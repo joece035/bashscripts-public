@@ -1,0 +1,298 @@
+#!/bin/bash
+# ======================================================
+# 🚀 JOE'S PERSONAL COMMAND CENTER (The Master Sync File)
+# ======================================================
+
+# --- 1. ENVIRONMENT DETECTION & PATHS ---
+if [[ -d "/data/data/com.termux" ]]; then
+    export JOE_ENV="TERMUX"
+    export hmt="$HOME"
+    export hwsl="/data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root"
+    export hpc="/mnt/c/Users/User" 
+    # Termux Specific Commands
+    export NODE_BIN="node"
+    export OPENCLAW_BIN="$HOWM/.env"
+elif grep -q "microsoft" /proc/version 2>/dev/null; then
+    export JOE_ENV="WSL"
+    export hwsl="$HOME"
+    export hpc="/mnt/c/Users/User"
+    export htm="/data/data/com.termux/files/home"
+    # WSL Specific Commands (Hermes Node)
+    export NODE_BIN="$HOME/.local/bin/node"
+    export OPENCLAW_JS="$HOME/.local/lib/openclaw/node_modules/.bin/openclaw"
+    export OPENCLAW_BIN="openclaw"
+else
+    export JOE_ENV="LINUX"
+    export hwsl="$HOME"
+    export NODE_BIN="node"
+    export OPENCLAW_BIN="openclaw"
+fi
+
+# Define standard workspace paths
+export oppc="$hpc/openclaw"
+export dtpc="$hpc/Desktop"
+export dbp="$HOME/dashboard"
+export hubt="/data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root"
+export hmp="$HOME/.hermes"
+export ENGINES_DIR="$dbp/api/engines"
+export BASH_SCRIPTS="$hwsl/bashscripts"
+
+# Global settings
+export NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
+export OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1
+export OPENCLAW_NO_RESPAWN=1
+export PYTHONIOENCODING="utf-8"
+export CURRENT_OC_PROFILE="${CURRENT_OC_PROFILE:-None (Default)}"
+export WSL_TELSCAIL_IP="100.80.195.120"
+export WINDOWS_IP="100.69.181.45"
+export WINDOWS_USER="User"
+export WSL_IP="100.80.195.120"
+export WSL_USER="usercivenz"
+export TERMUX_IP="100.110.26.16"
+export TERMUX_USER="u0_a331"
+export TERMUX_PORT="8022"
+export DEBAIN_IP="100.110.26.16"
+export DEBAIN_USER="flux"
+export DEBAIN_PORT="9022"
+
+# --- 2. COLORS & THEME ---
+CYAN='\033[36m'
+GREEN='\033[32m'
+YELLOW='\033[33m'
+MAGENTA='\033[35m'
+RED='\033[31m'
+GRAY='\033[90m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+
+# --- 3. MISSION CONTROL FUNCTIONS ---
+
+opstatus() {
+    echo -ne "\033]0;OC: $CURRENT_OC_PROFILE\007"
+    echo -e " [Current Profile] : ${GREEN}${CURRENT_OC_PROFILE}${NC}"
+    echo -e " [Workspace]       : ${GRAY}${OPENCLAW_WORKSPACE}${NC}"
+    echo -e " [State Directory] : ${GRAY}${OPENCLAW_STATE_DIR}${NC}"
+}
+
+
+op1() { export OPENCLAW_STATE_DIR="$HOME/.openclaw-1"; export OPENCLAW_WORKSPACE="$OPENCLAW_STATE_DIR/workspace"; export CURRENT_OC_PROFILE="Profile 1"; opstatus; cd "$OPENCLAW_STATE_DIR"; }
+op2() { export OPENCLAW_STATE_DIR="$HOME/.openclaw-2"; export OPENCLAW_WORKSPACE="$OPENCLAW_STATE_DIR/workspace"; export CURRENT_OC_PROFILE="Profile 2"; opstatus; cd "$OPENCLAW_STATE_DIR"; }
+op3() { export OPENCLAW_STATE_DIR="$HOME/.openclaw-3"; export OPENCLAW_WORKSPACE="$OPENCLAW_STATE_DIR/workspace"; export CURRENT_OC_PROFILE="Profile 3"; opstatus; cd "$OPENCLAW_STATE_DIR"; }
+op4() { export OPENCLAW_STATE_DIR="$HOME/.openclaw-4"; export OPENCLAW_WORKSPACE="$OPENCLAW_STATE_DIR/workspace"; export CURRENT_OC_PROFILE="Profile 4"; opstatus; cd "$OPENCLAW_STATE_DIR"; }
+op5() { export OPENCLAW_STATE_DIR="$HOME/.openclaw-5"; export OPENCLAW_WORKSPACE="$OPENCLAW_STATE_DIR/workspace"; export CURRENT_OC_PROFILE="Profile 5 (Fah)"; opstatus; cd "$OPENCLAW_STATE_DIR"; }
+op6() { export OPENCLAW_STATE_DIR="$HOME/.openclaw-6"; export OPENCLAW_WORKSPACE="$OPENCLAW_STATE_DIR/workspace"; export CURRENT_OC_PROFILE="Profile 6 (Fon)"; opstatus; cd "$OPENCLAW_STATE_DIR"; }
+op7() { export OPENCLAW_STATE_DIR="$HOME/.openclaw-7"; export OPENCLAW_WORKSPACE="$OPENCLAW_STATE_DIR/workspace"; export CURRENT_OC_PROFILE="Profile 7 (J1)"; opstatus; cd "$OPENCLAW_STATE_DIR"; }
+
+opreset() {
+    unset OPENCLAW_STATE_DIR
+    unset OPENCLAW_WORKSPACE
+    export CURRENT_OC_PROFILE="None (Cleared)"
+    echo -ne "\033]0;WSL: Ubuntu\007"
+    echo -e "${CYAN}🧹 OpenClaw Profile has been RESET.${NC}"
+}
+
+opgate() {
+    local port=${1:-10000}
+    echo -e "${MAGENTA}🚀 Starting Gateway on Port $port...${NC}"
+    $OPENCLAW_JS gateway --port "$port"
+}
+
+# --- 4. SYSTEM & NETWORK UTILITIES ---
+
+opgw() {
+    local port="${1:-1111}"
+    if ! [[ "$port" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}Error: Port must be a number${NC}"
+        return 1
+    fi
+    if [[ "$JOE_ENV" == "WSL" ]]; then
+        $NODE_BIN $OPENCLAW_JS gateway --port "$port"
+    else
+        source ~/.env && . $OPENCLAW_BIN gateway --port "$port"
+    fi
+}
+
+fp() {
+  local p="${1:-}"
+  if [[ -z "$p" ]]; then echo "Usage: fp <port>"; return 1; fi
+  local pid=$(ss -tlnp "sport = :$p" 2>/dev/null | grep -oP 'pid=\K[0-9]+' | head -1)
+  if [[ -n "$pid" ]]; then echo -e "${GREEN}Port $p is LISTENING - PID: $pid${NC}"
+  else echo -e "${YELLOW}Port $p is NOT in use${NC}"; fi
+}
+
+fpk() {
+    local port=$1
+    if [ -z "$port" ]; then echo -e "${RED}❌ Usage: fpk <port_number>${NC}"; return 1; fi
+    local pid=$(lsof -t -i:$port)
+    if [ -n "$pid" ]; then
+        echo -e "${CYAN}🔍 Found Process on Port $port:${NC}"
+        lsof -i:$port
+        echo -n -e "${YELLOW}⚠️ Do you want to kill PID $pid? (y/n): ${NC}"
+        read confirm
+        if [[ "$confirm" == [yY] ]]; then kill -9 $pid; echo -e "${GREEN}✅ Process $pid has been killed.${NC}"
+        else echo -e "${RED}❌ Canceled.${NC}"; fi
+    else echo -e "${YELLOW}🔍 No process found running on port $port${NC}"; fi
+}
+
+kk() {  
+    killall -9 termux-info 2>/dev/null; pkill -9 -u $(whoami)  
+}
+
+kkk() {
+    echo -e "${RED}☢️ DEPLOYING NUCLEAR KILL...${NC}"
+    kill -9 $(pgrep -f "python|node|cmd") 2>/dev/null; echo "All killed."
+    echo -e "${GREEN}✅ Cleanup Complete!${NC}"
+}
+
+kkkk() {
+    echo -e "${RED}☠️ SYSTEM PURGE (Python/Node/CMD)${NC}"
+    taskkill.exe /F /IM python.exe /T /FI "STATUS eq RUNNING"
+    taskkill.exe /F /IM node.exe /T /FI "STATUS eq RUNNING"
+    taskkill.exe /F /IM cmd.exe /T /FI "STATUS eq RUNNING"
+    echo -e "${GREEN}✅ All targets neutralized.${NC}"
+}
+
+
+
+check-tm() {
+    echo -e "${YELLOW}🔍 Scanning for Mobile...${NC}"
+    if ping -c 1 "100.110.26.16" &> /dev/null; then echo -e "${GREEN}✅ Mobile is ONLINE!${NC}"
+    else echo -e "${RED}❌ ERROR: Mobile is OFFLINE!${NC}"; fi
+}
+
+recon() {
+    echo -e "${CYAN}📡 Connecting ADB to Mobile...${NC}"
+    adb connect "100.110.26.16:5555"
+    echo -e "${GREEN}📱 Launching Scrcpy...${NC}"
+    "$hpc/scrcpy/scrcpy-win64-v2.4/scrcpy.exe" &
+}
+®
+opdb() {
+    local dash_path="$HOME/dashboard"
+    local venv_python="$dash_path/.venv/bin/python"
+    if [ -d "$dash_path" ]; then
+        echo -e "${GREEN}🚀 Launching OpenClaw DASHBOARD...${NC}"
+        cd "$dash_path"
+        if [ -f "$venv_python" ]; then
+            "$venv_python" server.py &
+        else
+            python3 server.py &
+        fi
+        echo -e "${GREEN}✅ DASHBOARD is running (Background). http://localhost:5050${NC}"
+    else echo -e "${RED}❌ Error: Path $dash_path not found!${NC}"; fi
+}
+
+tsc() {
+    local base_path="$HOME/dashboard"
+    local venv_python="$base_path/.venv/bin/python"
+    local script_path="api/engines/trend_scan/daily_trend_scan.py"
+    if [ -f "$base_path/$script_path" ]; then
+        echo -e "${GREEN}🚀 [Trend Scan] Starting...${NC}"
+        cd "$base_path"
+        "$venv_python" "$script_path"
+        cd - > /dev/null
+        echo -e "${CYAN}✅ Trend Scan เรียบร้อยแล้วครับกัปตัน!${NC}"
+    else
+        echo -e "${RED}❌ ไม่พบไฟล์ที่: $base_path/$script_path${NC}"
+    fi
+}
+
+# --- 5. ALIASES (NAVIGATION & SHORTCUTS) ---
+
+alias cls='clear'
+alias oppc='cd $oppc'
+alias dtpc='cd $dtpc'
+alias dbp='cd $dbp'
+alias hmt='cd $hmt'
+alias hwsl='cd $hwsl'
+alias hpc='cd $hpc'
+alias hubt='cd $hubt'
+alias hmp='cd $hmp'
+alias ktmux="tmux kill-server"
+alias runbuild="cd $dbp/frontend && npm run build && cd .."
+alias cmdc="cd $ENGINES_DIR/cmd-convertor && source .venv/bin/activate && python cli_converter.py"
+alias opjs="$OPENCLAW_JS"
+alias enp="cd $ENGINES_DIR"
+alias enpipe="enp && source $pPATH && python3 pipeline_engine.py"
+
+# SSH Shortcuts (moved to 3worlds.sh)
+
+# --- 6. SCRIPTS & FILE MANAGEMENT ---
+clear
+# Auto-source File Manager
+[ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh && _fm_banner
+
+alias fmr="source ~/bashscripts/bash-manager.sh && fm help"
+
+alias fmoff="source ~/bashscripts/bash-manager.sh && fm learn off"
+
+alias fmon="source ~/bashscripts/bash-manager.sh && fm learn on"
+
+alias xfm="source ~/bashscripts/bash-manager.sh && source ~/bashscripts/xfm_append.sh && xfm learn on"
+
+# SSH Transfer Script (moved to 3worlds.sh)
+
+# --- 7. THE ULTIMATE HELP UTILITY ---
+
+help() {
+    echo -e "${CYAN}======================================================${NC}"
+    echo -e "   🚀 ${BOLD}JOE'S MISSION CONTROL - COMMAND LIST${NC}"
+    echo -e "${CYAN}======================================================${NC}"
+    
+    echo -e "${YELLOW}${BOLD}🔹 [ CUSTOM FUNCTIONS ]${NC}"
+    grep -E -h -B 1 '^[a-zA-Z0-9_-]+\(\)' ~/bashscripts/.bashjoe | while read -r line; do
+        if [[ $line == "# ---"* ]] || [[ $line == "# ==="* ]]; then last_comment=""
+        elif [[ $line == "#"* ]]; then last_comment="${line#*# }"
+        elif [[ $line == *"()"* ]]; then
+            func_name=$(echo $line | cut -d'(' -f1)
+            if [[ "$func_name" =~ ^(ble|__|_|bash_|quote) ]]; then continue; fi
+            printf "  \033[32m%-15b\033[0m \033[90m%b\033[0m\n" "${func_name}" "${last_comment}"
+            last_comment=""
+        fi
+    done
+
+    echo -e "\n${YELLOW}${BOLD}🔹 [ ALIASES ]${NC}"
+    grep -E -h -B 1 '^alias [a-zA-Z0-9_-]+=' ~/bashscripts/.bashjoe | while read -r line; do
+        if [[ $line == "# ---"* ]] || [[ $line == "# ==="* ]]; then last_comment=""
+        elif [[ $line == "#"* ]]; then last_comment="${line#*# }"
+        elif [[ $line == "alias "* ]]; then
+            alias_name=$(echo $line | cut -d'=' -f1 | sed 's/alias //')
+            printf "  \033[36m%-15b\033[0m \033[90m%b\033[0m\n" "${alias_name}" "${last_comment}"
+            last_comment=""
+        fi
+    done
+    
+    echo -e "${CYAN}======================================================${NC}"
+    echo -e " Tip: Type ${GREEN}'h'${NC} to see this list."
+    echo -e " Env: ${MAGENTA}${JOE_ENV}${NC}"
+}
+
+alias h='help'
+alias reload='source ~/.bashrc && echo -e "${GREEN}✅ Config reloaded!${NC}"'
+alias pp="reload"
+
+
+#source ~/bashscripts/echo.sh 
+
+# --- 8. INITIALIZATION ---
+
+
+full_pipe() {
+  echo -e "${CYAN}============= Full Pipe Line ==============${NC}"
+	source $pPATH
+	enp
+	python3 pipeline_engine.py
+}
+alias fbrun="full_pipe"
+
+gpc() {
+    if [ -z "$1" ]; then
+        # ถ้าไม่ใส่เลข Port ให้โชว์ LISTEN ทั้งหมด
+         ss -tulpn | grep LISTEN
+    else
+        # ถ้าใส่เลข Port (เช่น gpc 22) ให้กรองเฉพาะ Port นั้น
+         ss -tulpn | grep LISTEN | grep ":$1 "
+    fi
+}
+
