@@ -6,32 +6,34 @@
 # --- 1. ENVIRONMENT DETECTION & PATHS ---
 if [[ -d "/data/data/com.termux" ]]; then
     export JOE_ENV="TERMUX"
-    export hmt="$HOME"
-    export hwsl="/data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root"
-    export hpc="/mnt/c/Users/User" 
+    export htm="$HOME"
+    export hpc="/mnt/c/Users/User"
+    export hwsl="/home/usercivenz" 
     # Termux Specific Commands
     export NODE_BIN="node"
     export OPENCLAW_BIN="$HOWM/.env"
+    export dbp="$HOME/dashboard"
 elif grep -q "microsoft" /proc/version 2>/dev/null; then
     export JOE_ENV="WSL"
-    export hwsl="$HOME"
     export hpc="/mnt/c/Users/User"
     export htm="/data/data/com.termux/files/home"
+    export hwsl="HOME"
     # WSL Specific Commands (Hermes Node)
     export NODE_BIN="$HOME/.local/bin/node"
     export OPENCLAW_JS="$HOME/.local/lib/openclaw/node_modules/.bin/openclaw"
     export OPENCLAW_BIN="openclaw"
+    export dbp="$HOME/dashboard"
 else
-    export JOE_ENV="LINUX"
-    export hwsl="$HOME"
+    export JOE_ENV="LINUX(GIT-BASH)"
     export NODE_BIN="node"
     export OPENCLAW_BIN="openclaw"
+    export dbp="$hwsl/dashboard"
+    export hwsl="$HOME/.env"
 fi
 
 # Define standard workspace paths
 export oppc="$hpc/openclaw"
 export dtpc="$hpc/Desktop"
-export dbp="$HOME/dashboard"
 export hubt="/data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root"
 export hmp="$HOME/.hermes"
 export ENGINES_DIR="$dbp/api/engines"
@@ -198,6 +200,8 @@ tsc() {
     fi
 }
 
+
+
 # --- 5. ALIASES (NAVIGATION & SHORTCUTS) ---
 
 alias cls='clear'
@@ -211,10 +215,10 @@ alias hubt='cd $hubt'
 alias hmp='cd $hmp'
 alias ktmux="tmux kill-server"
 alias runbuild="cd $dbp/frontend && npm run build && cd .."
-alias cmdc="cd $ENGINES_DIR/cmd-convertor && source .venv/bin/activate && python cli_converter.py"
 alias opjs="$OPENCLAW_JS"
 alias enp="cd $ENGINES_DIR"
 alias enpipe="enp && source $pPATH && python3 pipeline_engine.py"
+alias cmdc="cd $dbp/api/engines/cmd-convertor && source .venv/bin/activate && python cli_converter.py"
 
 # SSH Shortcuts (moved to 3worlds.sh)
 
