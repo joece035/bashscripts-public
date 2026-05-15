@@ -1,0 +1,7 @@
+# Force LF line endings for all shell scripts in this repo
+# Prevents CRLF conversion on Windows git clone/pull
+* text=auto eol=lf
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.md text eol=lf
