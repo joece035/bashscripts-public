@@ -24,7 +24,7 @@ elif grep -q "microsoft" /proc/version 2>/dev/null; then
     export OPENCLAW_BIN="openclaw"
     export dbp="$HOME/dashboard"
 elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
-    export JOE_ENV="LINUX(GIT-BASH)"
+    export JOE_ENV="GIT-BASH"
     export NODE_BIN="node"
     export OPENCLAW_BIN="openclaw"
     export dbp="$hwsl/dashboard"
@@ -223,13 +223,10 @@ tsc() {
     fi
 }
 
-
-
->>>>>>> Stashed changes
 # SSH Shortcuts (moved to 3worlds.sh)
 
 # --- 6. SCRIPTS & FILE MANAGEMENT ---
-clear
+
 # Auto-source File Manager
 [ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh && _fm_banner
 
@@ -280,7 +277,7 @@ help() {
 
 alias h='help'
 alias reload='source ~/.bashrc && echo -e "${GREEN}✅ Config reloaded!${NC}"'
-alias pp="reload"
+
 
 
 #source ~/bashscripts/echo.sh 
@@ -306,3 +303,38 @@ gpc() {
     fi
 }
 
+
+status() {
+
+    echo "🌍 ENV      : $JOE_ENV"
+
+    if [[ -n "$SSH_CONNECTION" ]]; then
+        echo "🔐 SSH      : ACTIVE"
+    else
+        echo "🔐 SSH      : LOCAL"
+    fi
+
+    if [[ -n "$TMUX" ]]; then
+        echo "🧩 TMUX     : ACTIVE"
+    else
+        echo "🧩 TMUX     : OFF"
+    fi
+
+    if command -v tailscale >/dev/null 2>&1; then
+        if tailscale status >/dev/null 2>&1; then
+            echo "🌐 TAILSCALE: ONLINE"
+        else
+            echo "🌐 TAILSCALE: OFFLINE"
+        fi
+    fi
+
+    echo "📂 PROJECT DIR  : $(basename "$PWD")"
+
+    if command -v claude >/dev/null 2>&1; then
+        echo "🤖 AGENT    : claude-code"
+    else
+        echo "🤖 AGENT    : none"
+    fi
+}
+
+alias pp="reload"
