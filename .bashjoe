@@ -23,13 +23,16 @@ elif grep -q "microsoft" /proc/version 2>/dev/null; then
     export OPENCLAW_JS="$HOME/.local/lib/openclaw/node_modules/.bin/openclaw"
     export OPENCLAW_BIN="openclaw"
     export dbp="$HOME/dashboard"
-else
+elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
     export JOE_ENV="LINUX(GIT-BASH)"
     export NODE_BIN="node"
     export OPENCLAW_BIN="openclaw"
     export dbp="$hwsl/dashboard"
     export hwsl="$HOME/.env"
+else
+    export JOE_ENV="LINUX"
 fi
+
 
 # Define standard workspace paths
 export oppc="$hpc/openclaw"
@@ -37,7 +40,7 @@ export dtpc="$hpc/Desktop"
 export hubt="/data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/root"
 export hmp="$HOME/.hermes"
 export ENGINES_DIR="$dbp/api/engines"
-export BASH_SCRIPTS="$hwsl/bashscripts"
+export BASH_SCRIPTS="$HOME/bashscripts"
 
 # Global settings
 export NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
@@ -56,6 +59,26 @@ export TERMUX_PORT="8022"
 export DEBAIN_IP="100.110.26.16"
 export DEBAIN_USER="flux"
 export DEBAIN_PORT="9022"
+
+
+# --- 5. ALIASES (NAVIGATION & SHORTCUTS) ---
+
+alias cls='clear'
+alias oppc='cd $oppc'
+alias dtpc='cd $dtpc'
+alias dbp='cd $dbp'
+alias hmt='cd $hmt'
+alias hwsl='cd $hwsl'
+alias hpc='cd $hpc'
+alias hubt='cd $hubt'
+alias hmp='cd $hmp'
+alias ktmux="tmux kill-server"
+alias runbuild="cd $dbp/frontend && npm run build && cd .."
+alias opjs="$OPENCLAW_JS"
+alias enp="cd $ENGINES_DIR"
+alias enpipe="enp && source $pPATH && python3 pipeline_engine.py"
+alias cmdc="cd $dbp/api/engines/cmd-convertor && source .venv/bin/activate && python cli_converter.py"
+alias gdb="proot-distro login debian"
 
 # --- 2. COLORS & THEME ---
 CYAN='\033[36m'
@@ -111,7 +134,7 @@ opgw() {
     if [[ "$JOE_ENV" == "WSL" ]]; then
         $NODE_BIN $OPENCLAW_JS gateway --port "$port"
     else
-        source ~/.env && . $OPENCLAW_BIN gateway --port "$port"
+       . $OPENCLAW_BIN gateway --port "$port"
     fi
 }
 
@@ -188,7 +211,7 @@ opdb() {
 tsc() {
     local base_path="$HOME/dashboard"
     local venv_python="$base_path/.venv/bin/python"
-    local script_path="api/engines/trend_scan/daily_trend_scan.py"
+    local script_path="api/engines/trend_scan/daily_trend_scan.pyต"
     if [ -f "$base_path/$script_path" ]; then
         echo -e "${GREEN}🚀 [Trend Scan] Starting...${NC}"
         cd "$base_path"
@@ -202,24 +225,7 @@ tsc() {
 
 
 
-# --- 5. ALIASES (NAVIGATION & SHORTCUTS) ---
-
-alias cls='clear'
-alias oppc='cd $oppc'
-alias dtpc='cd $dtpc'
-alias dbp='cd $dbp'
-alias hmt='cd $hmt'
-alias hwsl='cd $hwsl'
-alias hpc='cd $hpc'
-alias hubt='cd $hubt'
-alias hmp='cd $hmp'
-alias ktmux="tmux kill-server"
-alias runbuild="cd $dbp/frontend && npm run build && cd .."
-alias opjs="$OPENCLAW_JS"
-alias enp="cd $ENGINES_DIR"
-alias enpipe="enp && source $pPATH && python3 pipeline_engine.py"
-alias cmdc="cd $dbp/api/engines/cmd-convertor && source .venv/bin/activate && python cli_converter.py"
-
+>>>>>>> Stashed changes
 # SSH Shortcuts (moved to 3worlds.sh)
 
 # --- 6. SCRIPTS & FILE MANAGEMENT ---

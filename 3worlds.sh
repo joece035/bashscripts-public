@@ -20,10 +20,10 @@ unalias tac tm tw wsl cpw2t cpt2w push 2>/dev/null
 
 tdb()  { ssh -p "${DEBAIN_PORT}" "${DEBAIN_USER}@${DEBAIN_IP}" "$@"; }
 tac()  { ssh -p 8158 "${ACODE_USER}@${ACODE_IP}" "$@"; }
-tm()  { ssh -p 8022 "${TERMUX_USER}@${TERMUX_IP}" "$@"; }
+tm()  { ssh -p 8022 "${TERMUX_USER}@${TERMUX_IP}"pwsh -NoLogo"'" "$@"; }
 tw()  { ssh "${WINDOWS_USER}@${WINDOWS_IP}" "$@"; }
 wsl() { ssh -i ~/.ssh/id_ed25519_wsl -p 22 "${WSL_USER}@${WSL_IP}" "$@"; }
-
+Tw() { ssh -t "${WINDOWS_USER}@${WINDOWS_IP}" "'C:\Program Files\Git\bin\bash.exe' --login $@"; }
 # --- rsync helpers ---
 _rsync_tm()  { rsync -az --update --info=progress2 -e "ssh -p 8022" "$@" "${TERMUX_USER}@${TERMUX_IP}:"; }
 _rsync_tm_get() { rsync -az --update --info=progress2 -e "ssh -p 8022" "${TERMUX_USER}@${TERMUX_IP}:${1}" "$2"; }
