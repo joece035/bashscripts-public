@@ -236,6 +236,7 @@ tsc() {
 # Auto-source File Manager
 [ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh && _fm_banner
 
+
 alias fmr="source ~/bashscripts/bash-manager.sh && fm help"
 
 alias fmoff="source ~/bashscripts/bash-manager.sh && fm learn off"

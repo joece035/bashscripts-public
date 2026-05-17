@@ -20,7 +20,7 @@ unalias tac tm tw wsl cpw2t cpt2w push 2>/dev/null
 
 tdb()  { ssh -p "${DEBAIN_PORT}" "${DEBAIN_USER}@${DEBAIN_IP}" "$@"; }
 tac()  { ssh -p 8158 "${ACODE_USER}@${ACODE_IP}" "$@"; }
-tm()  { ssh -p 8022 "${TERMUX_USER}@${TERMUX_IP}"pwsh -NoLogo"'" "$@"; }
+tm()  { ssh -p 8022 "${TERMUX_USER}@${TERMUX_IP}" "$@"; }
 tw()  { ssh "${WINDOWS_USER}@${WINDOWS_IP}" "$@"; }
 wsl() { ssh -i ~/.ssh/id_ed25519_wsl -p 22 "${WSL_USER}@${WSL_IP}" "$@"; }
 Tw() { ssh -t "${WINDOWS_USER}@${WINDOWS_IP}" "'C:\Program Files\Git\bin\bash.exe' --login $@"; }
