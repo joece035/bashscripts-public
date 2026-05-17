@@ -215,12 +215,13 @@ opdb() {
 }
 
 tsc() {
-    local base_path="$hwsl/dashboard"
+    local base_path="$dbp"
     local script_path="api/engines/trend_scan/daily_trend_scan.py"
     if [ -f "$base_path/$script_path" ]; then
         echo -e "${GREEN}🚀 [Trend Scan] Starting...${NC}"
-        cd "$base_path"
-        source "$DASHBOARD_PYTHON" "$script_path"
+        dbp
+        source "$DASHBOARD_PYTHON" 
+        python "$script_path"
         cd - > /dev/null
         echo -e "${CYAN}✅ Trend Scan เรียบร้อยแล้วครับกัปตัน!${NC}"
     else
