@@ -4,31 +4,33 @@
 # ======================================================
 
 # --- 1. ENVIRONMENT DETECTION & PATHS ---
+
+# Termux Specific Commands
 if [[ -d "/data/data/com.termux" ]]; then
     export JOE_ENV="TERMUX"
     export htm="$HOME"
     export hpc="/mnt/c/Users/User"
     export hwsl="/home/usercivenz" 
-    # Termux Specific Commands
     export NODE_BIN="node"
     export OPENCLAW_BIN="$HOWM/.env"
     export dbp="$HOME/dashboard"
+# WSL Specific Commands (Standard Node)
 elif grep -q "microsoft" /proc/version 2>/dev/null; then
     export JOE_ENV="WSL"
     export hpc="/mnt/c/Users/User"
     export htm="/data/data/com.termux/files/home"
-    export hwsl="HOME"
-    # WSL Specific Commands (Standard Node)
+    export hwsl="$HOME"
     export NODE_BIN="node"
     export OPENCLAW_JS="$HOME/.local/lib/openclaw/node_modules/.bin/openclaw"
     export OPENCLAW_BIN="openclaw"
     export dbp="$HOME/dashboard"
+# Git bash
 elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
     export JOE_ENV="GIT-BASH"
     export NODE_BIN="node"
     export OPENCLAW_BIN="openclaw"
     export dbp="$hwsl/dashboard"
-    export hwsl="$HOME/.env"
+    #export hwsl="$HOME/.env"
 else
     export JOE_ENV="LINUX"
 fi
@@ -46,9 +48,9 @@ export BASH_SCRIPTS="$HOME/bashscripts"
 if [[ "$JOE_ENV" == "TERMUX" ]]; then
     export DASHBOARD_VENV="$HOME/.dash_venv"
 else
-    export DASHBOARD_VENV="$HOME/dashboard/.venv"
+    export DASHBOARD_VENV="$hwsl/dashboard/.venv"
 fi
-export DASHBOARD_PYTHON="$DASHBOARD_VENV/bin/python"
+export DASHBOARD_PYTHON="$DASHBOARD_VENV/bin/activate"
 export NODE_COMPILE_CACHE=/var/tmp/openclaw-compile-cache
 export OPENCLAW_ALLOW_INSECURE_PRIVATE_WS=1
 export OPENCLAW_NO_RESPAWN=1
@@ -199,12 +201,12 @@ recon() {
     "$hpc/scrcpy/scrcpy-win64-v2.4/scrcpy.exe" &
 }
 opdb() {
-    local dash_path="$HOME/dashboard"
+    local dash_path="$dbp"
     if [ -d "$dash_path" ]; then
         echo -e "${GREEN}🚀 Launching OpenClaw DASHBOARD...${NC}"
         cd "$dash_path"
         if [ -f "$DASHBOARD_PYTHON" ]; then
-            "$DASHBOARD_PYTHON" server.py &
+            source $DASHBOARD_PYTHON && python server.py 
         else
             python3 server.py &
         fi
@@ -213,12 +215,12 @@ opdb() {
 }
 
 tsc() {
-    local base_path="$HOME/dashboard"
-    local script_path="api/engines/trend_scan/daily_trend_scan.pyต"
+    local base_path="$hwsl/dashboard"
+    local script_path="api/engines/trend_scan/daily_trend_scan.py"
     if [ -f "$base_path/$script_path" ]; then
         echo -e "${GREEN}🚀 [Trend Scan] Starting...${NC}"
         cd "$base_path"
-        "$DASHBOARD_PYTHON" "$script_path"
+        source "$DASHBOARD_PYTHON" "$script_path"
         cd - > /dev/null
         echo -e "${CYAN}✅ Trend Scan เรียบร้อยแล้วครับกัปตัน!${NC}"
     else
