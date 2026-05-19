@@ -87,6 +87,8 @@ alias enp="cd $ENGINES_DIR"
 alias enpipe="enp && $DASHBOARD_PYTHON pipeline_engine.py"
 alias cmdc="cd $dbp/api/engines/cmd-convertor && $DASHBOARD_PYTHON cli_converter.py"
 alias gdb="proot-distro login debian"
+alias bsc="cd $BASHSCRIPTS_DIR && pwd"
+
 
 # --- 2. COLORS & THEME ---
 CYAN='\033[36m'
@@ -201,17 +203,17 @@ recon() {
     "$hpc/scrcpy/scrcpy-win64-v2.4/scrcpy.exe" &
 }
 opdb() {
-    local dash_path="$dbp"
-    if [ -d "$dash_path" ]; then
+    if [ -d "$dbp" ]; then
         echo -e "${GREEN}🚀 Launching OpenClaw DASHBOARD...${NC}"
-        cd "$dash_path"
-        if [ -f "$DASHBOARD_PYTHON" ]; then
-            source $DASHBOARD_PYTHON && python server.py 
+        cd "$dbp"
+        if [ -f "$pyvenv" ]; then
+            source $pyvenv
+            python3 server.py 
         else
-            python3 server.py &
+            python3 server.py 
         fi
-        echo -e "${GREEN}✅ DASHBOARD is running (Background). http://localhost:5050${NC}"
-    else echo -e "${RED}❌ Error: Path $dash_path not found!${NC}"; fi
+        echo -e "${GREEN}✅ DASHBOARD is running ${NC}"
+    else echo -e "${RED}❌ Error: Path $dbp not found!${NC}"; fi
 }
 
 tsc() {
@@ -307,9 +309,11 @@ pysync() {
 
 
 full_pipe() {
+  local project="$dbp/api/engines"
   echo -e "${CYAN}============= Full Pipe Line ==============${NC}"
-	enp
-	$DASHBOARD_PYTHON pipeline_engine.py
+	source $pyvenv
+	cd $project
+	python3 pipeline_engine.py
 }
 alias fbrun="full_pipe"
 
@@ -322,7 +326,12 @@ gpc() {
          ss -tulpn | grep LISTEN | grep ":$1 "
     fi
 }
-
+cmdp() {
+  local project="$dbp/api/engines/cmd-convertor"
+        source $pyvenv
+        cd $project
+        python3 cli_converter.py
+}
 
 status() {
 
