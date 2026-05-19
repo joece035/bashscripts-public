@@ -236,21 +236,29 @@ tsc() {
 # --- 6. SCRIPTS & FILE MANAGEMENT ---
 
 # Auto-source File Manager
-[ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh
+#[ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh
 
 
 alias fmr="source $hwsl/bashscripts/bash-manager.sh && fm help"
 
 alias fmoff="source $hwsl/bashscripts/bash-manager.sh && fm learn off"
 
-alias fmon="clear&& source $hwsl/bashscripts/bash-manager.sh &&  _fm_banner&& fm learn on"
-
-
+fmon() {
+  clear
+  if [[ "$JOE_ENV" == "TERMUX" ]]; then
+    local home_path="$HOME"
+  else
+    local home_path="$hwsl"
+  fi
+  source $home_path/bashscripts/bash-manager.sh
+  _fm_banner
+  fm learn on
+}
 xfmb() { 
 	clear
-	_xfm_banner
+	xfm_bn
+  source ~/bashscripts/xfm_append.sh
 }
-
 # --- 7. THE ULTIMATE HELP UTILITY ---
 
 help() {

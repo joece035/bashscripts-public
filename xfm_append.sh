@@ -44,7 +44,7 @@ _xfm_banner() {
   echo -e "  ${LGREEN}✅ XFM loaded successfully. Cross-world bridge established.${RESET}"
   echo -e ""
 }
-
+alias xfm_bn="_xfm_banner"
 
 # ─────────────────────────────────────────────────────────────────
 # MACHINE CONFIG — แก้ตรงนี้ถ้า IP/User เปลี่ยน

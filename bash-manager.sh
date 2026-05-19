@@ -1321,7 +1321,7 @@ _fm_banner() {
   echo -e "  ${LGREEN}✅ File Manager loaded ${RESET}"
   echo -e ""
 }
-
+alias fm_bn="_fm_banner"
 # Run the banner
 # ─────────────────────────────────────────────────────────────────
 # WELCOME MESSAGE (แสดงตอน source)
