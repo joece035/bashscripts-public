@@ -239,11 +239,11 @@ tsc() {
 [ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh
 
 
-alias fmr="source ~/bashscripts/bash-manager.sh && fm help"
+alias fmr="source $hwsl/bashscripts/bash-manager.sh && fm help"
 
-alias fmoff="source ~/bashscripts/bash-manager.sh && fm learn off"
+alias fmoff="source $hwsl/bashscripts/bash-manager.sh && fm learn off"
 
-alias fmon="clear&& source ~/bashscripts/bash-manager.sh &&  _fm_banner&& fm learn on"
+alias fmon="clear&& source $hwsl/bashscripts/bash-manager.sh &&  _fm_banner&& fm learn on"
 
 
 xfmb() { 
