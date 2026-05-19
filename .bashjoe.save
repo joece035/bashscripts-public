@@ -67,6 +67,48 @@ export TERMUX_PORT="8022"
 export DEBAIN_IP="100.110.26.16"
 export DEBAIN_USER="flux"
 export DEBAIN_PORT="9022"
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
+# Lookforward output path (สำหรับ image_gen อ่าน output จาก lookforward)
+# ค่า default คือ DASHBOARD_ROOT/data/content/lookforward/ready_to_post
+READY_TO_POST_PATH=/home/usercivenz/dashboard/api/engines/data/output/lookforward/ready_to_post
 
 
 # --- 5. ALIASES (NAVIGATION & SHORTCUTS) ---
@@ -87,8 +129,6 @@ alias enp="cd $ENGINES_DIR"
 alias enpipe="enp && $DASHBOARD_PYTHON pipeline_engine.py"
 alias cmdc="cd $dbp/api/engines/cmd-convertor && $DASHBOARD_PYTHON cli_converter.py"
 alias gdb="proot-distro login debian"
-alias bsc="cd $BASHSCRIPTS_DIR && pwd"
-
 
 # --- 2. COLORS & THEME ---
 CYAN='\033[36m'
@@ -203,17 +243,17 @@ recon() {
     "$hpc/scrcpy/scrcpy-win64-v2.4/scrcpy.exe" &
 }
 opdb() {
-    if [ -d "$dbp" ]; then
+    local dash_path="$dbp"
+    if [ -d "$dash_path" ]; then
         echo -e "${GREEN}🚀 Launching OpenClaw DASHBOARD...${NC}"
-        cd "$dbp"
-        if [ -f "$pyvenv" ]; then
-            source $pyvenv
-            python3 server.py 
+        cd "$dash_path"
+        if [ -f "$DASHBOARD_PYTHON" ]; then
+            source $DASHBOARD_PYTHON && python server.py 
         else
-            python3 server.py 
+            python3 server.py &
         fi
-        echo -e "${GREEN}✅ DASHBOARD is running ${NC}"
-    else echo -e "${RED}❌ Error: Path $dbp not found!${NC}"; fi
+        echo -e "${GREEN}✅ DASHBOARD is running (Background). http://localhost:5050${NC}"
+    else echo -e "${RED}❌ Error: Path $dash_path not found!${NC}"; fi
 }
 
 tsc() {
@@ -236,20 +276,18 @@ tsc() {
 # --- 6. SCRIPTS & FILE MANAGEMENT ---
 
 # Auto-source File Manager
-[ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh
+[ -f ~/bashscripts/bash-manager.sh ] && source ~/bashscripts/bash-manager.sh && _fm_banner
 
 
 alias fmr="source ~/bashscripts/bash-manager.sh && fm help"
 
 alias fmoff="source ~/bashscripts/bash-manager.sh && fm learn off"
 
-alias fmon="clear&& source ~/bashscripts/bash-manager.sh &&  _fm_banner&& fm learn on"
+alias fmon="source ~/bashscripts/bash-manager.sh && fm learn on"
 
+alias xfm="source ~/bashscripts/bash-manager.sh && source ~/bashscripts/xfm_append.sh && xfm learn on"
 
-xfmb() { 
-	clear
-	_xfm_banner
-}
+# SSH Transfer Script (moved to 3worlds.sh)
 
 # --- 7. THE ULTIMATE HELP UTILITY ---
 
@@ -311,11 +349,9 @@ pysync() {
 
 
 full_pipe() {
-  local project="$dbp/api/engines"
   echo -e "${CYAN}============= Full Pipe Line ==============${NC}"
-	source $pyvenv
-	cd $project
-	python3 pipeline_engine.py
+	enp
+	$DASHBOARD_PYTHON pipeline_engine.py
 }
 alias fbrun="full_pipe"
 
@@ -328,12 +364,7 @@ gpc() {
          ss -tulpn | grep LISTEN | grep ":$1 "
     fi
 }
-cmdp() {
-  local project="$dbp/api/engines/cmd-convertor"
-        source $pyvenv
-        cd $project
-        python3 cli_converter.py
-}
+
 
 status() {
 
@@ -368,7 +399,4 @@ status() {
     fi
 }
 
-
-
-
-alias pp="clear && reload"
+alias pp="reload"

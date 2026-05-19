@@ -13,7 +13,7 @@
 #        fm learn on                  (เปิด Learn Mode — ดูคำสั่งจริง)
 #        fm learn off                 (ปิด Learn Mode)
 # =============================================================================
-clear
+
 # ─────────────────────────────────────────────────────────────────
 # COLORS & STYLES
 # ─────────────────────────────────────────────────────────────────
@@ -1318,9 +1318,13 @@ _fm_banner() {
   echo -e "    ${CYAN}fm learn on${RESET}   ${GRAY}→  เปิด Learn Mode (เพื่อดูคำสั่งจริงขณะรัน)${RESET}"
   echo -e "    ${CYAN}fm world${RESET}      ${GRAY}→  ตรวจสอบ IP และสถานะเครื่องอื่น (3-Worlds)${RESET}"
   echo -e "  ${DIM}───────────────────────────────────────────────────────────────────${RESET}"
-  echo -e "  ${LGREEN}✅ File Manager loaded and ready to serve, Captain!${RESET}"
+  echo -e "  ${LGREEN}✅ File Manager loaded ${RESET}"
   echo -e ""
 }
 
 # Run the banner
-
+# ─────────────────────────────────────────────────────────────────
+# WELCOME MESSAGE (แสดงตอน source)
+# ─────────────────────────────────────────────────────────────────
+echo -e "  ${LCYAN}💻 fm File-Manager loaded!${RESET}  พิมพ์ ${BOLD}fm help${RESET} หรือ ${BOLD}xfm status${RESET}"
+echo -e ""
