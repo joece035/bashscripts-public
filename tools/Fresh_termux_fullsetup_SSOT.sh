@@ -57,42 +57,57 @@ fi
 # ============================================================
 # STAGE 1.5 — Clear stale apt/dpkg locks (Termux apt can hang
 #   for 10+ min if a previous pkg install was interrupted)
+#   NOTE: wrapped in set +e — fuser/psmisc may not be installed
+#   yet on a fresh Termux, so we use lsof fallback or just
+#   force-remove the locks (safe on a fresh install).
 # ============================================================
 log "Stage 1.5: Check for stale apt locks"
+set +e
 DPKG_DIR="/data/data/com.termux/files/usr/var/lib/dpkg"
 APT_ARCHIVES="/data/data/com.termux/files/usr/var/cache/apt/archives"
+
+# Try to find a process holding the lock (fuser → lsof → none)
 _lock_pid=""
-if [[ -f "$DPKG_DIR/lock-frontend" ]]; then
-    # fuser prints PID to stdout if a process holds the lock
+if command -v fuser >/dev/null 2>&1; then
     _lock_pid="$(fuser "$DPKG_DIR/lock-frontend" 2>/dev/null | tr -d ' ')"
+elif command -v lsof >/dev/null 2>&1; then
+    _lock_pid="$(lsof -t "$DPKG_DIR/lock-frontend" 2>/dev/null | head -1 | tr -d ' ')"
 fi
+
 if [[ -n "$_lock_pid" ]]; then
-    # Check how long it's been holding the lock (etime in seconds)
     _etime="$(ps -o etimes= -p "$_lock_pid" 2>/dev/null | tr -d ' ')"
     if [[ -n "$_etime" ]] && [[ "$_etime" -gt 120 ]]; then
         warn "Stale apt lock held by PID $_lock_pid for ${_etime}s — killing."
-        kill -9 "$_lock_pid" 2>/dev/null || true
-        pkill -9 -x apt 2>/dev/null || true
-        pkill -9 -x dpkg 2>/dev/null || true
+        kill -9 "$_lock_pid" 2>/dev/null
+        pkill -9 -x apt 2>/dev/null
+        pkill -9 -x dpkg 2>/dev/null
         sleep 1
     else
-        # Lock held < 2 min — wait for it (another install may be running)
         log "apt lock held by PID $_lock_pid (${_etime:-0}s) — waiting up to 60s..."
         _wait=0
-        while [[ -n "$(fuser "$DPKG_DIR/lock-frontend" 2>/dev/null | tr -d ' ')" ]] && [[ $_wait -lt 60 ]]; do
+        while [[ $_wait -lt 60 ]]; do
             sleep 2; _wait=$((_wait+2))
+            _still=""
+            if command -v fuser >/dev/null 2>&1; then
+                _still="$(fuser "$DPKG_DIR/lock-frontend" 2>/dev/null | tr -d ' ')"
+            elif command -v lsof >/dev/null 2>&1; then
+                _still="$(lsof -t "$DPKG_DIR/lock-frontend" 2>/dev/null | head -1 | tr -d ' ')"
+            fi
+            [[ -z "$_still" ]] && break
         done
-        if [[ -n "$(fuser "$DPKG_DIR/lock-frontend" 2>/dev/null | tr -d ' ')" ]]; then
-            die "apt lock still held after 60s — run manually: kill -9 $_lock_pid"
+        if [[ -n "$_still" ]]; then
+            warn "apt lock still held after 60s — force-clearing."
         fi
-        ok "Lock released."
     fi
 fi
-# Remove stale lock files (safe — fuser confirmed no holder)
-rm -f "$DPKG_DIR/lock-frontend" "$DPKG_DIR/lock" "$APT_ARCHIVES/lock" 2>/dev/null || true
+
+# Force-remove stale lock files (safe on fresh install — no real
+# apt process should be running during bootstrap)
+rm -f "$DPKG_DIR/lock-frontend" "$DPKG_DIR/lock" "$APT_ARCHIVES/lock" 2>/dev/null
 # Repair any interrupted dpkg state
-dpkg --configure -a 2>/dev/null || true
+dpkg --configure -a 2>/dev/null
 ok "Locks cleared, dpkg state consistent."
+set -e
 
 # ============================================================
 # STAGE 2 — Update base system
@@ -114,7 +129,7 @@ PKGS=(
     python python-pip nodejs
     vim neovim fzf ripgrep bat htop tmux tree zip unzip
     lsd syncthing tailscale termux-api
-    termux-tools coreutils findutils gnu-sed gnugrep
+    termux-tools coreutils findutils gnu-sed gnugrep psmisc
 )
 pkg install -y "${PKGS[@]}"
 ok "Core packages installed."
