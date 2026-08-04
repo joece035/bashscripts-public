@@ -111,9 +111,31 @@ set -e
 
 # ============================================================
 # STAGE 2 — Update base system
+#   Retry with --fix-missing on 404 (stale mirror).
+#   If it still fails, suggest termux-change-repo.
 # ============================================================
 log "Stage 2: Update base system"
-pkg update -y && pkg upgrade -y
+set +e
+pkg update -y 2>&1
+pkg upgrade -y 2>&1
+_rc=$?
+set -e
+
+if [[ $_rc -ne 0 ]]; then
+    warn "pkg upgrade failed (rc=$_rc). Retrying with --fix-missing..."
+    set +e
+    apt-get update -y 2>&1
+    apt-get upgrade -y --fix-missing 2>&1
+    _rc2=$?
+    set -e
+    if [[ $_rc2 -ne 0 ]]; then
+        printf '\n%s*** Mirror may be stale (404 errors). ***%s\n' "$_Y" "$_R" >&2
+        printf 'Run this to switch mirror, then re-run the script:\n' >&2
+        printf '    %stermux-change-repo%s\n' "$_B" "$_R" >&2
+        printf '    bash Fresh_termux_fullsetup_SSOT.sh\n\n' >&2
+        die "Base update failed — run termux-change-repo first."
+    fi
+fi
 ok "Packages updated."
 
 # ============================================================
@@ -136,7 +158,10 @@ PKGS=(
     lsd termux-api
     termux-tools coreutils findutils sed grep psmisc
 )
-pkg install -y "${PKGS[@]}" && ok "Core packages installed." || warn "Some core packages failed (check above)."
+pkg install -y "${PKGS[@]}" && ok "Core packages installed." \
+    || { warn "Some core packages failed — retrying with --fix-missing..."; \
+         apt-get install -y --fix-missing "${PKGS[@]}" 2>&1 && ok "Core packages installed (retry)." \
+         || warn "Some packages still failed (check above)."; }
 
 # tailscale + syncthing need extra repos — install separately, non-fatal
 for _extra in tailscale syncthing; do
