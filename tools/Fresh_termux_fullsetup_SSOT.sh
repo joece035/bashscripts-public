@@ -122,17 +122,32 @@ ok "Packages updated."
 #   curl (3worlds, syncctl), jq (syncctl), rsync (fm), python3
 #   (block/utils, syncctl fallback), git (theme), ssh/scp (3worlds),
 #   syncthing (3worlds), tailscale (3worlds, status), node (openclaw).
+#
+#   NOTE on Termux packages:
+#   - sed/grep are GNU by default (no gnu-sed/gnugrep names)
+#   - tailscale requires root-repo — installed separately below
+#   - psmisc (fuser) may not exist — installed with || true
 # ============================================================
 log "Stage 3: Install SSOT dependencies"
 PKGS=(
     zsh git curl wget jq openssh rsync
     python python-pip nodejs
     vim neovim fzf ripgrep bat htop tmux tree zip unzip
-    lsd syncthing tailscale termux-api
-    termux-tools coreutils findutils gnu-sed gnugrep psmisc
+    lsd termux-api
+    termux-tools coreutils findutils sed grep psmisc
 )
-pkg install -y "${PKGS[@]}"
-ok "Core packages installed."
+pkg install -y "${PKGS[@]}" && ok "Core packages installed." || warn "Some core packages failed (check above)."
+
+# tailscale + syncthing need extra repos — install separately, non-fatal
+for _extra in tailscale syncthing; do
+    if ! command -v "$_extra" >/dev/null 2>&1; then
+        pkg install -y "$_extra" 2>/dev/null \
+            && ok "$_extra installed." \
+            || warn "$_extra not available — install manually later (may need root-repo)."
+    else
+        ok "$_extra already installed."
+    fi
+done
 
 # ============================================================
 # STAGE 4 — ZSH as default login shell
