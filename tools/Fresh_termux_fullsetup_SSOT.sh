@@ -55,6 +55,46 @@ else
 fi
 
 # ============================================================
+# STAGE 1.5 — Clear stale apt/dpkg locks (Termux apt can hang
+#   for 10+ min if a previous pkg install was interrupted)
+# ============================================================
+log "Stage 1.5: Check for stale apt locks"
+DPKG_DIR="/data/data/com.termux/files/usr/var/lib/dpkg"
+APT_ARCHIVES="/data/data/com.termux/files/usr/var/cache/apt/archives"
+_lock_pid=""
+if [[ -f "$DPKG_DIR/lock-frontend" ]]; then
+    # fuser prints PID to stdout if a process holds the lock
+    _lock_pid="$(fuser "$DPKG_DIR/lock-frontend" 2>/dev/null | tr -d ' ')"
+fi
+if [[ -n "$_lock_pid" ]]; then
+    # Check how long it's been holding the lock (etime in seconds)
+    _etime="$(ps -o etimes= -p "$_lock_pid" 2>/dev/null | tr -d ' ')"
+    if [[ -n "$_etime" ]] && [[ "$_etime" -gt 120 ]]; then
+        warn "Stale apt lock held by PID $_lock_pid for ${_etime}s — killing."
+        kill -9 "$_lock_pid" 2>/dev/null || true
+        pkill -9 -x apt 2>/dev/null || true
+        pkill -9 -x dpkg 2>/dev/null || true
+        sleep 1
+    else
+        # Lock held < 2 min — wait for it (another install may be running)
+        log "apt lock held by PID $_lock_pid (${_etime:-0}s) — waiting up to 60s..."
+        _wait=0
+        while [[ -n "$(fuser "$DPKG_DIR/lock-frontend" 2>/dev/null | tr -d ' ')" ]] && [[ $_wait -lt 60 ]]; do
+            sleep 2; _wait=$((_wait+2))
+        done
+        if [[ -n "$(fuser "$DPKG_DIR/lock-frontend" 2>/dev/null | tr -d ' ')" ]]; then
+            die "apt lock still held after 60s — run manually: kill -9 $_lock_pid"
+        fi
+        ok "Lock released."
+    fi
+fi
+# Remove stale lock files (safe — fuser confirmed no holder)
+rm -f "$DPKG_DIR/lock-frontend" "$DPKG_DIR/lock" "$APT_ARCHIVES/lock" 2>/dev/null || true
+# Repair any interrupted dpkg state
+dpkg --configure -a 2>/dev/null || true
+ok "Locks cleared, dpkg state consistent."
+
+# ============================================================
 # STAGE 2 — Update base system
 # ============================================================
 log "Stage 2: Update base system"
