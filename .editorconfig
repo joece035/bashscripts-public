@@ -1,0 +1,15 @@
+# EditorConfig — SSOT for line endings & encoding
+# https://editorconfig.org
+# ใช้ได้กับทุก editor (VS Code, Vim, Sublime, ...) ที่มี EditorConfig support
+# บังคับให้ไฟล์ทุกไฟล์ในโปรเจคนี้เป็น LF + UTF-8 เสมอ
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# ไฟล์ที่ต้องเป็น CRLF จริงๆ (ถ้ามี) — ปกติ bash scripts ไม่มี
+# [*.bat]
+# end_of_line = crlf

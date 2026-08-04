@@ -1,0 +1,141 @@
+=== RUN START Sun Aug  2 22:10:57 +07 2026 ===
+[38;5;220m[1m=== Test Suite: 00.1-function-tools.sh ===[0m
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[1] bc___ — Math & Rounding Engine[0m
+  [38;5;46m✓[0m bc___ 0 22/7
+  [38;5;46m✓[0m bc___ 2 22/7
+  [38;5;46m✓[0m bc___ 10 22/7
+  [38;5;46m✓[0m bc___ 100 22/7 (len)
+  [38;5;46m✓[0m bc___ u 2 10/3 (up)
+  [38;5;46m✓[0m bc___ d 2 10/3 (down)
+  [38;5;46m✓[0m bc___ r 2 10/3 (round)
+  [38;5;46m✓[0m bc___ 2 u 10/3
+  [38;5;46m✓[0m bc___ 2 d 10/3
+  [38;5;46m✓[0m bc___ 2 0-10/3
+  [38;5;46m✓[0m bc___ u 2 0-10/3
+  [38;5;46m✓[0m bc___ 0 6/3
+  [38;5;46m✓[0m bc___ 4 6/3
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[2] roundup / rounddown / round[0m
+  [38;5;46m✓[0m roundup 2 10/3
+  [38;5;46m✓[0m rounddown 2 10/3
+  [38;5;46m✓[0m round 2 10/3
+  [38;5;46m✓[0m roundup 0 22/7
+  [38;5;46m✓[0m rounddown 0 22/7
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[3] mathsnew / mathsbk (bc -l)[0m
+  [38;5;46m✓[0m mathsnew 22/7 (no scale → int)
+  [38;5;46m✓[0m mathsnew 4 22/7 (scale=4)
+  [38;5;46m✓[0m mathsnew 0 5/2 (scale=0)
+  [38;5;46m✓[0m mathsbk 4 22/7
+  [38;5;46m✓[0m mathsbk 0 5/2
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[4] mth — Excel-style Maths Helper[0m
+[38;5;39m  4a. leading decimal arg (maths-style)[0m
+  [38;5;46m✓[0m mth 0 22/7
+  [38;5;46m✓[0m mth 2 22/7
+  [38;5;46m✓[0m mth 10 22/7
+  [38;5;46m✓[0m mth 100 22/7 (len)
+  [38;5;46m✓[0m mth 2 u 22/7
+  [38;5;46m✓[0m mth 2 d 22/7
+[38;5;39m  4b. basic infix[0m
+  [38;5;46m✓[0m mth 10/3
+  [38;5;46m✓[0m mth 2+3
+  [38;5;46m✓[0m mth 2*3
+  [38;5;46m✓[0m mth 7-3
+  [38;5;46m✓[0m mth 2^10
+  [38;5;46m✓[0m mth 10%3
+  [38;5;46m✓[0m mth 2**10 (**→^)
+[38;5;39m  4c. trailing scale/mode (tail-peel)[0m
+  [38;5;46m✓[0m mth 10/3 0
+  [38;5;46m✓[0m mth 10/3 4
+  [38;5;46m✓[0m mth 10/3 0 d
+  [38;5;46m✓[0m mth 10/3 2 u
+  [38;5;46m✓[0m mth 10/3 2 d
+  [38;5;46m✓[0m mth 10/3 u 2
+  [38;5;46m✓[0m mth 10/3 d
+[38;5;39m  4d. functions[0m
+  [38;5;46m✓[0m mth sqrt(144)
+  [38;5;46m✓[0m mth abs(-5)
+  [38;5;46m✓[0m mth int(3.9)
+  [38;5;46m✓[0m mth round(3.5)
+  [38;5;46m✓[0m mth ceil(3.1)
+  [38;5;46m✓[0m mth floor(3.9)
+  [38;5;46m✓[0m mth pow(2,10)
+  [38;5;46m✓[0m mth mod(10,3)
+  [38;5;46m✓[0m mth sqrt(5^2+10^2)
+  [38;5;46m✓[0m mth SQRT(144)+2^3
+[38;5;39m  4e. variadic functions[0m
+  [38;5;46m✓[0m mth SUM(10,20,30)
+  [38;5;46m✓[0m mth AVG(10,20,30)
+  [38;5;46m✓[0m mth MIN(5,2,9)
+  [38;5;46m✓[0m mth MAX(5,2,9)
+[38;5;39m  4f. IF + string passthrough[0m
+  [38;5;46m✓[0m mth if(100>50,"yes","no")
+  [38;5;46m✓[0m mth if(10>50,"yes","no")
+[38;5;39m  4g. constants[0m
+  [38;5;46m✓[0m mth pi()*2
+  [38;5;46m✓[0m mth e()
+[38;5;39m  4h. trig / log[0m
+  [38;5;46m✓[0m mth sin(0)
+  [38;5;46m✓[0m mth cos(0)
+  [38;5;46m✓[0m mth ln(e())
+  [38;5;46m✓[0m mth exp(1)
+[38;5;39m  4i. comparison operators[0m
+  [38;5;46m✓[0m mth 5>3
+  [38;5;46m✓[0m mth 3>5
+  [38;5;46m✓[0m mth 5>=5
+  [38;5;46m✓[0m mth 3!=3
+[38;5;39m  4j. aliases bc_ / math[0m
+  [38;5;46m✓[0m bc_ 10/3
+  [38;5;46m✓[0m math 10/3
+  [38;5;46m✓[0m bc_ 2 22/7 (leading)
+[38;5;39m  4k. no-arg usage[0m
+  [38;5;46m✓[0m mth (no args) prints usage
+  [38;5;46m✓[0m mth (no args) returns non-zero[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[5] tp — tput cols[0m
+  [38;5;46m✓[0m tp returns a number (cols)
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[6] replace_w — find + sed replace[0m
+  [38;5;46m✓[0m replace_w a.txt
+  [38;5;46m✓[0m replace_w b.txt
+  [38;5;46m✓[0m replace_w (no args) usage
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[7] mv_pattern — move by pattern[0m
+  [38;5;46m✓[0m mv_pattern moved 2 .txt
+  [38;5;46m✓[0m mv_pattern left 1 in src
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[8] back_up — simple backup[0m
+  [38;5;39m⊘[0m back_up real run  [38;5;39m(skipped: cn() not loaded (needs full bashscripts profile))[0m
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[9] bkp / bkpi / bkpl / bkls / bkrm[0m
+  [38;5;46m✓[0m bkp file success msg
+  [38;5;46m✓[0m bkp created BACKUP_DIR
+  [38;5;46m✓[0m bkp file count = 1
+  [38;5;46m✓[0m bkp folder success msg
+  [38;5;46m✓[0m bkpl success msg
+  [38;5;46m✓[0m bkpl .tar.gz created
+  [38;5;46m✓[0m bkpi success msg
+  [38;5;46m✓[0m bkpi 2nd run success
+  [38;5;46m✓[0m bkls header
+  [38;5;46m✓[0m bkls filter finds one.txt
+  [38;5;46m✓[0m bkrm reduced count (6 → 1)
+  [38;5;46m✓[0m bkp not-found msg
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[10] get_process[0m
+  [38;5;46m✓[0m get_process n returns ps lines
+  [38;5;46m✓[0m get_process t returns tree
+  [38;5;46m✓[0m get_process invalid mode returns non-zero
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m[11] wa / agent_md / hm — presence checks[0m
+  [38;5;46m✓[0m wa: ffmpeg available (function defined)
+  [38;5;46m✓[0m agent_md copied AGENT.md
+  [38;5;39m⊘[0m hm test  [38;5;39m(skipped: $SSOT/tools/hermes.sh not available)[0m
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;220m[1m=== Summary ===[0m
+  [38;5;46mPASS[0m: 97
+  [38;5;196mFAIL[0m: 0
+  [38;5;39mSKIP[0m: 2
+[38;5;220m────────────────────────────────────────────────[0m
+[38;5;46m[1m✅ All tests passed[0m
+=== RUN END exit=0 ===

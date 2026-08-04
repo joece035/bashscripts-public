@@ -1,0 +1,33 @@
+# ── Syncthing artifacts ──
+.stfolder
+.stignore
+.syncctl/
+*.sync-conflict-*
+
+# ── Backup files ──
+*.bak
+*.bak2
+*.bak3
+*.orig
+
+# ── Editor / IDE ──
+.vscode/
+*.swp
+*.swo
+*~
+
+# ── Python ──
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+
+# ── OS junk ──
+.DS_Store
+Thumbs.db
+
+# ── Secrets (defensive — should already be in 00-env.sh which is committed,
+#    but if anyone drops a .env.local or key file here, keep it out) ──
+*.env.local
+*.pem
+*.key

@@ -1,7 +1,13 @@
-# Force LF line endings for all shell scripts in this repo
-# Prevents CRLF conversion on Windows git clone/pull
+# Git line-ending policy — SSOT for git (ถ้า init repo ในอนาคต)
+# บังคับให้ทุกไฟล์ text เก็บเป็น LF ใน git เสมอ
+# ใช้กับทุกไฟล์ text (รวม .sh, .md, .txt)
 * text=auto eol=lf
-*.sh text eol=lf
-*.bash text eol=lf
-*.zsh text eol=lf
-*.md text eol=lf
+
+# ไฟล์ binary ไม่ต้องแตะ
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.zip binary
+*.gz binary
