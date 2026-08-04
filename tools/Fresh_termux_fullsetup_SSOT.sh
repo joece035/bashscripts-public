@@ -133,8 +133,8 @@ clone_if_absent https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTO
 # ============================================================
 log "Stage 7: Clone SSOT repo"
 if [[ ! -d "$SSOT_DIR/.git" ]]; then
-    git clone https://github.com/<your-user>/bashscripts.git "$SSOT_DIR" \
-        || die "Clone failed — edit repo URL in this script."
+    git clone https://github.com/sitthawat035/bashscripts.git "$SSOT_DIR" \
+        || die "Clone failed — check network or repo access."
     ok "SSOT cloned to $SSOT_DIR"
 else
     ok "SSOT already at $SSOT_DIR (pulling)."
