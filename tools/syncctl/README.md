@@ -175,6 +175,9 @@ syncctl who       # → "MASTER: wsl"
 | `syncctl recover` | Recover from stale handover |
 | `syncctl doctor` | รัน 7-step audit (CRLF, master, conflicts, types, lock, API, stale) |
 | `syncctl logs [N]` | ดู audit log (NDJSON) |
+| `syncctl fix-types [--dry-run]` | Reconcile folder types with master (idempotent) |
+| `syncctl set-type <dev> <type>` | Set one device folder type (escape hatch) |
+| `syncctl types` | Show ownership table (current vs expected) |
 | `syncctl --debug <cmd>` | Verbose logging |
 
 ---
@@ -372,3 +375,47 @@ syncctl transfer win --reason "fix sshd"
 
 **หลักการ:** *If uncertain, do not change ownership.*
 *Checkpoints exist to make certainty possible.*
+
+---
+
+## 🔧 Folder Type Reconciliation
+
+### ปัญหา: `syncctl doctor` แจ้ง folder type ผิด
+
+เช่น `master=wsl` แต่ `termux` เป็น `sendreceive` แทนที่จะเป็น `receiveonly`
+→ เกิดจากตอน onboard device ใหม่ ลืม set type ให้ถูก
+
+### วิธีแก้: ใช้ `syncctl fix-types`
+
+```bash
+# 1. ดูก่อนว่า device ไหน type ผิด
+syncctl types
+# DEVICE     CURRENT        EXPECTED       STATUS
+# wsl        sendonly       sendonly       ✓ ok (MASTER)
+# windows    sendreceive    receiveonly    ✗ MISMATCH (REPLICA)
+# termux     receiveonly    receiveonly    ✓ ok (REPLICA)
+# mumu       sendreceive    receiveonly    ✗ MISMATCH (REPLICA)
+
+# 2. Preview การแก้ (ไม่แตะ API)
+syncctl fix-types --dry-run
+
+# 3. รันจริง — set ทุก device ให้ตรงกับ master
+syncctl fix-types --reason "reconcile after termux reinstall"
+```
+
+### คุณสมบัติ:
+
+- **Idempotent** — รันซ้ำได้, ไม่ error ถ้าทุก device ถูกอยู่แล้ว
+- **No state.json change** — ไม่ใช่ handover, master pointer ไม่เปลี่ยน
+- **Locked** — ใช้ lock เดิม → กัน race กับ `transfer` ที่อาจรันพร้อมกัน
+- **Safe default** — ไม่แตะ API ถ้าไม่ต้องเปลี่ยน (device ที่ถูกอยู่แล้วถูก skip)
+- **Audited** — บันทึกใน `audit.log` ทุกครั้ง
+
+### เมื่อไหร่ควรใช้อะไร:
+
+| ต้องการ | ใช้ | เพราะ |
+|---------|-----|-------|
+| แก้เฉพาะ 1 device | `syncctl set-type <dev> <type>` | Escape hatch สำหรับ edge case |
+| แก้ทั้ง cluster ให้ตรงกับ master | `syncctl fix-types` | Auto-reconcile ตาม master pointer |
+| เปลี่ยน master ไปเครื่องอื่น | `syncctl transfer` | Two-phase commit + state.json |
+| ดูสถานะตอนนี้ | `syncctl types` หรือ `syncctl status` | Read-only |

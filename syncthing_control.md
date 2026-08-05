@@ -754,6 +754,99 @@ Syncthing = data synchronization engine
 
 ---
 
+# 23. Folder Type Reconciliation (added 2026-08-05)
+
+## ปัญหา
+
+`syncctl doctor` แจ้งว่า folder type ของ device หนึ่ง (เช่น termux) ไม่ตรงกับที่ควรเป็น
+
+เช่น: `master=wsl` แต่ `termux` เป็น `sendreceive` แทนที่จะเป็น `receiveonly`
+
+**สาเหตุหลัก:** ตอน onboard device ใหม่ ลืม set folder type ให้ถูก
+หรือ Syncthing default เป็น `sendreceive` แล้วลืม override
+
+**ผลกระทบ:** device ที่เป็น `sendreceive` สามารถแก้ไขไฟล์ได้ → เกิด conflict กับ master
+
+## Design Decision 23.1: `fix-types` vs `transfer`
+
+`transfer` มีจุดประสงค์เพื่อ **ย้าย master** (เขียน state.json, two-phase commit, recoverable)
+
+แต่กรณีนี้ **master ไม่เปลี่ยน** → แค่ "fix folder type ให้ตรงกับ master"
+
+จึงสร้าง subcommand ใหม่: `syncctl fix-types`
+
+| | `transfer` | `fix-types` |
+|---|---|---|
+| เปลี่ยน master pointer? | ✅ Yes | ❌ No |
+| เขียน state.json? | ✅ Yes (HANDOVER_IN_PROGRESS) | ❌ No |
+| Touch ทุก device folder type? | ✅ Yes (เพราะต้อง demote/promote) | ✅ Yes (reconcile ตาม master) |
+| Recovery menu เกี่ยวข้อง? | ✅ Yes (stale handover detection) | ❌ No |
+| Idempotent? | ✅ Yes (already master = noop) | ✅ Yes (already correct = noop) |
+| Dry-run? | ✅ Yes | ✅ Yes |
+| Locked? | ✅ Yes | ✅ Yes (กัน race กับ transfer) |
+
+## Design Decision 23.2: `set-type` เป็น escape hatch
+
+บางครั้งต้อง set type แค่ device เดียวโดยไม่ต้อง reconcile cluster
+
+เช่น: อยาก `sendreceive` termux ชั่วคราวเพื่อ test (อย่า! แต่ถ้าจำเป็น)
+
+`syncctl set-type <dev> <sendonly|receiveonly|sendreceive>` ทำหน้าที่นี้
+
+**Idempotent:** ถ้า device อยู่ type นั้นอยู่แล้ว → noop (log audit, ไม่เรียก API)
+
+**Validation:** reject type ที่ไม่ใช่ 3 ตัวเลือกนี้
+
+## Design Decision 23.3: `types` เป็น read-only inspect
+
+`syncctl types` แสดง ownership table (DEVICE | CURRENT | EXPECTED | STATUS)
+
+ต่างจาก `status` ที่แสดงภาพรวม:
+- `status` = dashboard (master, sync %, checkpoint, conflicts)
+- `types` = folder type only (current vs expected vs mismatch)
+
+ใช้ `types` เมื่อต้องการ focus เฉพาะ folder type
+
+## Implementation Notes
+
+### `fix_types` function (lib/ownership.sh)
+
+```bash
+fix_types() {
+    # 1. Resolve master (FAIL if uninit or state conflict)
+    # 2. Acquire lock
+    # 3. Loop: for each device, compare current vs expected
+    #    - If match → skip
+    #    - If mismatch → PATCH via API (skip if dry-run)
+    # 4. Log audit + report
+    # 5. Release lock
+}
+```
+
+### `set_type_device` function (lib/ownership.sh)
+
+```bash
+set_type_device() {
+    # 1. Validate device name (known_device check)
+    # 2. Validate type (sendonly|receiveonly|sendreceive)
+    # 3. Get current type (via get_folder_type)
+    # 4. If already at target → noop (audit only)
+    # 5. Else → PATCH via set_folder_type (which validates again)
+}
+```
+
+### Tests (tests/run.sh)
+
+4 new tests:
+- `test_fix_types_dry_run` — verify no API calls + preview output
+- `test_fix_types_idempotent` — re-run is noop
+- `test_set_type_valid` — set one device, verify mock state
+- `test_set_type_invalid_rejected` — garbage type rejected, no state change
+
+Total: 30 → 34 tests
+
+---
+
 # Expected Final UX
 
 ผู้ใช้ควรสามารถทำแบบนี้ได้:

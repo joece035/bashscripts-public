@@ -197,6 +197,13 @@ $(c w b 'COMMANDS')
   recover                         Recover from stale/interrupted handover
   doctor                          รัน audit ทุกอย่าง
   logs [tail N]                   ดู audit log
+  fix-types [--dry-run]           Reconcile folder types with current master
+       [--reason "..."]           Reason (logged in audit)
+                                  (master=sendonly, อื่น=receiveonly)
+  set-type <dev> <type>           Set one device folder type
+       type: sendonly|receiveonly|sendreceive
+                                  (escape hatch — usually use fix-types)
+  types                           Show ownership table (current vs expected)
   help                            แสดง help
 
 $(c w b 'EXAMPLES')

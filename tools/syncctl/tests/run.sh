@@ -93,16 +93,19 @@ _setup() {
         [wsl]="3S42YWK-FAKE-WSL-ID"
         [windows]="FJXVHAJ-FAKE-WIN-ID"
         [termux]="2KJ2HQ3-FAKE-TM-ID"
+        [mumu]="MUMU123-FAKE-MUMU-ID"
     )
     declare -gA SYNCCTL_API_URLS=(
         [wsl]="http://wsl:8385"
         [windows]="http://window:8384"
         [termux]="http://termux:8383"
+        [mumu]="http://mumu:8382"
     )
     declare -gA SYNCCTL_API_KEYS=(
         [wsl]="fake-wsl-key"
         [windows]="fake-win-key"
         [termux]="fake-tm-key"
+        [mumu]="fake-mumu-key"
     )
     export SYNCCTL_LOCAL_DEVICE="wsl"
     export SYNCCTL_LOCAL_API_URL="http://wsl:8385"
@@ -361,6 +364,88 @@ test_doctor() {
 }
 
 # ──────────────────────────────────────────────────────────
+# Test 12: fix-types --dry-run
+# ──────────────────────────────────────────────────────────
+test_fix_types_dry_run() {
+    printf "\n%s\n" "$(_R_BOLD "TEST: fix-types --dry-run (no API calls)")"
+    _setup "cluster-clean"
+    state_set_local_master "wsl"
+
+    local out
+    out="$(fix_types --dry-run 2>&1)"
+    _assert_contains "shows DRY RUN" "DRY RUN" "$out"
+    _assert_contains "shows current master" "wsl" "$out"
+    _assert_contains "shows replica devices" "termux" "$out"
+    _assert_contains "shows expected type" "receiveonly" "$out"
+    _assert_contains "says no changes applied" "No changes applied" "$out"
+
+    # Verify MOCK_FOLDER_TYPES was NOT touched (no real API call)
+    _assert_eq "termux type unchanged after dry-run" "" "${MOCK_FOLDER_TYPES[termux]:-}"
+    _assert_eq "windows type unchanged after dry-run" "" "${MOCK_FOLDER_TYPES[windows]:-}"
+
+    _teardown
+}
+
+# ──────────────────────────────────────────────────────────
+# Test 13: fix-types idempotent (already correct → noop)
+# ──────────────────────────────────────────────────────────
+test_fix_types_idempotent() {
+    printf "\n%s\n" "$(_R_BOLD "TEST: fix-types (already correct → no changes)")"
+    _setup "cluster-clean"
+    state_set_local_master "wsl"
+
+    local out
+    out="$(fix_types 2>&1)"
+    _assert_contains "says all correct" "already correct" "$out"
+
+    # After first run, all types should match expectation
+    # Running again should be a noop
+    local out2
+    out2="$(fix_types 2>&1)"
+    _assert_contains "idempotent on re-run" "already correct" "$out2"
+
+    _teardown
+}
+
+# ──────────────────────────────────────────────────────────
+# Test 14: set-type <dev> <valid type>
+# ──────────────────────────────────────────────────────────
+test_set_type_valid() {
+    printf "\n%s\n" "$(_R_BOLD "TEST: set-type termux sendreceive (sets one device)")"
+    _setup "cluster-clean"
+    state_set_local_master "wsl"
+
+    set_type_device "termux" "sendreceive"
+    _assert_eq "termux type set to sendreceive" "sendreceive" "${MOCK_FOLDER_TYPES[termux]}"
+
+    # Idempotency: same type again → ok (mock doesn't noop but audit happens)
+    set_type_device "termux" "sendreceive"
+    _assert_eq "termux type still sendreceive" "sendreceive" "${MOCK_FOLDER_TYPES[termux]}"
+
+    _teardown
+}
+
+# ──────────────────────────────────────────────────────────
+# Test 15: set-type rejects invalid type
+# ──────────────────────────────────────────────────────────
+test_set_type_invalid_rejected() {
+    printf "\n%s\n" "$(_R_BOLD "TEST: set-type rejects invalid type)")"
+    _setup "cluster-clean"
+    state_set_local_master "wsl"
+
+    if set_type_device "termux" "garbage" 2>/dev/null; then
+        printf "  %s set-type with garbage should FAIL\n" "$(_R_ERR "✗")"
+        (( FAIL++ )) || true
+    else
+        printf "  %s invalid type correctly rejected\n" "$(_R_OK "✓")"
+        (( PASS++ )) || true
+    fi
+    _assert_eq "termux type NOT changed on rejection" "" "${MOCK_FOLDER_TYPES[termux]:-}"
+
+    _teardown
+}
+
+# ──────────────────────────────────────────────────────────
 # Run all
 # ──────────────────────────────────────────────────────────
 main() {
@@ -379,6 +464,10 @@ main() {
     test_state_reconcile
     test_ownership_conflict_abort
     test_doctor
+    test_fix_types_dry_run
+    test_fix_types_idempotent
+    test_set_type_valid
+    test_set_type_invalid_rejected
 
     printf "\n%s\n" "$(_R_BOLD "═══════════════════════════════════════════════════════════")"
     if (( FAIL == 0 )); then
