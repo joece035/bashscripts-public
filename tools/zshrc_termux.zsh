@@ -5,23 +5,24 @@
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 
-# -- Path Setup (System paths first, then Termux if present) ----
+# -- Path Setup ------------------------------------------------
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$HOME/.local/bin:$PATH"
 if [[ -d "/data/data/com.termux/files/usr/bin" ]]; then
     export PATH="/data/data/com.termux/files/usr/bin:$PATH"
 fi
 
 # -- Ensure Zsh completion paths are in fpath -------------------
-for _fp in \
-    /data/data/com.termux/files/usr/share/zsh/site-functions(N) \
-    /data/data/com.termux/files/usr/share/zsh/*/functions/Completion(N) \
-    /data/data/com.termux/files/usr/share/zsh/*/functions(N) \
-    /usr/share/zsh/site-functions(N) \
-    /usr/share/zsh/*/functions/Completion(N) \
-    /usr/share/zsh/*/functions(N); do
-    [[ -d "$_fp" ]] && fpath=("$_fp" $fpath)
-done
-unset _fp
+_tz_dir="/data/data/com.termux/files/usr/share/zsh"
+if [[ -d "$_tz_dir" ]]; then
+    for _d in "$_tz_dir"/site-functions "$_tz_dir"/*/functions "$_tz_dir"/*/functions/*; do
+        [[ -d "$_d" ]] && fpath+=("$_d")
+    done
+fi
+unset _tz_dir _d
+
+# -- Oh My Zsh Flags -------------------------------------------
+export DISABLE_LS_COLORS="true"
+export ZSH_DISABLE_COMPFIX="true"
 
 # -- Clear old shell function conflicts for OMZ spectrum -------
 unfunction color 2>/dev/null || true
