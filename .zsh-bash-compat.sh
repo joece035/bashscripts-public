@@ -9,20 +9,28 @@
 setopt SH_WORD_SPLIT 2>/dev/null    # Word splitting like bash
 setopt GLOB_SUBST 2>/dev/null       # Glob expansion like bash
 setopt NULL_GLOB 2>/dev/null        # No error on empty globs
-setopt NO_NOMATCH 2>/dev/null
 setopt KSH_ARRAYS 2>/dev/null       # 0-indexed arrays like bash
+setopt NO_NOMATCH 2>/dev/null       # Don't error on unmatched globs
 
 # ── 2. BASH_SOURCE array shim for ZSH ──
 if [[ -n "${ZSH_VERSION:-}" ]]; then
-    typeset -g -a BASH_SOURCE
+    typeset -g -a BASH_SOURCE 2>/dev/null
     BASH_SOURCE=("${(%):-%x}")
 fi
 
-# ── 3. Bash completion system ──
-autoload -Uz compinit 2>/dev/null && compinit -u 2>/dev/null
-autoload -Uz bashcompinit 2>/dev/null && bashcompinit 2>/dev/null
+# ── 3. Guard compdump function for compinit ──
+# Prevents "compinit:484: compdump: function definition file not found"
+if ! autoload +X -U compdump 2>/dev/null && ! typeset -f compdump &>/dev/null; then
+    compdump() { return 0; }
+fi
 
-# ── 4. complete() shim for bash scripts ──
+# ── 4. Bash completion compatibility ──
+# Only load bashcompinit if available; do NOT re-run compinit (OMZ already runs it)
+if typeset -f compinit &>/dev/null || autoload +X -U compinit 2>/dev/null; then
+    autoload -Uz bashcompinit 2>/dev/null && bashcompinit 2>/dev/null || true
+fi
+
+# ── 5. complete() & compgen() shims ──
 if ! command -v complete &>/dev/null && ! typeset -f complete &>/dev/null; then
     complete() { :; }
 fi
@@ -30,7 +38,7 @@ if ! command -v compgen &>/dev/null && ! typeset -f compgen &>/dev/null; then
     compgen() { :; }
 fi
 
-# ── 5. Unalias conflicts BEFORE bashscripts load ──
+# ── 6. Unalias conflicts BEFORE bashscripts load ──
 unalias sudo 2>/dev/null
 unalias sd 2>/dev/null
 unalias rc 2>/dev/null
@@ -40,10 +48,10 @@ unalias ls 2>/dev/null
 unalias ll 2>/dev/null
 unalias la 2>/dev/null
 
-# ── 6. Zsh-specific PATH helper ──
+# ── 7. Zsh-specific PATH helper ──
 [[ -d /usr/local/bin ]] && path=("/usr/local/bin" $path)
 
-# ── 7. mapfile shim ──
+# ── 8. mapfile shim ──
 if ! command -v mapfile &>/dev/null && ! typeset -f mapfile &>/dev/null; then
     mapfile() {
         local _opts=() _var=""
