@@ -5,6 +5,10 @@
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 
+# -- Shell Options (Prevent glob errors) ------------------------
+setopt NO_NOMATCH 2>/dev/null || true
+setopt NULL_GLOB 2>/dev/null || true
+
 # -- Path Setup ------------------------------------------------
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$HOME/.local/bin:$PATH"
 if [[ -d "/data/data/com.termux/files/usr/bin" ]]; then
@@ -14,7 +18,7 @@ fi
 # -- Ensure Zsh completion paths are in fpath -------------------
 _tz_dir="/data/data/com.termux/files/usr/share/zsh"
 if [[ -d "$_tz_dir" ]]; then
-    for _d in "$_tz_dir"/site-functions "$_tz_dir"/*/functions "$_tz_dir"/*/functions/*; do
+    for _d in "$_tz_dir"/site-functions(N) "$_tz_dir"/*(N) "$_tz_dir"/*/functions(N) "$_tz_dir"/*/functions/*(N); do
         [[ -d "$_d" ]] && fpath+=("$_d")
     done
 fi
