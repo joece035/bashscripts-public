@@ -5,9 +5,10 @@
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 
-# -- Shell Options (Prevent glob errors) ------------------------
+# -- Shell Options (Prevent glob errors & duplicate fpath) ------
 setopt NO_NOMATCH 2>/dev/null || true
 setopt NULL_GLOB 2>/dev/null || true
+typeset -U fpath path PATH 2>/dev/null || true
 
 # -- Path Setup ------------------------------------------------
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$HOME/.local/bin:$PATH"
@@ -15,7 +16,7 @@ if [[ -d "/data/data/com.termux/files/usr/bin" ]]; then
     export PATH="/data/data/com.termux/files/usr/bin:$PATH"
 fi
 
-# -- Ensure ALL Zsh completion paths are in fpath ---------------
+# -- Ensure ALL Zsh system function directories are in fpath ----
 _tz_dir="/data/data/com.termux/files/usr/share/zsh"
 if [[ -d "$_tz_dir" ]]; then
     for _d in "$_tz_dir"/site-functions(N) \
@@ -43,7 +44,7 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# -- Oh My Zsh -------------------------------------------------
+# -- Oh My Zsh (Source ONCE per session to prevent compinit corruption on reload) --
 export ZSH="$HOME/.oh-my-zsh"
 ZSH_THEME="powerlevel10k/powerlevel10k"
 
@@ -55,7 +56,10 @@ plugins=(
     zsh-history-substring-search
 )
 
-[[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+if [[ -z "${_OMZ_SOURCED:-}" ]]; then
+    export _OMZ_SOURCED=1
+    [[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+fi
 
 # -- ZSH/Bash compat layer (BEFORE joe.sh) ---------------------
 SSOT_PATH="${SSOT:-$HOME/bashscripts}"
