@@ -59,3 +59,6 @@ else
     bindkey '^[[A' up-line-or-history   2>/dev/null
     bindkey '^[[B' down-line-or-history 2>/dev/null
 fi
+
+# -- Powerlevel10k finalize (required for instant prompt) ------
+(( ! ${+functions[p10k]} )) || p10k finalize
