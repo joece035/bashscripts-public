@@ -18,9 +18,9 @@
 [[ -n "${_SYNCCTL_CHECKPOINT_LOADED:-}" ]] && return 0
 _SYNCCTL_CHECKPOINT_LOADED=1
 
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/api.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/state.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/config.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/api.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/state.sh"
 
 # Globals set by checkpoint_run()
 export SYNCCTL_CHECKPOINT_ID=""

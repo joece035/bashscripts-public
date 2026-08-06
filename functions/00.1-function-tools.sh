@@ -913,6 +913,7 @@ rc_del() {
 #                 SYNCCTL-short_cut                  #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 
+unalias stc 2>/dev/null
 stc(){
    [[ -z "$1" ]] && { cn 220 bi "Usage: stc <option> [args...]"; return 1; }
         case "$1" in

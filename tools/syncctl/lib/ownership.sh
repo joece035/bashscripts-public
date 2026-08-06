@@ -14,10 +14,10 @@
 [[ -n "${_SYNCCTL_OWNERSHIP_LOADED:-}" ]] && return 0
 _SYNCCTL_OWNERSHIP_LOADED=1
 
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/api.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/state.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/lock.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/config.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/api.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/state.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/lock.sh"
 
 # ──────────────────────────────────────────────────────────
 # Single-device: set master

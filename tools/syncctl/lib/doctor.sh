@@ -16,11 +16,11 @@
 [[ -n "${_SYNCCTL_DOCTOR_LOADED:-}" ]] && return 0
 _SYNCCTL_DOCTOR_LOADED=1
 
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/api.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/state.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/lock.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/ownership.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/config.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/api.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/state.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/lock.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/ownership.sh"
 
 # Color helper functions
 _R_OK()    { cn 46  b "$@"; }

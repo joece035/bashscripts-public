@@ -21,12 +21,12 @@
 [[ -n "${_SYNCCTL_HANDOVER_LOADED:-}" ]] && return 0
 _SYNCCTL_HANDOVER_LOADED=1
 
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/api.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/state.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/lock.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/checkpoint.sh"
-source "$(dirname "${BASH_SOURCE[0]}")/ownership.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/config.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/api.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/state.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/lock.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/checkpoint.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/ownership.sh"
 
 # ──────────────────────────────────────────────────────────
 # init_master <device>

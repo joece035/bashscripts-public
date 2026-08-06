@@ -15,7 +15,7 @@
 [[ -n "${_SYNCCTL_LOCK_LOADED:-}" ]] && return 0
 _SYNCCTL_LOCK_LOADED=1
 
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/config.sh"
 
 # Hold the lock here (so we can release)
 _SYNCCTL_LOCK_DIR=""

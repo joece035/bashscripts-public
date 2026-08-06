@@ -1259,8 +1259,8 @@ _comp_pull() {
 # For now, we'll keep the direct aliases for better completion experience.
 alias push="fm push"
 alias pull="fm pull"
-complete -o nospace -F _comp_push push
-complete -o nospace -F _comp_pull pull
+command -v complete >/dev/null 2>&1 && complete -o nospace -F _comp_push push
+command -v complete >/dev/null 2>&1 && complete -o nospace -F _comp_pull pull
 
 # SSH Shortcuts
 alias tm="fm ssh tm"

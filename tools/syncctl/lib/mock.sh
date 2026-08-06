@@ -6,7 +6,7 @@
 # NO guard line here so re-sourcing in tests always installs mock.
 # ============================================================
 
-source "$(dirname "${BASH_SOURCE[0]}")/api.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/api.sh"
 
 declare -gA MOCK_FOLDER_TYPES=()
 

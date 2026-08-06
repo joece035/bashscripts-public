@@ -15,7 +15,7 @@
 _SYNCCTL_STATE_LOADED=1
 
 # Source config (paths)
-source "$(dirname "${BASH_SOURCE[0]}")/config.sh"
+source "${SYNCCTL_LIB_DIR:-$(dirname "$0")}/config.sh"
 
 # ──────────────────────────────────────────────────────────
 # Local master cache: ~/.local/share/syncctl/master

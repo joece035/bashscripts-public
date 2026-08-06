@@ -17,7 +17,13 @@ set -u
 
 
 SYNCCTL_DEBUG="${SYNCCTL_DEBUG:-0}"
-SYNCCTL_SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+# Portable script path detection (bash: BASH_SOURCE, zsh: $0 or funcfiletrace)
+if [[ -n "${BASH_VERSION:-}" ]]; then
+    SYNCCTL_SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+else
+    # $0 = script name when sourced; funcfiletrace[1] = calling script
+    SYNCCTL_SELF="${0:A}"  # zsh: full path of current script
+fi
 SYNCCTL_LIB_DIR="$(cd "$(dirname "$SYNCCTL_SELF")" && pwd)/lib"
 
 # Try to load 00-env.sh from common locations
@@ -238,6 +244,10 @@ main() {
 }
 
 # Only run main when executed directly, not when sourced (e.g. from joe.sh)
-if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
-    main "$@"
+# Portable: bash uses BASH_SOURCE, zsh uses $0 vs funcfiletrace
+if [[ -n "${BASH_VERSION:-}" ]]; then
+    [[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"
+else
+    # In zsh, $0 is the script name when sourced; check if we're the entry point
+    [[ "$ZSH_EVAL_CONTEXT" != *:file* ]] && main "$@"
 fi
