@@ -51,7 +51,7 @@ _set_prompt() {
 }
 
 # สั่งให้ Bash รันฟังก์ชันนี้ทุกครั้งก่อนแสดง Prompt
-PROMPT_COMMAND=_set_prompt
+if [[ -z "${ZSH_VERSION:-}" ]]; then PROMPT_COMMAND=_set_prompt; fi
 
 # 5. Show Fastfetch (only in interactive WSL shells with logo)
 if [[ $- == *i* ]] && command -v fastfetch >/dev/null 2>&1; then
