@@ -895,18 +895,17 @@ hm() {
 }
 
 # -- delete all .rc_* files in $HOME
-rmc_del() {
+rc_del() {
+  if [[ "$JOE_ENV" == "TERMUX" ]]; then
     local rc
     for rc in "$HOME"/.rc_*; do
        if [[ -f "$rc" ]]; then
          rm -f "$rc" && cn 28 "deleted $rc"
-         c 10 bi "ALL DONE"
-            return 0
-       else
-         cn 220 b "no .rc_* file found"
-            return 0
+         c 10 bi "ALL done"
+       else  c 220 b "No _rc_* files found"
        fi
     done
+  fi   
 }
 
  

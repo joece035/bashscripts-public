@@ -31,7 +31,7 @@ pp() {
 
     clear
     case $JOE_ENV in
-        TERMUX|MUMU) source "$HOME/.bashrc" ;;
+        TERMUX|MUMU) source "$HOME/.zshrc" ;;
         WSL|GIT-BASH) source "$HOME/.bashrc" ;;
     esac
     cn 2 b "RELOADING....$(cn 10 bi "SUCCESSFULLY....!")"
@@ -164,6 +164,7 @@ fi
 # m a 50  # offset=50 cols from left (was 0=full-center, looked like 'hang' on slow shells)
 
 syncthing_auto
+rc_del
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
 # after each command, but joe.sh uses unset variables (dbp, $2, etc.)

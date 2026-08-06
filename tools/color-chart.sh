@@ -5,7 +5,7 @@
 # Browse all 256 colors. Print the code you want to use.
 # Usage: bash tools/color-chart.sh
 # ============================================================
-
+gh ssh-key add ~/.ssh/id_ed25519.pub --type signing
 # Standard 16 colors
 echo -e "\n\e[1;38;5;255m━━━ Standard 16 (0-15) ━━━\e[0m"
 for i in {0..15}; do

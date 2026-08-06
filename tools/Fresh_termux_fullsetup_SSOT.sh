@@ -15,7 +15,11 @@
 #  cannot use c()/cn(). Colors via `tput` only (no inline \e[).
 # ============================================================
 
-set -euo pipefail
+set -euo pipefail 2>/dev/null || setopt PIPE_FAIL 2>/dev/null
+
+# Disable history expansion (!) — safe for zsh if the script
+# gets sourced or if chsh changes the shell mid-run (Termux quirk).
+set +H 2>/dev/null || true
 
 # ── Minimal color helpers (tput — portable, no inline ANSI) ──
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1; then
@@ -222,13 +226,61 @@ clone_if_absent https://github.com/TamCore/autoupdate-oh-my-zsh-plugins "$ZSH_CU
 clone_if_absent https://github.com/marlonrichert/zsh-autocomplete "$ZSH_CUSTOM/plugins/zsh-autocomplete"
 clone_if_absent https://github.com/zsh-users/zsh-autosuggestions   "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
 clone_if_absent https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
+clone_if_absent https://github.com/zsh-users/zsh-history-substring-search "$ZSH_CUSTOM/plugins/zsh-history-substring-search"
 
 # ============================================================
 # STAGE 7 — Clone SSOT repo (~/bashscripts)
+#   Uses SSH (private repo needs auth). Generates an SSH key
+#   if none exists and tells the user to add it to GitHub.
 # ============================================================
 log "Stage 7: Clone SSOT repo"
+
+# ── 7a — Make sure we have an SSH key ──
+SSH_KEY="$TERMUX_HOME/.ssh/id_ed25519"
+if [[ ! -f "$SSH_KEY" ]]; then
+    log "  Generating SSH key..."
+    ssh-keygen -t ed25519 -C "termux@$(hostname)" -f "$SSH_KEY" -N "" 2>&1
+    ok "SSH key generated."
+fi
+
+# ── 7b — Make sure ssh-agent is running and key is loaded ──
+if command -v ssh-agent >/dev/null 2>&1; then
+    _agent_out="$(ssh-agent -s 2>/dev/null)" || true
+    if [[ -n "$_agent_out" ]]; then
+        eval "$_agent_out" >/dev/null 2>&1
+        ssh-add "$SSH_KEY" 2>/dev/null || true
+        ok "SSH agent running."
+    fi
+fi
+
+# ── 7c — Test GitHub SSH access ──
+if ! ssh -T git@github.com -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
+    PUB_KEY="$(cat "${SSH_KEY}.pub")"
+    printf '\n'
+    printf '%s╔══════════════════════════════════════════════════════════╗%s\n' "$_B" "$_R"
+    printf '%s║  SSH key not registered on GitHub yet.                 ║%s\n' "$_B" "$_R"
+    printf '%s║                                                        ║%s\n' "$_B" "$_R"
+    printf '%s║  Copy the key below and add it to GitHub:             ║%s\n' "$_B" "$_R"
+    printf '%s║  → https://github.com/settings/ssh/new                ║%s\n' "$_B" "$_R"
+    printf '%s║                                                        ║%s\n' "$_B" "$_R"
+    printf '%s║  Key (copy this):                                     ║%s\n' "$_B" "$_R"
+    printf '%s╠══════════════════════════════════════════════════════════╣%s\n' "$_B" "$_R"
+    printf '  %s\n' "$PUB_KEY"
+    printf '%s╚══════════════════════════════════════════════════════════╝%s\n' "$_B" "$_R"
+    printf '\n'
+    printf 'After adding the key, press Enter to continue...\n'
+    read -r _
+
+    # Re-test after user adds the key
+    if ! ssh -T git@github.com -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
+        die "GitHub SSH auth still failing — make sure you added the key correctly."
+    fi
+fi
+ok "GitHub SSH access verified."
+
+# ── 7d — Clone (or pull) ──
 if [[ ! -d "$SSOT_DIR/.git" ]]; then
-    git clone https://github.com/sitthawat035/bashscripts.git "$SSOT_DIR" \
+    git clone git@github.com:sitthawat035/bashscripts.git "$SSOT_DIR" \
         || die "Clone failed — check network or repo access."
     ok "SSOT cloned to $SSOT_DIR"
 else
@@ -252,42 +304,29 @@ else
 fi
 
 # ============================================================
-# STAGE 9 — Wire ~/.zshrc to source joe.sh (the SSOT booster)
-#   joe.sh is the ONLY entry point (per AGENT.md load order).
-#   It auto-detects TERMUX, sources 00-env.sh → 01-colors.sh → ...
+# STAGE 9 -- Wire ~/.zshrc to SSOT zshrc_termux.zsh (symlink)
+#   SSOT template lives in bashscripts/tools/zshrc_termux.zsh
+#   which is synced from WSL master via Syncthing.
+#   On Termux: ~/.zshrc is a symlink -> SSOT (read-only on device).
 # ============================================================
-log "Stage 9: Wire ~/.zshrc → joe.sh"
-ZSHRC="$TERMUX_HOME/.zshrc"
-touch "$ZSHRC"
+log "Stage 9: Wire ~/.zshrc -> zshrc_termux.zsh (SSOT symlink)"
+ZSHRC_DEST="$TERMUX_HOME/.zshrc"
+ZSHRC_SRC="$SSOT_DIR/tools/zshrc_termux.zsh"
 
-# Set ZSH_THEME to powerlevel10k (only if user hasn't customized)
-if grep -q '^ZSH_THEME=' "$ZSHRC"; then
-    sed -i 's|^ZSH_THEME=.*|ZSH_THEME="powerlevel10k/powerlevel10k"|' "$ZSHRC"
+if [[ ! -f "$ZSHRC_SRC" ]]; then
+    warn "zshrc_termux.zsh not found at $ZSHRC_SRC"
+    warn "Syncthing may not have synced yet -- ~/.zshrc will be created after sync"
 else
-    echo 'ZSH_THEME="powerlevel10k/powerlevel10k"' >> "$ZSHRC"
+    # Backup existing .zshrc if NOT already our symlink
+    if [[ -f "$ZSHRC_DEST" && ! -L "$ZSHRC_DEST" ]]; then
+        mv "$ZSHRC_DEST" "${ZSHRC_DEST}.bak.$(date +%s)"
+        warn "Backed up existing ~/.zshrc"
+    fi
+    ln -sf "$ZSHRC_SRC" "$ZSHRC_DEST"
+    ok "~/.zshrc -> $ZSHRC_SRC (SSOT symlink)"
 fi
 
-# Ensure plugins line includes our extras
-if ! grep -q '^plugins=\(' "$ZSHRC"; then
-    cat >> "$ZSHRC" <<'EOF'
-plugins=(git autoupdate zsh-autocomplete zsh-autosuggestions zsh-syntax-highlighting)
-EOF
-fi
 
-# Source joe.sh exactly once (idempotent guard block)
-if ! grep -q 'Fresh_termux_fullsetup_SSOT' "$ZSHRC"; then
-    cat >> "$ZSHRC" <<'EOF'
-
-# ── Fresh_termux_fullsetup_SSOT — SSOT booster (single entry point) ──
-# joe.sh detects JOE_ENV, then sources 00-env.sh → 01-colors.sh → ...
-if [[ -f "$HOME/bashscripts/joe.sh" ]]; then
-    source "$HOME/bashscripts/joe.sh"
-fi
-EOF
-    ok "~/.zshrc wired to source joe.sh."
-else
-    ok "~/.zshrc already wired."
-fi
 
 # ============================================================
 # STAGE 10 — termux-style (optional theme picker)
@@ -319,25 +358,24 @@ if command -v sshd >/dev/null 2>&1; then
 fi
 
 # ============================================================
-# DONE
+# DONE — print summary (printf, NOT heredoc — avoids zsh
+#   history-expansion issues when chsh switches shell mid-run)
 # ============================================================
-cat <<EOF
-
-${_B}${_G}════════════════════════════════════════════════════${_R}
-${_B}${_G}  SSOT bootstrap complete.${_R}
-${_B}${_G}════════════════════════════════════════════════════${_R}
-
-Next steps:
-  1. ${_B}chsh -s zsh${_R}  (if Stage 4 warned) then restart Termux
-  2. ${_B}exec zsh${_R}     (or close & reopen the session)
-  3. On first zsh launch, powerlevel10k config wizard runs — answer it.
-  4. ${_Y}IMPORTANT${_R}: reinstalling Termux changed your Syncthing
-     device ID. From a node that has Syncthing online, run:
-        ${_B}st-register-all${_R}
-     so the mesh re-learns this phone's new ID.
-  5. (Optional) ${_B}tailscale up${_R} to rejoin the tailnet.
-
-EOF
+printf '\n'
+printf '%s════════════════════════════════════════════════════%s\n' "$_B$_G" "$_R"
+printf '%s  SSOT bootstrap complete.%s\n' "$_B$_G" "$_R"
+printf '%s════════════════════════════════════════════════════%s\n' "$_B$_G" "$_R"
+printf '\n'
+printf 'Next steps:\n'
+printf '  1. %schsh -s zsh%s  (if Stage 4 warned) then restart Termux\n' "$_B" "$_R"
+printf '  2. %sexec zsh%s     (or close & reopen the session)\n' "$_B" "$_R"
+printf '  3. On first zsh launch, powerlevel10k config wizard runs -- answer it.\n'
+printf '  4. %sIMPORTANT%s: reinstalling Termux changed your Syncthing\n' "$_Y" "$_R"
+printf '     device ID. From a node that has Syncthing online, run:\n'
+printf '        %sst-register-all%s\n' "$_B" "$_R"
+printf '     so the mesh re-learns this phone new ID.\n'
+printf '  5. (Optional) %stailscale up%s to rejoin the tailnet.\n' "$_B" "$_R"
+printf '\n'
 
 
 
