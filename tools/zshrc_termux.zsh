@@ -15,10 +15,15 @@ if [[ -d "/data/data/com.termux/files/usr/bin" ]]; then
     export PATH="/data/data/com.termux/files/usr/bin:$PATH"
 fi
 
-# -- Ensure Zsh completion paths are in fpath -------------------
+# -- Ensure ALL Zsh completion paths are in fpath ---------------
 _tz_dir="/data/data/com.termux/files/usr/share/zsh"
 if [[ -d "$_tz_dir" ]]; then
-    for _d in "$_tz_dir"/site-functions(N) "$_tz_dir"/*(N) "$_tz_dir"/*/functions(N) "$_tz_dir"/*/functions/*(N); do
+    for _d in "$_tz_dir"/site-functions(N) \
+              "$_tz_dir"/*(N) \
+              "$_tz_dir"/*/functions(N) \
+              "$_tz_dir"/*/functions/*(N) \
+              "$_tz_dir"/*/functions/*/*(N) \
+              "$_tz_dir"/*/functions/*/*/*(N); do
         [[ -d "$_d" ]] && fpath+=("$_d")
     done
 fi
