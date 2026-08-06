@@ -227,65 +227,39 @@ clone_if_absent https://github.com/marlonrichert/zsh-autocomplete "$ZSH_CUSTOM/p
 clone_if_absent https://github.com/zsh-users/zsh-autosuggestions   "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
 clone_if_absent https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 clone_if_absent https://github.com/zsh-users/zsh-history-substring-search "$ZSH_CUSTOM/plugins/zsh-history-substring-search"
-
 # ============================================================
-# STAGE 7 — Clone SSOT repo (~/bashscripts)
-#   Uses SSH (private repo needs auth). Generates an SSH key
-#   if none exists and tells the user to add it to GitHub.
+# STAGE 7 — Check SSOT repo (~/bashscripts)
+#   If Syncthing already synced ~/bashscripts, skip git clone.
 # ============================================================
-log "Stage 7: Clone SSOT repo"
+log "Stage 7: Check SSOT repo"
 
-# ── 7a — Make sure we have an SSH key ──
-SSH_KEY="$TERMUX_HOME/.ssh/id_ed25519"
-if [[ ! -f "$SSH_KEY" ]]; then
-    log "  Generating SSH key..."
-    ssh-keygen -t ed25519 -C "termux@$(hostname)" -f "$SSH_KEY" -N "" 2>&1
-    ok "SSH key generated."
-fi
-
-# ── 7b — Make sure ssh-agent is running and key is loaded ──
-if command -v ssh-agent >/dev/null 2>&1; then
-    _agent_out="$(ssh-agent -s 2>/dev/null)" || true
-    if [[ -n "$_agent_out" ]]; then
-        eval "$_agent_out" >/dev/null 2>&1
-        ssh-add "$SSH_KEY" 2>/dev/null || true
-        ok "SSH agent running."
-    fi
-fi
-
-# ── 7c — Test GitHub SSH access ──
-if ! ssh -T git@github.com -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
-    PUB_KEY="$(cat "${SSH_KEY}.pub")"
-    printf '\n'
-    printf '%s╔══════════════════════════════════════════════════════════╗%s\n' "$_B" "$_R"
-    printf '%s║  SSH key not registered on GitHub yet.                 ║%s\n' "$_B" "$_R"
-    printf '%s║                                                        ║%s\n' "$_B" "$_R"
-    printf '%s║  Copy the key below and add it to GitHub:             ║%s\n' "$_B" "$_R"
-    printf '%s║  → https://github.com/settings/ssh/new                ║%s\n' "$_B" "$_R"
-    printf '%s║                                                        ║%s\n' "$_B" "$_R"
-    printf '%s║  Key (copy this):                                     ║%s\n' "$_B" "$_R"
-    printf '%s╠══════════════════════════════════════════════════════════╣%s\n' "$_B" "$_R"
-    printf '  %s\n' "$PUB_KEY"
-    printf '%s╚══════════════════════════════════════════════════════════╝%s\n' "$_B" "$_R"
-    printf '\n'
-    printf 'After adding the key, press Enter to continue...\n'
-    read -r _
-
-    # Re-test after user adds the key
-    if ! ssh -T git@github.com -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
-        die "GitHub SSH auth still failing — make sure you added the key correctly."
-    fi
-fi
-ok "GitHub SSH access verified."
-
-# ── 7d — Clone (or pull) ──
-if [[ ! -d "$SSOT_DIR/.git" ]]; then
-    git clone git@github.com:sitthawat035/bashscripts.git "$SSOT_DIR" \
-        || die "Clone failed — check network or repo access."
-    ok "SSOT cloned to $SSOT_DIR"
+if [[ -d "$SSOT_DIR" && -f "$SSOT_DIR/joe.sh" ]]; then
+    ok "SSOT repo already present at $SSOT_DIR (via Syncthing)"
 else
-    ok "SSOT already at $SSOT_DIR (pulling)."
-    git -C "$SSOT_DIR" pull --ff-only || warn "pull failed — check manually."
+    SSH_KEY="$TERMUX_HOME/.ssh/id_ed25519"
+    if [[ ! -f "$SSH_KEY" ]]; then
+        log "  Generating SSH key..."
+        ssh-keygen -t ed25519 -C "termux@$(hostname)" -f "$SSH_KEY" -N "" 2>&1
+        ok "SSH key generated."
+    fi
+
+    if command -v ssh-agent >/dev/null 2>&1; then
+        _agent_out="$(ssh-agent -s 2>/dev/null)" || true
+        if [[ -n "$_agent_out" ]]; then
+            eval "$_agent_out" >/dev/null 2>&1
+            ssh-add "$SSH_KEY" 2>/dev/null || true
+            ok "SSH agent running."
+        fi
+    fi
+
+    if ! ssh -T git@github.com -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
+        warn "GitHub SSH key not registered — continuing via Syncthing setup..."
+    fi
+
+    if [[ ! -d "$SSOT_DIR/.git" ]]; then
+        git clone git@github.com:sitthawat035/bashscripts.git "$SSOT_DIR" 2>/dev/null \
+            || warn "Git clone skipped — relies on Syncthing sync"
+    fi
 fi
 
 # ============================================================
