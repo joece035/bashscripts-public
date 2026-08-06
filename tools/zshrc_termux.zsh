@@ -32,7 +32,8 @@ export ZSH_DISABLE_COMPFIX="true"
 unfunction color 2>/dev/null || true
 unset color 2>/dev/null || true
 
-# -- Powerlevel10k instant prompt (must be near top) -----------
+# -- Powerlevel10k instant prompt (quiet output warning) -------
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
