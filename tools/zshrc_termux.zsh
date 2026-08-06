@@ -5,6 +5,11 @@
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 
+# -- Termux / Local PATH ---------------------------------------
+[[ -d "/data/data/com.termux/files/usr/bin" ]] && PATH="/data/data/com.termux/files/usr/bin:$PATH"
+PATH="/usr/bin:/bin:$HOME/.local/bin:$PATH"
+export PATH
+
 # -- Powerlevel10k instant prompt (must be near top) -----------
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
@@ -35,6 +40,22 @@ SSOT_PATH="${SSOT:-$HOME/bashscripts}"
 # -- Powerlevel10k config --------------------------------------
 [[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
 
-# -- History substring search keybinds -------------------------
-bindkey "^[[A" history-substring-search-up   2>/dev/null
-bindkey "^[[B" history-substring-search-down 2>/dev/null
+# -- Safe UP/DOWN keybindings (prevent missing function file errors) --
+if ! autoload +X -U up-line-or-beginning-search 2>/dev/null; then
+    up-line-or-beginning-search() { zle up-line-or-history; }
+    zle -N up-line-or-beginning-search 2>/dev/null
+fi
+if ! autoload +X -U down-line-or-beginning-search 2>/dev/null; then
+    down-line-or-beginning-search() { zle down-line-or-history; }
+    zle -N down-line-or-beginning-search 2>/dev/null
+fi
+
+if zle -la 2>/dev/null | grep -q history-substring-search; then
+    bindkey '^[[A' history-substring-search-up   2>/dev/null
+    bindkey '^[[B' history-substring-search-down 2>/dev/null
+    bindkey "$terminfo[kcuu1]" history-substring-search-up   2>/dev/null
+    bindkey "$terminfo[kcud1]" history-substring-search-down 2>/dev/null
+else
+    bindkey '^[[A' up-line-or-history   2>/dev/null
+    bindkey '^[[B' down-line-or-history 2>/dev/null
+fi
