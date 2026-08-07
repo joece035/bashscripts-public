@@ -50,10 +50,18 @@ die()  { printf '%s✗%s %s\n' "$_R_C$_B" "$_R" "$*" >&2; exit 1; }
 
 # ── Config (defaults overridable via env) ──
 SSOT_DIR="${SSOT_DIR:-$HOME/bashscripts}"
-SSOT_REPO_SSH="${SSOT_REPO_SSH:-git@github.com:joece035/bashscripts.git}"
+SSOT_REPO_SSH="${SSOT_REPO_SSH:-ssh://git@github.com/joece035/bashscripts.git}"
 ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
 GIT_USER_NAME="${GIT_USER_NAME:-sitthawat035}"
 GIT_USER_EMAIL="${GIT_USER_EMAIL:-sitthawat035@users.noreply.github.com}"
+
+# ── Never prompt for credentials ──
+# git: fail instead of asking GitHub username/password (e.g. if a URL
+#      rewrite forces HTTPS). ssh: BatchMode kills ALL interactive prompts
+#      (host-key yes/no, passphrase, password); accept-new trusts GitHub
+#      keys silently on first contact.
+export GIT_TERMINAL_PROMPT=0
+export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
 
 # ============================================================
 # STAGE 0 — Preflight
@@ -248,6 +256,15 @@ SSH_KEY="$HOME/.ssh/id_ed25519"
 if [[ -d "$SSOT_DIR" && -f "$SSOT_DIR/joe.sh" ]]; then
     ok "SSOT repo already present at $SSOT_DIR (Syncthing or previous clone)"
 else
+    # ── broken-clone recovery: a half-cloned repo from an interrupted run
+    #    (e.g. a previous bootstrap died at a credential prompt) would block
+    #    re-cloning — move it aside instead of deleting (Syncthing safety).
+    if [[ -d "$SSOT_DIR/.git" && ! -f "$SSOT_DIR/joe.sh" ]]; then
+        warn "Incomplete clone found at $SSOT_DIR — moving it aside..."
+        mv "$SSOT_DIR" "$SSOT_DIR.broken.$(date +%s)"
+        ok "Moved aside; will re-clone cleanly."
+    fi
+
     # ── key generation (fresh device) ──
     if [[ ! -f "$SSH_KEY" ]]; then
         log "  Generating SSH key..."
@@ -263,7 +280,7 @@ else
         warn "No public key found — clone will need Syncthing or a manual git clone."
     fi
 
-    # ── clone attempt loop (SSH; pauses once for key registration) ──
+    # ── clone attempt loop (SSH, never prompts; pauses once for key registration) ──
     _cloned=0
     for _attempt in 1 2; do
         if git clone "$SSOT_REPO_SSH" "$SSOT_DIR" 2>/dev/null; then
@@ -273,7 +290,7 @@ else
         if [[ "$_attempt" -eq 1 && -n "$_PUBKEY" ]]; then
             echo
             echo "  GitHub can't authenticate this device yet."
-            echo "  Add the SSH key, then I'll retry:"
+            echo "  Add the SSH key, then I'll retry (no username/password will ever be asked):"
             echo "      URL : https://github.com/settings/ssh/new"
             echo "      Key : $_PUBKEY"
             echo
