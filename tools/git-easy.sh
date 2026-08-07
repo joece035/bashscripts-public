@@ -10,12 +10,22 @@
 #   giteasy status    → just show what changed
 # ============================================================
 
+# ── Colors: use SSOT's cn() when running under the SSOT config,
+#    fall back to plain ANSI when run standalone. No hardcoded paths. ──
 GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BLUE='\033[0;34m'; DIM='\033[2m'; NC='\033[0m'
-ok()   { echo -e "${GREEN}✓${NC} $*"; }
-warn() { echo -e "${YELLOW}!${NC} $*"; }
-err()  { echo -e "${RED}✗${NC} $*"; }
-info() { echo -e "${BLUE}›${NC} $*"; }
-dim()  { echo -e "${DIM}$*${NC}"; }
+if declare -F cn >/dev/null 2>&1; then
+    ok()   { cn 2 b "✓ $*"; }
+    warn() { cn 3   "! $*"; }
+    err()  { cn 1   "✗ $*"; }
+    info() { cn 12  "› $*"; }
+    dim()  { cn 8     "$*"; }
+else
+    ok()   { echo -e "${GREEN}✓${NC} $*"; }
+    warn() { echo -e "${YELLOW}!${NC} $*"; }
+    err()  { echo -e "${RED}✗${NC} $*"; }
+    info() { echo -e "${BLUE}›${NC} $*"; }
+    dim()  { echo -e "${DIM}$*${NC}"; }
+fi
 
 # ── Step 0: are we in a git repo? ──────────────────────────
 if ! git rev-parse --git-dir >/dev/null 2>&1; then

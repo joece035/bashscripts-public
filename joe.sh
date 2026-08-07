@@ -45,7 +45,7 @@ pp() {
 # ── Step 2: Set derived paths based on JOE_ENV ──
 case "$JOE_ENV" in
     TERMUX|MUMU)
-        export SSOT="/data/data/com.termux/files/home/bashscripts"
+        export SSOT="$HOME/bashscripts"
         export DASHBOARD_DIR="$HOME/dashboard"
         export OBSIDIAN_VAULT="/storage/emulated/0/syncthing/hermes_vault"
         export home="$HOME"

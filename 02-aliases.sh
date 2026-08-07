@@ -90,8 +90,9 @@ alias gdb="proot-distro login debian"
 alias fmr="fm help"
 alias fmoff="fm learn off"
 
-# User-friendly git (non-IT safe): saves + uploads with plain questions
-alias giteasy='bash "$SSOT/tools/git-easy.sh"'
+# User-friendly git (non-IT safe): saves + uploads with plain questions.
+# Portable: uses $SSOT when the SSOT config loaded it, else falls back to $HOME/bashscripts.
+alias giteasy='bash "${SSOT:-$HOME/bashscripts}/tools/git-easy.sh"'
 
 # ============================================================
 # INFRASTRUCTURE & SYNC
