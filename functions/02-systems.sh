@@ -245,12 +245,12 @@ draw_() {
 
 slink(){
    # --at gitbash
-   # 1. กำหนดค่าตัวแปร และครอบ Double Quotes เพื่อป้องกันปัญหาเรื่อง Path ที่มี Space (ช่องว่าง)
+   # 1. กำหนดค่าตัวแปร และครอบ Double Quotes เพื่อป้องกันปัญหาเรื่อง Path ที่มี Space (ช่องว่าง) source = symlink , target=fileจริง
    local src="${1:-${PWD}}"
    local tar="${2:?SELECT TARGET}"
    
    # 2. คัดลอกและแบ็คอัพ
-   cp -r "${src}" "${tar}" && mv "${src}" "${src}bk"
+   cp -r "${src}" "$(dirname "${tar}")" && mv "${src}" "${src}bk"
    
    # 3. สร้าง Symlink และแสดงผล (แก้เรื่องการซ้อน Quotes และคำผิดนิดหน่อย)
    ln -s "${tar}" "${src}" && echo "done symbolic link ${src} --> ${tar}"

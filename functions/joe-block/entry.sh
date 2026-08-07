@@ -33,7 +33,7 @@ _blk_source_modules() {
     fi
     # Export _BLOCK_ROOT so theme.sh can use it (avoids BASH_SOURCE issue in zsh)
     # _BLOCK_ROOT must point to bashscripts/ root (one level up from functions/)
-    _BLOCK_ROOT="$(cd "${_D}/../.." && pwd)"
+    _BLOCK_ROOT="$(cd "${_D}/../../.." && pwd)"   # bashscripts/ root (block → joe-block → functions → bashscripts)
     export _BLOCK_ROOT
     [[ -f "${_D}/utils.sh"    ]] && source "${_D}/utils.sh"
     [[ -f "${_D}/layout.sh"   ]] && source "${_D}/layout.sh"

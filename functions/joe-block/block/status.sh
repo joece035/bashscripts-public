@@ -1,11 +1,6 @@
 #!/bin/bash
 
 
-# _safe_check <cmd...> — run command with 5s timeout, return 0/1 only
-_safe_check() {
-    timeout 5 "$@" &>/dev/null
-    return $?
-}
 # ============================================================
 # block/status.sh — Data providers (Status Renderers)
 # ============================================================
@@ -93,7 +88,7 @@ status_new() {
         axs_emo="🔴"
     fi
     # -- 5.Oenclaw & Hermes detection
-    local openclaw_ver hermes_ver tool
+    local openclaw_ver hermes_ver tool tools
     tools=( "openclaw" "hermes" )
 
     for tool in "${tools[@]}"; do
@@ -188,10 +183,10 @@ openv() {
         "|MODEL|$OPENCLAW_MODEL|"
         "|TIME_OUT|$OPENCLAW_TIMEOUT|"
         "|OPENCLAW_GATEWAY_PORT|$OPENCLAW_GATEWAY_PORT|"
-        "|OPENCLAW_TOKEN|$OPENCLAW_TOKEN|"
-        "|BRAVE_API_KEY|$BRAVE_API_KEY|"
-        "|TELEGRAM_BOT_TOKEN|$TELEGRAM_BOT_TOKEN|"
-        "|DISCORD_BOT_TOKEN|$DISCORD_BOT_TOKEN|"
+        "|OPENCLAW_TOKEN|$(_mask_token "$OPENCLAW_TOKEN")|"
+        "|BRAVE_API_KEY|$(_mask_token "$BRAVE_API_KEY")|"
+        "|TELEGRAM_BOT_TOKEN|$(_mask_token "$TELEGRAM_BOT_TOKEN")|"
+        "|DISCORD_BOT_TOKEN|$(_mask_token "$DISCORD_BOT_TOKEN")|"
         "|WORKSPACE|$WORKSPACE|"
         "|OPENCLAW_BIN|$OPENCLAW_BIN|"
         "|OPENCLAW_INDEX_JS|$OPENCLAW_INDEX_JS|"

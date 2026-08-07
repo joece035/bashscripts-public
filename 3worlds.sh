@@ -166,8 +166,34 @@ _comp_cpt2w() {
   fi
 }
 
-complete -o nospace -F _comp_cpw2t cpw2t
-complete -o nospace -F _comp_cpt2w cpt2w
+# ── Tab completion registration (bash + zsh) ──
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+    # Zsh: define completion functions, register only if compdef available
+    _cpw2t() {
+        local cur="${words[CURRENT]}"
+        if [[ $CURRENT -eq 2 ]]; then
+            _files
+        elif [[ $CURRENT -eq 3 ]]; then
+            compadd -a -- $(_t_remote_paths "$cur")
+        fi
+    }
+    _cpt2w() {
+        local cur="${words[CURRENT]}"
+        if [[ $CURRENT -eq 2 ]]; then
+            compadd -a -- $(_t_remote_paths "$cur")
+        elif [[ $CURRENT -eq 3 ]]; then
+            _files
+        fi
+    }
+    # compdef is only available in interactive zsh with oh-my-zsh
+    if command -v compdef >/dev/null 2>&1; then
+        compdef _cpw2t cpw2t
+        compdef _cpt2w cpt2w
+    fi
+else
+    complete -o nospace -F _comp_cpw2t cpw2t
+    complete -o nospace -F _comp_cpt2w cpt2w
+fi
 
 managetm() {
   cn 141 b "--- 3-Worlds Commands ---"

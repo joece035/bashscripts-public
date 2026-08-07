@@ -6,7 +6,7 @@
 # Runs as: bash tools/ssot-audit.sh
 # ============================================================
 
-set -uo pipefail
+set -uo pipefail 2>/dev/null || setopt PIPE_FAIL 2>/dev/null
 
 ROOT="${1:-$HOME/bashscripts}"
 COLORS_FILE="$ROOT/01-colors.sh"

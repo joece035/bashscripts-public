@@ -51,10 +51,10 @@ if [[ -n "${_BLOCK_ROOT:-}" ]]; then
     _THEME_DIR="${_BLOCK_ROOT}/functions/joe-block/block"
 elif [[ -n "${BASH_SOURCE[0]:-}" ]]; then
     _THEME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-    _BLOCK_ROOT="${_THEME_DIR}/../.."
+    _BLOCK_ROOT="${_THEME_DIR}/../../.."
 elif [[ -n "${funcfiletrace[1]:-}" ]]; then
     _THEME_DIR="$(cd "$(dirname "${funcfiletrace[1]}")" && pwd)"
-    _BLOCK_ROOT="${_THEME_DIR}/../.."
+    _BLOCK_ROOT="${_THEME_DIR}/../../.."
 else
     _THEME_DIR="${SCRIPTS_PATH:-$HOME/bashscripts}/functions/joe-block/block"
     _BLOCK_ROOT="${SCRIPTS_PATH:-$HOME/bashscripts}"

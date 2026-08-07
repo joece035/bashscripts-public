@@ -60,8 +60,20 @@ op_profile() {
     
 }
 oc(){
-   op_profile "$@"
-   opstatus2
+    if [ $# -gt 1 ]; then
+    local _style_=${1:-_style_default}
+    local _offset_=${2:--0.5}
+    shift "$#"
+      _load_theme "$_style_" "$_offset_"
+      op_profile "$@"
+      opstatus2
+    else
+       _load_theme "_style_default" "-0.5"
+       op_profile "$@"
+       opstatus2
+    fi
+
+
 }
 
 

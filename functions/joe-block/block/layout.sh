@@ -30,8 +30,9 @@ fi
 # ============================================================
 _blk_parse_row() {
     local row="$1"
-    local parts
-    IFS='|' read -ra parts <<< "$row"
+    # Cross-shell split on '|' via _split_pipe() helper (utils.sh).
+    # Keeps the rest of the engine shell-agnostic.
+    _split_pipe parts "$row"
     local n=${#parts[@]}
 
     case $n in
@@ -82,17 +83,23 @@ _blk_parse_row() {
 _blk_scan() {
     local rows=("$@")
     local max_l=0 max_v=0
-    local row lw vw
+    local row w
     local _parsed_eml _parsed_label _parsed_value _parsed_emr
+    local -a labels=() values=()
 
     for row in "${rows[@]}"; do
         _blk_parse_row "$row"
-        # visual column-width (emoji-aware), NOT codepoint count ${#...}
-        lw="$(_blk_str_width "$_parsed_label")"
-        vw="$(_blk_str_width "$_parsed_value")"
-        (( lw > max_l )) && max_l=$lw
-        (( vw > max_v )) && max_v=$vw
+        labels+=("$_parsed_label")
+        values+=("$_parsed_value")
     done
+
+    # Batch visual-width (emoji-aware) — python3 เรียกครั้งเดียวแทนทุกเซลล์
+    while IFS= read -r w; do
+        (( w > max_l )) && max_l=$w
+    done < <(_blk_str_widths "${labels[@]}")
+    while IFS= read -r w; do
+        (( w > max_v )) && max_v=$w
+    done < <(_blk_str_widths "${values[@]}")
 
     _LAYOUT[label_w]=$max_l
     _LAYOUT[value_w]=$max_v
@@ -145,7 +152,7 @@ _blk_build_layout() {
     local range=$(( TERM_WIDTH - block_w - 2 ))
     (( range < 0 )) && range=0
     local half=$(( range / 2 ))
-    local off_pct=$(echo "scale=0; $offset * 100 / 1" | bc 2>/dev/null || echo 0)
+    local off_pct=$(awk -v o="$offset" 'BEGIN{printf "%d", o*100}' 2>/dev/null || echo 0)
     local indent=$(( 1 + half + off_pct * half / 100 ))
 
     # -- NONE → force left-align (indent=1)

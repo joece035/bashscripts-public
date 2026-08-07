@@ -94,3 +94,10 @@ fi
 
 # -- Powerlevel10k finalize ------------------------------------
 (( ! ${+functions[p10k]} )) || p10k finalize
+# pnpm
+export PNPM_HOME="/data/data/com.termux/files/home/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end

@@ -49,8 +49,8 @@ case "$JOE_ENV" in
         export DASHBOARD_DIR="$HOME/dashboard"
         export OBSIDIAN_VAULT="/storage/emulated/0/syncthing/hermes_vault"
         export home="$HOME"
-        export nexus_vault="/storage/emulated/0/nexus_vault"
-        export MAIN_SYNC_DIR="/storage/emulated/0/main_sync"
+        export nexus_vault="$HOME/nexus_vault"
+        export MAIN_SYNC_DIR="$HOME/main_sync"
         
 
         ;;
@@ -80,7 +80,7 @@ esac
 # -- Global varialble defined after done env detection process
         export SCRIPTS_PATH="$SSOT"
         export COLOR_PATH="$SSOT"
-        export main_sync="$MAIN_SYNC_DIR"
+        export msync="$MAIN_SYNC_DIR"
         export htm="/data/data/com.termux/files/home"
 
 # ── Step 1.5: CRLF SELF-HEAL (กันไฟล์ CRLF ทำ bash พัง) ──
@@ -111,11 +111,14 @@ fi
 [ -f "$SCRIPTS_PATH/01-colors.sh" ] && source "$SCRIPTS_PATH/01-colors.sh"
 
 # Auto-start sshd if not running (guarded for git-bash which lacks pgrep)
+# Auto-start ssh-agent if not running (needed for tm/tw key auth)
+if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l &>/dev/null; then
+    eval "$(ssh-agent -s)" >/dev/null 2>&1
+    ssh-add ~/.ssh/id_ed25519 2>/dev/null
+fi
 if command -v pgrep >/dev/null 2>&1; then
     if ! pgrep -x "sshd" >/dev/null 2>&1; then
-        sshd >/dev/null 2>&1 && cn 10 b "SSH Daemon started successfully." || cn 9 b "Failed to start sshd."
-    else
-        cn 10 bi "ssh activated"
+        sshd >/dev/null 2>&1 || true
     fi
 else
     # No pgrep (git-bash / WSL busybox) — try service, fall back silently
@@ -163,8 +166,8 @@ fi
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 # m a 50  # offset=50 cols from left (was 0=full-center, looked like 'hang' on slow shells)
 
-syncthing_auto
-rc_del
+syncthing_auto >/dev/null 2>&1
+rc_del >/dev/null 2>&1
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
 # after each command, but joe.sh uses unset variables (dbp, $2, etc.)

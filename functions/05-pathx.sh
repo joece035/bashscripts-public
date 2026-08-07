@@ -95,8 +95,14 @@ raw="${raw//\'/}"   # ลบ single quote ออกด้วยเ
   # 3. Detect + convert
   # ── Case A: WSL UNC path  //wsl.localhost/Ubuntu/home/... ──
   if [[ "$raw" =~ ^//wsl\.localhost/([^/]+)(/.*)$ ]]; then
-    distro="${BASH_REMATCH[1]}"
-    rest="${BASH_REMATCH[2]}"   # /home/usercivenz/nexus_vault
+    # Portable regex match extraction (bash: BASH_REMATCH, zsh: match[])
+    if [[ -n "${BASH_VERSION:-}" ]]; then
+      distro="${BASH_REMATCH[1]}"
+      rest="${BASH_REMATCH[2]}"
+    else
+      distro="${match[1]}"
+      rest="${match[2]}"
+    fi
 
     case "${JOE_ENV}" in
       WSL)      converted="$rest" ;;
@@ -107,8 +113,13 @@ raw="${raw//\'/}"   # ลบ single quote ออกด้วยเ
 
   # ── Case B: Windows drive path  C:/Users/... ──
   elif [[ "$raw" =~ ^([A-Za-z]):(/.*)$ ]]; then
-    drive="${BASH_REMATCH[1],,}"
-    rest="${BASH_REMATCH[2]}"   # /Users/User/AppData/...
+    if [[ -n "${BASH_VERSION:-}" ]]; then
+      drive="${BASH_REMATCH[1],,}"
+      rest="${BASH_REMATCH[2]}"
+    else
+      drive="${(L)match[1]}"
+      rest="${match[2]}"
+    fi
 
     case "${JOE_ENV}" in
       WSL)      converted="/mnt/${drive}${rest}" ;;
@@ -145,7 +156,7 @@ _p_clip_write() {
 }
 
 imma_jump_to_the_fucking_god_damn_windows_path_from_wsl_by_typing_only_fuckin_j() {
-   cd "$(p)"
+   cdc "$(p)"
 }
 alias j='imma_jump_to_the_fucking_god_damn_windows_path_from_wsl_by_typing_only_fuckin_j' 
 

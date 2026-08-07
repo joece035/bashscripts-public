@@ -160,7 +160,7 @@ _style_c(){
     local random_pick="no"
     local color_modes_b=("no" "random" "yes")  
     # ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰  #
-        set_ _data_ROWS        ""  # -- data ที่จัดเตรียมไว้
+        set_ _data_ROWS        "op_profile"  # -- data ที่จัดเตรียมไว้
     # ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰  #
 
     if [[ "$random_pick" = "yes" ]]; then

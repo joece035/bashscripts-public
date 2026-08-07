@@ -52,7 +52,10 @@ export dtpc="$hpc/Desktop"          # compat alias ของ dpc
 export hmp="${HERMES_DIR:-$HOME/.hermes}"   # AGENT.md: hmp = $HOME/.hermes
 export HERMES_LOG_DIR="${HERMES_DIR}/logs"  # log dir สำหรับ tools/hermes.sh
 export BRAVE_SEARCH_API_KEY="BSAfPRWzAVe_En3GTQ-cZHcy3MXk8hB"  # Replace with your actual API key
-# ============================================================
+export BRAVE_API_KEY="${BRAVE_SEARCH_API_KEY}"
+export ALPHA_DIR="$msync/alpha-workspace"
+export alpha=${ALPHA_DIR}
+# ============================================================  
 # Dynamic env switching
 # ============================================================
 ai_bin() {
@@ -230,7 +233,6 @@ export DEBIAN_PORT="$NODE_DEBIAN_PORT"
 
 # --- SHORT CUT FOR JOE-- #
 export nx="$nexus_vault"
-export msync="$MAIN_SYNC_DIR"
 export USDT_BEP20_BITKUB=0x5C7D1Da0862F8865C328c8CDE22B3C1168dA2740
 export SOL_BITKUB=DxX8Z9VhpSVnXqwzyN36qJNtK2dUZEaBh9ExFaP9NM9E
 export SOL_METAMAS=AU7vdRgRbcdcULoiXiQ6AfQpb96MDiFXDyEC2YQAS8Bav

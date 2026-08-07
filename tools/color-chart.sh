@@ -29,12 +29,21 @@ done
 
 # Common picks (cheat sheet)
 echo -e "\n\e[1;38;5;255m━━━ Joe's Favorite Picks ━━━\e[0m"
-declare -A picks=(
-    [red]=196 [lred]=203 [orange]=208 [yellow]=226 [lg]=82
-    [llg]=46 [green]=34 [cyan]=51 [lcyan]=87 [blue]=33
-    [lblue]=75 [purple]=141 [pink]=213 [gray]=244 [white]=255
-    [dim]=245
-)
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+    typeset -A picks=(
+        [red]=196 [lred]=203 [orange]=208 [yellow]=226 [lg]=82
+        [llg]=46 [green]=34 [cyan]=51 [lcyan]=87 [blue]=33
+        [lblue]=75 [purple]=141 [pink]=213 [gray]=244 [white]=255
+        [dim]=245
+    )
+else
+    declare -A picks=(
+        [red]=196 [lred]=203 [orange]=208 [yellow]=226 [lg]=82
+        [llg]=46 [green]=34 [cyan]=51 [lcyan]=87 [blue]=33
+        [lblue]=75 [purple]=141 [pink]=213 [gray]=244 [white]=255
+        [dim]=245
+    )
+fi
 for name in "${!picks[@]}"; do
     num=${picks[$name]}
     printf "\e[38;5;%sm████\e[0m %-8s = \e[1;38;5;255m%s\e[0m\n" "$num" "$name" "$num"

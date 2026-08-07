@@ -46,19 +46,6 @@ _get_frame_chars() {
 }
 
 # ============================================================
-# _build_border_line <char_colored> <width>
-#   Returns a string of <char_colored> repeated <width> times.
-#   Handles ANSI colored chars (repeat the plain char, then color once).
-# ============================================================
-_build_border_line() {
-    local colored_char="$1"
-    local width="$2"
-    local plain_char="$3"   # plain (uncolored) version for repeat
-    _blk_repeat_char "$plain_char" "$width"
-    # Note: full colored repeat is done in render_border_top/bot
-}
-
-# ============================================================
 # render_border_top
 #   Prints top border. Uses _LAYOUT[block_w], _LAYOUT[indent], _THEME
 # ============================================================
@@ -199,7 +186,7 @@ render_row() {
     # -- Truncate value if its VISUAL width exceeds value_w (prevent wrap)
     local vlen; vlen="$(_blk_str_width "$value")"
     if (( vlen > value_w )); then
-        value="${value:0:$((value_w - 1))}…"
+        value="$(_blk_truncate "$value" $((value_w - 1)))…"
     fi
 
     # -- Text padding using VISUAL width (emoji-aware), not codepoint count ${#...}

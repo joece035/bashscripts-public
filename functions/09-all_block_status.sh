@@ -23,8 +23,9 @@ opstats_data(){
 }
 
 opstatus2(){
-   
-opstats_data
+  _style_default 
+  
+    opstats_data
   
     render_() {
     local ROWS=(

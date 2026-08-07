@@ -41,6 +41,34 @@ _pvar() {
 }
 
 # ============================================================
+# _split_pipe <input_var_name> <string>
+#   Splits <string> on '|' into the array named <input_var_name>.
+#   Cross-shell — bash 4+ and zsh 5+.
+#   Usage:
+#     _split_pipe parts "$row"
+#     echo "${#parts[@]}"   # array length
+#     echo "${parts[2]}"    # 3rd field
+#   Why a function (not inline): bash's `read -ra` errors in zsh
+#   (`bad option: -a`); zsh's `${(@s:|:)}` is a syntax error in bash.
+#   Centralizing the shell detect keeps the rest of the engine clean.
+# ============================================================
+_split_pipe() {
+    local _arr_name="$1"
+    local _str="$2"
+    # Resolve the array name in the caller's scope.
+    # bash 4.2+: namerefs ; zsh 5+: typeset -g
+    if [[ -n "${BASH_VERSION:-}" ]]; then
+        # bash: IFS + read -ra into the named array via nameref
+        local -n _out="$_arr_name"
+        IFS='|' read -ra _out <<< "$_str"
+    else
+        # zsh: split with (s:|:) and assign to the global array
+        # (zsh arrays are auto-global unless declared `local -a` in fn)
+        eval "${_arr_name}=(\"\${(@s:|:)_str}\")"
+    fi
+}
+
+# ============================================================
 # _blk_repeat_char <char> <count>
 #   Prints <char> repeated <count> times (no newline)
 # ============================================================
@@ -164,5 +192,102 @@ PYEOF
         local plain
         plain=$(printf '%s' "$str" | sed 's/\x1b\[[0-9;]*[a-zA-Z]//g')
         printf '%s' "${#plain}"
+    fi
+}
+
+# ============================================================
+# _blk_str_widths — batch visual-width (reads lines from stdin)
+#   Same accuracy tiers as _blk_str_width, but ONE python3 call
+#   for many strings (fast path for _blk_scan).
+#   Usage: printf '%s\n' "str1" "str2" | _blk_str_widths
+# ============================================================
+_blk_str_widths() {
+    if command -v python3 &>/dev/null; then
+        python3 - "$@" 2>/dev/null <<'PYEOF'
+import sys, re, unicodedata
+
+def wc(s):
+    s = re.sub(r'(?:\x1b|\\e)\[[0-?]*[ -/]*[@-~]', '', s)
+    try:
+        from wcwidth import wcswidth
+        w = wcswidth(s)
+        if w >= 0:
+            return w
+    except ImportError:
+        pass
+    def is_pictograph(cp):
+        return (0x1F300 <= cp <= 0x1FAFF or
+                0x2600 <= cp <= 0x26FF or
+                0x2700 <= cp <= 0x27BF or
+                0x2B00 <= cp <= 0x2BFF)
+    chars = list(s)
+    n = len(chars)
+    i = 0
+    w = 0
+    while i < n:
+        c = chars[i]
+        cp = ord(c)
+        cat = unicodedata.category(c)
+        if cat == 'Mn' or cp == 0x200D or 0xFE00 <= cp <= 0xFE0F or 0xE0100 <= cp <= 0xE01EF:
+            i += 1
+            continue
+        if 0x1F1E6 <= cp <= 0x1F1FF:
+            j = i
+            while j < n and 0x1F1E6 <= ord(chars[j]) <= 0x1F1FF:
+                j += 1
+            w += ((j - i + 1) // 2) * 2
+            i = j
+            continue
+        has_vs16 = (i + 1 < n) and (ord(chars[i + 1]) == 0xFE0F)
+        if is_pictograph(cp) or has_vs16:
+            w += 2
+            i += 1
+            continue
+        ea = unicodedata.east_asian_width(c)
+        w += 2 if ea in ('W', 'F') else 1
+        i += 1
+    return max(w, 0)
+
+for a in sys.argv[1:]:
+    print(wc(a))
+PYEOF
+        return 0
+    fi
+
+    # fallback: ไม่มี python3 — นับ codepoint คร่าว ๆ
+    local s
+    for s in "$@"; do
+        printf '%s\n' "${#s}"
+    done
+}
+
+# ============================================================
+# _blk_truncate <str> <max_w> — ตัด string ตาม visual width
+#   (กันตัดกลาง emoji / กวาดเกินช่อง) — ใช้ตอน value ยาวเกิน
+# ============================================================
+_blk_truncate() {
+    local str="$1" max_w="$2"
+    local w cut
+    w="$(_blk_str_width "$str")"
+    cut=${#str}
+    while (( w > max_w && cut > 1 )); do
+        cut=$(( cut - 1 ))
+        str="${str:0:cut}"
+        w="$(_blk_str_width "$str")"
+    done
+    printf '%s' "$str"
+}
+
+# ============================================================
+# _mask_token <value> — mask secret (โชว์ 4 ตัวแรก/4 ตัวท้าย)
+# ============================================================
+_mask_token() {
+    local v="$1"
+    if [[ -z "$v" ]]; then
+        printf '%s' "(unset)"
+    elif (( ${#v} <= 8 )); then
+        printf '%s' "****"
+    else
+        printf '%s' "${v:0:4}****${v: -4}"
     fi
 }

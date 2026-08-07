@@ -7,7 +7,7 @@
 # or wire into git pre-commit hook.
 # ============================================================
 
-set -euo pipefail
+set -euo pipefail 2>/dev/null || setopt PIPE_FAIL 2>/dev/null
 
 SSOT_COLORS_FILE="${HOME}/bashscripts/01-colors.sh"
 SSOT_ENV_FILE="${HOME}/bashscripts/00-env.sh"
