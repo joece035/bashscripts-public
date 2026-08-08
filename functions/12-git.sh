@@ -214,21 +214,74 @@ gpop() {
   git -C "$REPO_ROOT" stash pop
 }
 
-# ---- gclean : ⚠ DESTRUCTIVE — show what would be removed first ----
+# ---- gclean : PREVIEW only (always safe to run) ----
+# Lists untracked + ignored files in repo root. NEVER deletes.
 gclean() {
   if ! _git_need_repo; then return 1; fi
-  echo -e "${G_RED}⚠ DESTRUCTIVE${G_RST}"
-  echo -e "${G_DIM}untracked + ignored files in repo root:${G_RST}"
+  echo -e "${G_CYAN}preview — untracked + ignored files in repo root:${G_RST}"
   git -C "$REPO_ROOT" clean -ndx
-  echo ""
-  echo -e "${G_YEL}to actually delete, run: gclean!${G_RST}"
 }
 
-gclean!() {
+# ---- gcleanx : ⚠ DESTRUCTIVE — require 2-step confirmation ----
+# SAFETY: refuses if any target is a critical config dir
+# (.stfolder, .vscode, .git, .obsidian, .syncthing).
+# This guard exists because git clean -x will happily remove
+# .stfolder/ and break Syncthing sync, or .vscode/ and kill
+# editor settings. Those are NEVER build artifacts.
+gcleanx() {
   if ! _git_need_repo; then return 1; fi
-  echo -e "${G_RED}⚠ removing untracked + ignored files${G_RST}"
+
+  echo -e "${G_RED}⚠ DESTRUCTIVE: git clean -fdx (untracked + ignored)${G_RST}"
+  echo -e "${G_DIM}preview:${G_RST}"
+  local preview
+  preview="$(git -C "$REPO_ROOT" clean -ndx)"
+  if [[ -z "$preview" ]]; then
+    echo -e "${G_GRN}✓ nothing to clean${G_RST}"
+    return 0
+  fi
+  echo "$preview"
+  echo ""
+
+  # Safety guard — refuse if critical paths appear in target list.
+  # Word boundary: only match exact dir/file names like ".git" or ".gitignore"
+  # must NOT be treated as ".git" (the word "ignore" must not match).
+  # We use `grep -E` with explicit boundaries.
+  local dangerous_pattern='(^\s*Would remove (\.stfolder|\.stversions|\.vscode|\.git|\.obsidian|\.syncthing)/|\s\.git/?$|\sjoe\.sh\.bak)'
+  if echo "$preview" | grep -qE "$dangerous_pattern"; then
+    echo -e "${G_RED}✗ ABORTED — critical paths in target list:${G_RST}"
+    echo "$preview" | grep -E "$dangerous_pattern" | sed 's/^/    /'
+    echo ""
+    echo -e "${G_YEL}these are NOT build artifacts. If you really mean it,${G_RST}"
+    echo -e "${G_YEL}remove them manually with: rm -rf <path>${G_RST}"
+    return 2
+  fi
+
+  # 2-step confirmation
+  local ans1 ans2
+  echo -e "${G_YEL}Type 'yes' to continue:${G_RST} \c"
+  read -r ans1
+  [[ "$ans1" == "yes" ]] || { echo "aborted"; return 1; }
+
+  echo -e "${G_RED}Last chance — type the literal word 'delete':${G_RST} \c"
+  read -r ans2
+  [[ "$ans2" == "delete" ]] || { echo "aborted"; return 1; }
+
   git -C "$REPO_ROOT" clean -fdx
+  local rc=$?
+  if [[ $rc -eq 0 ]]; then
+    echo -e "${G_GRN}✓ cleaned${G_RST}"
+  else
+    echo -e "${G_RED}✗ failed (rc=$rc)${G_RST}"
+  fi
+  return $rc
 }
+
+# Backward-compat: gclean! → gcleanx (so old muscle memory still
+# hits the safe path; new name makes the danger explicit).
+# NOTE: defined as a FUNCTION (not alias) — zsh expands aliases at parse
+# time, so `alias gclean!` followed by `gclean!()` would fail with
+# "defining function based on alias". Function name works in bash + zsh.
+gclean!() { gcleanx "$@"; }
 
 # ---- help ----
 ghelp() {
@@ -250,8 +303,9 @@ git helpers (Alpha SSOT)
   gundo         soft reset HEAD~1
   gstash [msg]  stash with optional message
   gpop          pop last stash
-  gclean        preview untracked+ignored files
-  gclean!       actually delete them
+  gclean        preview untracked+ignored (safe — never deletes)
+  gcleanx       DESTRUCTIVE — 2-step confirm + safety guard
+                (refuses if .stfolder/.vscode/.git in target list)
   ghelp         this help
 
 workflow (most common):
