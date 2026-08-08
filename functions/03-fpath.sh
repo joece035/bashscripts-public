@@ -69,13 +69,34 @@ slink_() {
     # -- ไฟล์จริงจะย้ายไปอยู่ใน sd card และสร้าง link มาแทนที่ตัวเอง
 }
 
-ssh_kadd(){
-  #-- function นี้เอาไว้เวลาที่ต้องการจะเพิ่ม public ssh key เครื่องที่ต้องการเชื่อมไป ลงในไฟล์ authorized_keys
-  #-- public ssh key ที่ต้องการจะเพิ่ม รัน cat ~/.ssh/id_ed25519.pub ที่เครื่องปลายทาง แล้ว copy มา
-    local pubkey="${1:?SELECT PUBLIC KEY}"
-    [[ -d $HOME/.ssh ]] || mkdir -p "$HOME/.ssh"
-    chmod 700 "$HOME/.ssh"
-    echo "${pubkey}" >> "$HOME/.ssh/authorized_keys" &&
-    chmod 600 "$HOME/.ssh/authorized_keys"
-    echo "done adding ssh key" 
+
+ssh_kgen_(){
+  #-- สร้าง public/private key หากยังไม่มี
+  local machine="${1:?SELECT machine}"
+  local keyfile="$HOME/.ssh/id_ed25519_${machine}"
+  
+  if [[ -f "$keyfile" ]]; then
+    echo "SSH key already exists at $keyfile"
+  else
+    ssh-keygen -t ed25519 -C "${machine}" -f "${keyfile}"
+  fi
+  cat "${keyfile}.pub"
+}
+
+ssh_kadd_(){
+  #-- เพิ่ม Public Key ลงใน authorized_keys ของเครื่องปลายทาง (ป้องกันการเพิ่มซ้ำ)
+  local pubkey="${1:?SELECT PUBLIC KEY}"
+  local auth_file="$HOME/.ssh/authorized_keys"
+
+  [[ -d "$HOME/.ssh" ]] || mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  touch "$auth_file"
+  chmod 600 "$auth_file"
+
+  if grep -qF "$pubkey" "$auth_file"; then
+    echo "Key already exists in $auth_file"
+  else
+    echo "${pubkey}" >> "$auth_file"
+    echo "done adding ssh key"
+  fi
 }
