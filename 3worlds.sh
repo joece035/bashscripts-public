@@ -84,7 +84,7 @@ _rsync_from() {
 tm()  { _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" "$@"; }
 
 # mumu — SSH into Termux on MuMuPlayer (uses dedicated key id_ed25519_mumu)
-mumu() {
+bst() {
   local key="${HOME}/.ssh/id_ed25519_mumu"
   [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
   ssh -i "$key" -p "${NODE_MUMU_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \

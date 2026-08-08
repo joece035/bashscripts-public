@@ -97,9 +97,12 @@ if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
             sed -i 's/\r$//' "$_f"
             _crlf_count=$((_crlf_count+1))
         done <<< "$_crlf_files"
-        echo "⚠️  CRLF auto-fixed: ${_crlf_count} file(s) → LF (มาจากเครื่องอื่น/Windows)"
+        # Send to STDERR (not STDOUT) so Powerlevel10k instant prompt
+        # is not disturbed — p10k flags ANY stdout during init as a
+        # problem and prints a multi-line warning to the user.
+        echo "⚠️  CRLF auto-fixed: ${_crlf_count} file(s) → LF (มาจากเครื่องอื่น/Windows)" >&2
     fi
-    
+
 fi
 
 # ── Step 2: Source all modules using SCRIPTS_PATH ──
@@ -118,7 +121,12 @@ if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l &>/dev/null; then
 fi
 if command -v pgrep >/dev/null 2>&1; then
     if ! pgrep -x "sshd" >/dev/null 2>&1; then
-        sshd >/dev/null 2>&1 || true
+        sshd >/dev/null 2>&1 && cn 10 b "SSH Daemon started successfully." >&2 || cn 9 b "Failed to start sshd." >&2
+    else
+        # STDOUT-quiet: send ssh status to STDERR only so Powerlevel10k
+        # instant prompt (sourced first in .zshrc) is not invalidated.
+        # p10k is strict — ANY stdout during init triggers a warning.
+        cn 10 bi "ssh activated" >&2
     fi
 else
     # No pgrep (git-bash / WSL busybox) — try service, fall back silently
@@ -166,8 +174,15 @@ fi
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 # m a 50  # offset=50 cols from left (was 0=full-center, looked like 'hang' on slow shells)
 
-syncthing_auto >/dev/null 2>&1
-rc_del >/dev/null 2>&1
+# Init-time startup tasks — wrapped in { ... } >&2 so any console
+# output from syncthing_auto / rc_del goes to STDERR only.
+# Required by Powerlevel10k instant prompt (sourced first in .zshrc):
+# p10k is strict — ANY stdout during zsh init invalidates the
+# instant prompt and prints a multi-line warning to the user.
+{
+  syncthing_auto
+  rc_del
+} >&2
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
 # after each command, but joe.sh uses unset variables (dbp, $2, etc.)

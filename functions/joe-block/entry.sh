@@ -21,14 +21,22 @@
 
 # ── Source all modules (idempotent) ──────────────────────────
 _blk_source_modules() {
-    local _D
-    # Cross-shell: BASH_SOURCE (bash) or ${funcfiletrace[1]} (zsh)
-    if [[ -n "${BASH_SOURCE[0]:-}" ]]; then
-        _D="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/block"
-    elif [[ -n "${funcfiletrace[1]:-}" ]]; then
-        _D="$(cd "$(dirname "${funcfiletrace[1]}")" && pwd)/block"
+    local _D _self=""
+    # Cross-shell detection of the file where THIS function was defined:
+    #   bash : BASH_SOURCE[0] is the definition file (native bash).
+    #   zsh  : ${funcsourcetrace[1]} is "file:lineno" of the definition
+    #          site — exact zsh equivalent of bash's BASH_SOURCE[0].
+    #          Strip the ":lineno" suffix with %%:* to get the path.
+    #   both : fallback to SCRIPTS_PATH (SSOT).
+    if [[ -n "${BASH_VERSION:-}" && -n "${BASH_SOURCE[0]:-}" ]]; then
+        _self="${BASH_SOURCE[0]}"
+    elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
+        _self="${funcsourcetrace[1]%%:*}"
+    fi
+    if [[ -n "$_self" ]]; then
+        _D="$(cd "$(dirname "$_self")" && pwd)/block"
     else
-        # Fallback: assume functions/joe-block/block/ relative to SSOT
+        # Last resort: assume functions/joe-block/block/ relative to SSOT
         _D="${SCRIPTS_PATH:-$HOME/bashscripts}/functions/joe-block/block"
     fi
     # Export _BLOCK_ROOT so theme.sh can use it (avoids BASH_SOURCE issue in zsh)

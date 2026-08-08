@@ -228,7 +228,7 @@ ownership_table() {
     printf '%-10s %-14s %-14s %s\n' "DEVICE" "CURRENT" "EXPECTED" "STATUS"
     printf '%-10s %-14s %-14s %s\n' "----------" "--------------" "--------------" "------"
     for dev in $(syncctl_list_devices); do
-        local type expected status role
+        local type expected dev_status role
         type="$(get_folder_type "$dev")"
         if [[ -n "$master" && "$dev" == "$master" ]]; then
             expected="sendonly"
@@ -238,10 +238,10 @@ ownership_table() {
             role="REPLICA"
         fi
         if [[ "$type" == "$expected" ]]; then
-            status="✓ ok"
+            dev_status="✓ ok"
         else
-            status="✗ MISMATCH"
+            dev_status="✗ MISMATCH"
         fi
-        printf '%-10s %-14s %-14s %s\n' "$dev" "$type" "$expected" "$status ($role)"
+        printf '%-10s %-14s %-14s %s\n' "$dev" "$type" "$expected" "$dev_status ($role)"
     done
 }

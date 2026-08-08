@@ -924,6 +924,51 @@ stc(){
                               syncctl transfer "${device}" --reason "edited by this device" ;;
             -w|--who|w)       cn 198 bi "$(syncctl who | cut -d" " -f2)" ;;
             *)                syncctl "$@" ;;
-        esac
- 
+    esac
+
+}
+
+# NOTE: A stray "symlink" line used to live here — it was a function
+# definition that got deleted but the bare name remained, which zsh
+# then tried to execute as a system command, producing this on Termux:
+#   "No command symlink found, did you mean: ..."
+# That also broke Powerlevel10k instant prompt (any console output
+# during zsh init does). Removed 2026-08-08.
+
+#---syncctl shortcut---#
+sc() {
+  # Resolve SSOT (bashscripts repo) — fallback chain because $SSOT
+  # may not be set yet on Termux/acodex depending on boot order.
+  local _ssot=""
+  for p in \
+      "${SSOT:-}" \
+      "$HOME/bashscripts" \
+      "$SCRIPTS_PATH" \
+      "/home/usercivenz/bashscripts" \
+      "/data/data/com.termux/files/home/bashscripts"; do
+    [[ -n "$p" && -d "$p" ]] && { _ssot="$p"; break; }
+  done
+
+  if [[ -z "$_ssot" ]]; then
+    cn 196 bi "sc: cannot locate bashscripts repo (SSOT empty)"
+    return 1
+  fi
+
+  if [[ -f "$_ssot/tools/syncctl/syncctl" ]]; then
+    source "$_ssot/tools/syncctl/syncctl" 2>/dev/null
+  else
+    cn 220 bi "syncctl.sh not found in $_ssot/tools/"
+    return 1
+  fi
+
+  if [[ $# -eq 0 ]]; then
+    syncctl --help
+    return 0
+  fi
+  case "$1" in
+     tm) syncctl transfer termux --reason "edit on termux via acodex" ;;
+    wsl) syncctl transfer wsl --reason "edit on wsl" ;;
+    win) syncctl transfer windows --reason "edit on windows" ;;
+      *) stc "$@" ;;
+  esac
 }

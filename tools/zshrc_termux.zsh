@@ -92,6 +92,8 @@ else
     bindkey '^[[B' down-line-or-history 2>/dev/null
 fi
 
+GITSTATUS_LOG_LEVEL=DEBUG
+
 # -- Powerlevel10k finalize ------------------------------------
 (( ! ${+functions[p10k]} )) || p10k finalize
 # pnpm
