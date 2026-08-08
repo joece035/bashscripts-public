@@ -13,6 +13,11 @@ setopt KSH_ARRAYS 2>/dev/null       # 0-indexed arrays like bash
 setopt NO_NOMATCH 2>/dev/null       # Don't error on unmatched globs
 
 # ── 2. BASH_SOURCE array shim for ZSH ──
+# bash: BASH_SOURCE[0] inside a function = file where the function was defined.
+# zsh:  equivalent is funcsourcetrace[1] = "file:lineno" of the function's
+#       definition site. We initialize BASH_SOURCE[0] to the current file
+#       as a fallback for top-level code (where funcsourcetrace is unset).
+#       Functions should use ${funcsourcetrace[1]%%:*} (see entry.sh).
 if [[ -n "${ZSH_VERSION:-}" ]]; then
     typeset -g -a BASH_SOURCE 2>/dev/null
     BASH_SOURCE=("${(%):-%x}")

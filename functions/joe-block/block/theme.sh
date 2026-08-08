@@ -45,15 +45,18 @@ else
 fi
 
 # Evaluate root path at sourcing time
-# Priority: _BLOCK_ROOT from entry.sh > BASH_SOURCE > funcfiletrace > fallback
+# bash: BASH_SOURCE[0] = file where this code was sourced from.
+# zsh:  ${funcsourcetrace[1]} = "file:lineno" (exact equivalent).
+# Priority: _BLOCK_ROOT > BASH_SOURCE[0] (bash) / funcsourcetrace (zsh) > fallback
 if [[ -n "${_BLOCK_ROOT:-}" ]]; then
     # Already set by entry.sh — use as-is
     _THEME_DIR="${_BLOCK_ROOT}/functions/joe-block/block"
-elif [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+elif [[ -n "${BASH_VERSION:-}" && -n "${BASH_SOURCE[0]:-}" ]]; then
     _THEME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     _BLOCK_ROOT="${_THEME_DIR}/../../.."
-elif [[ -n "${funcfiletrace[1]:-}" ]]; then
-    _THEME_DIR="$(cd "$(dirname "${funcfiletrace[1]}")" && pwd)"
+elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
+    # funcsourcetrace[1] = "file:lineno" — strip :lineno with %%:*
+    _THEME_DIR="$(cd "$(dirname "${funcsourcetrace[1]%%:*}")" && pwd)"
     _BLOCK_ROOT="${_THEME_DIR}/../../.."
 else
     _THEME_DIR="${SCRIPTS_PATH:-$HOME/bashscripts}/functions/joe-block/block"

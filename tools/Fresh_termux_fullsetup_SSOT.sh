@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/data/data/com.termux/files/usr/bin/bash
 # ============================================================
 #  Fresh_termux_fullsetup_SSOT.sh
 #  ───────────────────────────────────────────────────────────
@@ -6,27 +6,13 @@
 #  Sets up EVERYTHING the SSOT (~/bashscripts) ecosystem needs
 #  and switches the login shell to ZSH.
 #
-#  FRESH PHONE (private repo — pick one way to get the script):
-#    Option A (git clone, needs your GitHub token or SSH key):
-#        pkg install -y git
-#        git clone https://github.com/joece035/bashscripts.git
-#        bash ~/bashscripts/tools/Fresh_termux_fullsetup_SSOT.sh
-#    Option B (script already transferred via scp/Syncthing/USB):
-#        bash Fresh_termux_fullsetup_SSOT.sh
-#
-#  The script itself clones ~/bashscripts over SSH and pauses
-#  for you to register the new device's SSH key with GitHub.
-#  If SSH isn't an option, let Syncthing deliver ~/bashscripts
-#  from another device and re-run — stages are idempotent.
+#  Run on the phone:
+#      bash Fresh_termux_fullsetup_SSOT.sh
 #
 #  Idempotent: safe to re-run; skips steps already done.
 #
 #  NOTE: This script runs BEFORE 01-colors.sh exists, so it
 #  cannot use c()/cn(). Colors via `tput` only (no inline \e[).
-#
-#  NO HARDCODED PATHS: everything derives from $HOME and $PREFIX
-#  (both set by Termux itself). Repo URL is overridable:
-#      SSOT_REPO_SSH=git@github.com:you/repo.git bash script.sh
 # ============================================================
 
 set -euo pipefail 2>/dev/null || setopt PIPE_FAIL 2>/dev/null
@@ -48,28 +34,18 @@ ok()   { printf '   %s✓%s %s\n' "$_G" "$_R" "$*"; }
 warn() { printf '   %s!%s %s\n' "$_Y" "$_R" "$*" >&2; }
 die()  { printf '%s✗%s %s\n' "$_R_C$_B" "$_R" "$*" >&2; exit 1; }
 
-# ── Config (defaults overridable via env) ──
-SSOT_DIR="${SSOT_DIR:-$HOME/bashscripts}"
-SSOT_REPO_SSH="${SSOT_REPO_SSH:-ssh://git@github.com/joece035/bashscripts.git}"
-ZSH_CUSTOM="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}"
-GIT_USER_NAME="${GIT_USER_NAME:-sitthawat035}"
-GIT_USER_EMAIL="${GIT_USER_EMAIL:-sitthawat035@users.noreply.github.com}"
-
-# ── Never prompt for credentials ──
-# git: fail instead of asking GitHub username/password (e.g. if a URL
-#      rewrite forces HTTPS). ssh: BatchMode kills ALL interactive prompts
-#      (host-key yes/no, passphrase, password); accept-new trusts GitHub
-#      keys silently on first contact.
-export GIT_TERMINAL_PROMPT=0
-export GIT_SSH_COMMAND="ssh -o BatchMode=yes -o StrictHostKeyChecking=accept-new -o ConnectTimeout=10"
+# ── Paths (canonical — match joe.sh Step 2 TERMUX branch) ──
+TERMUX_HOME="/data/data/com.termux/files/home"
+SSOT_DIR="$TERMUX_HOME/bashscripts"
+ZSH_CUSTOM="${ZSH_CUSTOM:-$TERMUX_HOME/.oh-my-zsh/custom}"
 
 # ============================================================
 # STAGE 0 — Preflight
 # ============================================================
 log "Stage 0: Preflight"
-[[ -n "${PREFIX:-}" && -d "$PREFIX" ]] || die "PREFIX not set — not running inside Termux."
+[[ -d /data/data/com.termux ]] || die "Not running inside Termux (no /data/data/com.termux)."
 command -v pkg >/dev/null 2>&1 || die "pkg manager not found."
-ok "Termux detected ($PREFIX)."
+ok "Termux detected."
 
 # ============================================================
 # STAGE 1 — Storage access (so Syncthing/SDCARD paths work)
@@ -85,11 +61,14 @@ fi
 # ============================================================
 # STAGE 1.5 — Clear stale apt/dpkg locks (Termux apt can hang
 #   for 10+ min if a previous pkg install was interrupted)
+#   NOTE: wrapped in set +e — fuser/psmisc may not be installed
+#   yet on a fresh Termux, so we use lsof fallback or just
+#   force-remove the locks (safe on a fresh install).
 # ============================================================
 log "Stage 1.5: Check for stale apt locks"
 set +e
-DPKG_DIR="$PREFIX/var/lib/dpkg"
-APT_ARCHIVES="$PREFIX/var/cache/apt/archives"
+DPKG_DIR="/data/data/com.termux/files/usr/var/lib/dpkg"
+APT_ARCHIVES="/data/data/com.termux/files/usr/var/cache/apt/archives"
 
 # Try to find a process holding the lock (fuser → lsof → none)
 _lock_pid=""
@@ -169,6 +148,11 @@ ok "Packages updated."
 #   curl (3worlds, syncctl), jq (syncctl), rsync (fm), python3
 #   (block/utils, syncctl fallback), git (theme), ssh/scp (3worlds),
 #   syncthing (3worlds), tailscale (3worlds, status), node (openclaw).
+#
+#   NOTE on Termux packages:
+#   - sed/grep are GNU by default (no gnu-sed/gnugrep names)
+#   - tailscale requires root-repo — installed separately below
+#   - psmisc (fuser) may not exist — installed with || true
 # ============================================================
 log "Stage 3: Install SSOT dependencies"
 PKGS=(
@@ -215,7 +199,7 @@ fi
 # ============================================================
 log "Stage 5: Oh-My-Zsh"
 export RUNZSH=no KEEP_ZSHRC=yes CHSH=no
-if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+if [[ ! -d "$TERMUX_HOME/.oh-my-zsh" ]]; then
     sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
     ok "Oh-My-Zsh installed."
 else
@@ -243,85 +227,46 @@ clone_if_absent https://github.com/marlonrichert/zsh-autocomplete "$ZSH_CUSTOM/p
 clone_if_absent https://github.com/zsh-users/zsh-autosuggestions   "$ZSH_CUSTOM/plugins/zsh-autosuggestions"
 clone_if_absent https://github.com/zsh-users/zsh-syntax-highlighting "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting"
 clone_if_absent https://github.com/zsh-users/zsh-history-substring-search "$ZSH_CUSTOM/plugins/zsh-history-substring-search"
-
 # ============================================================
-# STAGE 7 — SSOT repo (~/bashscripts)
-#   Fresh device: generate SSH key, PAUSE for GitHub
-#   registration, then clone. If a clone already exists
-#   (Syncthing sync), just set git identity and move on.
+# STAGE 7 — Check SSOT repo (~/bashscripts)
+#   If Syncthing already synced ~/bashscripts, skip git clone.
 # ============================================================
-log "Stage 7: SSOT repo"
-SSH_KEY="$HOME/.ssh/id_ed25519"
+log "Stage 7: Check SSOT repo"
 
 if [[ -d "$SSOT_DIR" && -f "$SSOT_DIR/joe.sh" ]]; then
-    ok "SSOT repo already present at $SSOT_DIR (Syncthing or previous clone)"
+    ok "SSOT repo already present at $SSOT_DIR (via Syncthing)"
 else
-    # ── broken-clone recovery: a half-cloned repo from an interrupted run
-    #    (e.g. a previous bootstrap died at a credential prompt) would block
-    #    re-cloning — move it aside instead of deleting (Syncthing safety).
-    if [[ -d "$SSOT_DIR/.git" && ! -f "$SSOT_DIR/joe.sh" ]]; then
-        warn "Incomplete clone found at $SSOT_DIR — moving it aside..."
-        mv "$SSOT_DIR" "$SSOT_DIR.broken.$(date +%s)"
-        ok "Moved aside; will re-clone cleanly."
-    fi
-
-    # ── key generation (fresh device) ──
+    SSH_KEY="$TERMUX_HOME/.ssh/id_ed25519"
     if [[ ! -f "$SSH_KEY" ]]; then
         log "  Generating SSH key..."
-        mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
-        ssh-keygen -t ed25519 -C "termux@$(hostname)" -f "$SSH_KEY" -N "" >/dev/null 2>&1
+        ssh-keygen -t ed25519 -C "termux@$(hostname)" -f "$SSH_KEY" -N "" 2>&1
         ok "SSH key generated."
-    else
-        ok "SSH key already present."
     fi
 
-    _PUBKEY="$(cat "$SSH_KEY.pub" 2>/dev/null)"
-    if [[ -z "$_PUBKEY" ]]; then
-        warn "No public key found — clone will need Syncthing or a manual git clone."
-    fi
-
-    # ── clone attempt loop (SSH, never prompts; pauses once for key registration) ──
-    _cloned=0
-    for _attempt in 1 2; do
-        if git clone "$SSOT_REPO_SSH" "$SSOT_DIR" 2>/dev/null; then
-            _cloned=1
-            break
+    if command -v ssh-agent >/dev/null 2>&1; then
+        _agent_out="$(ssh-agent -s 2>/dev/null)" || true
+        if [[ -n "$_agent_out" ]]; then
+            eval "$_agent_out" >/dev/null 2>&1
+            ssh-add "$SSH_KEY" 2>/dev/null || true
+            ok "SSH agent running."
         fi
-        if [[ "$_attempt" -eq 1 && -n "$_PUBKEY" ]]; then
-            echo
-            echo "  GitHub can't authenticate this device yet."
-            echo "  Add the SSH key, then I'll retry (no username/password will ever be asked):"
-            echo "      URL : https://github.com/settings/ssh/new"
-            echo "      Key : $_PUBKEY"
-            echo
-            if [[ -t 0 ]]; then
-                read -r -p "  Press Enter when done (or Ctrl-C to use Syncthing instead)... " _discard
-            else
-                warn "Non-interactive run — add the key and re-run, or use Syncthing."
-                break
-            fi
-        else
-            break
-        fi
-    done
-
-    if [[ "$_cloned" -eq 0 ]]; then
-        warn "SSOT clone skipped — deliver ~/bashscripts via Syncthing, then re-run."
     fi
-fi
 
-# ── git identity (fresh machine) — always ensure ──
-if [[ -f "$SSOT_DIR/joe.sh" ]]; then
-    git config --global user.name  "$GIT_USER_NAME"
-    git config --global user.email "$GIT_USER_EMAIL"
-    ok "Git identity set globally: $GIT_USER_NAME <$GIT_USER_EMAIL>"
+    if ! ssh -T git@github.com -o StrictHostKeyChecking=accept-new -o ConnectTimeout=5 2>&1 | grep -q "successfully authenticated"; then
+        warn "GitHub SSH key not registered — continuing via Syncthing setup..."
+    fi
+
+    if [[ ! -d "$SSOT_DIR/.git" ]]; then
+        git clone git@github.com:sitthawat035/bashscripts.git "$SSOT_DIR" 2>/dev/null \
+            || warn "Git clone skipped — relies on Syncthing sync"
+    fi
 fi
 
 # ============================================================
 # STAGE 8 — ~/.env  (JOE_ENV pin — joe.sh Step 0 reads this)
 # ============================================================
 log "Stage 8: Write ~/.env"
-ENV_FILE="$HOME/.env"
+ENV_FILE="$TERMUX_HOME/.env"
 if ! grep -q '^export JOE_ENV=' "$ENV_FILE" 2>/dev/null; then
     cat >> "$ENV_FILE" <<'EOF'
 # Set by Fresh_termux_fullsetup_SSOT.sh
@@ -333,13 +278,13 @@ else
 fi
 
 # ============================================================
-# STAGE 9 — Wire ~/.zshrc to SSOT zshrc_termux.zsh (symlink)
+# STAGE 9 -- Wire ~/.zshrc to SSOT zshrc_termux.zsh (symlink)
 #   SSOT template lives in bashscripts/tools/zshrc_termux.zsh
 #   which is synced from WSL master via Syncthing.
 #   On Termux: ~/.zshrc is a symlink -> SSOT (read-only on device).
 # ============================================================
 log "Stage 9: Wire ~/.zshrc -> zshrc_termux.zsh (SSOT symlink)"
-ZSHRC_DEST="$HOME/.zshrc"
+ZSHRC_DEST="$TERMUX_HOME/.zshrc"
 ZSHRC_SRC="$SSOT_DIR/tools/zshrc_termux.zsh"
 
 if [[ ! -f "$ZSHRC_SRC" ]]; then
@@ -355,11 +300,13 @@ else
     ok "~/.zshrc -> $ZSHRC_SRC (SSOT symlink)"
 fi
 
+
+
 # ============================================================
 # STAGE 10 — termux-style (optional theme picker)
 # ============================================================
 log "Stage 10: termux-style (optional)"
-TS_DIR="$HOME/termux-style"
+TS_DIR="$TERMUX_HOME/termux-style"
 if [[ ! -d "$TS_DIR" ]]; then
     git clone https://github.com/adi1090x/termux-style "$TS_DIR" && (cd "$TS_DIR" && ./install) \
         || warn "termux-style install failed (non-fatal)."
@@ -374,11 +321,11 @@ fi
 log "Stage 11: SSH daemon"
 if command -v sshd >/dev/null 2>&1; then
     # Set a password for the Termux user (needed for SSH from other nodes)
-    if [[ ! -f "$HOME/.ssh/authorized_keys" ]]; then
-        mkdir -p "$HOME/.ssh"
-        chmod 700 "$HOME/.ssh"
-        touch "$HOME/.ssh/authorized_keys"
-        chmod 600 "$HOME/.ssh/authorized_keys"
+    if [[ ! -f "$TERMUX_HOME/.ssh/authorized_keys" ]]; then
+        mkdir -p "$TERMUX_HOME/.ssh"
+        chmod 700 "$TERMUX_HOME/.ssh"
+        touch "$TERMUX_HOME/.ssh/authorized_keys"
+        chmod 600 "$TERMUX_HOME/.ssh/authorized_keys"
     fi
     passwd -e 2>/dev/null || warn "Set a password manually: passwd"
     ok "SSH ready — start with 'sshd' (joe.sh auto-starts it on boot)."
@@ -403,3 +350,4 @@ printf '        %sst-register-all%s\n' "$_B" "$_R"
 printf '     so the mesh re-learns this phone new ID.\n'
 printf '  5. (Optional) %stailscale up%s to rejoin the tailnet.\n' "$_B" "$_R"
 printf '\n'
+

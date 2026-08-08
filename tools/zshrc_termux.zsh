@@ -71,6 +71,10 @@ SSOT_PATH="${SSOT:-$HOME/bashscripts}"
 
 # -- Powerlevel10k config --------------------------------------
 [[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
+# .p10k.zsh (p10k configure) declares POWERLEVEL9K_INSTANT_PROMPT=verbose,
+# which would OVERRIDE the quiet above and re-enable the console-output
+# warning at finalize. Re-assert quiet AFTER sourcing it.
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 
 # -- Safe UP/DOWN keybindings ----------------------------------
 if ! autoload +X -U up-line-or-beginning-search 2>/dev/null; then
@@ -94,10 +98,10 @@ fi
 
 # -- Powerlevel10k finalize ------------------------------------
 (( ! ${+functions[p10k]} )) || p10k finalize
-# pnpm
+
+# -- pnpm (global bin dir; removed by an accidental WIP edit 2026-08-08) --
 export PNPM_HOME="/data/data/com.termux/files/home/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
 esac
-# pnpm end

@@ -12,18 +12,36 @@
 # When sourced, defines functions only. When run directly, calls main "$@".
 # ============================================================
 
+# Save nounset state so sourcing does NOT pollute the interactive shell
+_syncctl_was_nounset=0
+[[ -o nounset ]] 2>/dev/null && _syncctl_was_nounset=1 || true
 set -u
 
 
 
 SYNCCTL_DEBUG="${SYNCCTL_DEBUG:-0}"
 # Portable script path detection (bash: BASH_SOURCE, zsh: $0 or funcfiletrace)
-if [[ -n "${BASH_VERSION:-}" ]]; then
-    SYNCCTL_SELF="$(readlink -f "${BASH_SOURCE[0]}")"
-else
-    # $0 = script name when sourced; funcfiletrace[1] = calling script
-    SYNCCTL_SELF="${0:A}"  # zsh: full path of current script
-fi
+# NOTE: zsh-only prompt-expansion forms (${(%):-%x}) were removed here —
+# they are a PARSE-TIME "bad substitution" error in bash, which broke
+# `syncctl` in Git-Bash/WSL-bash. ${0:-} + the absolute fallbacks below
+# cover every real environment (zsh direct, zsh sourced via joe.sh, bash).
+SYNCCTL_SELF=""
+_cands=(
+    "${BASH_SOURCE[0]:-}"
+    "${0:-}"
+    "${SSOT:-}/tools/syncctl/syncctl"
+    "${SCRIPTS_PATH:-}/tools/syncctl/syncctl"
+    "$HOME/bashscripts/tools/syncctl/syncctl"
+    "/data/data/com.termux/files/home/bashscripts/tools/syncctl/syncctl"
+    "/home/usercivenz/bashscripts/tools/syncctl/syncctl"
+)
+for _cand in "${_cands[@]}"; do
+    if [[ -n "$_cand" && -f "$_cand" && "$_cand" == */syncctl ]]; then
+        SYNCCTL_SELF="$(readlink -f "$_cand" 2>/dev/null || echo "$_cand")"
+        break
+    fi
+done
+unset _cands _cand
 SYNCCTL_LIB_DIR="$(cd "$(dirname "$SYNCCTL_SELF")" && pwd)/lib"
 
 # Try to load 00-env.sh from common locations
@@ -125,7 +143,7 @@ cmd_lock() {
 }
 
 cmd_unlock() {
-    lock_release
+    lock_release force
     echo "✓ Lock released"
 }
 
@@ -243,11 +261,32 @@ main() {
     esac
 }
 
+# Define wrapper function so `syncctl` command is available when sourced into shell
+syncctl() {
+    # Lock-holding commands run in a child bash process: their auto-release
+    # relies on `trap 'lock_release' RETURN`, which is BASH-ONLY — in zsh the
+    # trap fails ("undefined signal: RETURN") and every transfer/init leaks
+    # the lock inside the live shell (later surfacing as a stale lock).
+    # Read-only commands run in-process for speed.
+    case "${1:-}" in
+        transfer|init|fix-types|lock|unlock)
+            bash "$SYNCCTL_SELF" "$@"
+            ;;
+        *)
+            main "$@"
+            ;;
+    esac
+}
+
 # Only run main when executed directly, not when sourced (e.g. from joe.sh)
-# Portable: bash uses BASH_SOURCE, zsh uses $0 vs funcfiletrace
 if [[ -n "${BASH_VERSION:-}" ]]; then
     [[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"
 else
-    # In zsh, $0 is the script name when sourced; check if we're the entry point
-    [[ "$ZSH_EVAL_CONTEXT" != *:file* ]] && main "$@"
+    # In zsh, ZSH_EVAL_CONTEXT contains ':file' when sourced (safe default 'file')
+    # prevents main() from running when ZSH_EVAL_CONTEXT is unset (Termux edge case)
+    [[ "${ZSH_EVAL_CONTEXT:-file}" != *:file* ]] && main "$@"
 fi
+
+# Restore nounset to its original state (don't pollute the interactive shell)
+[[ "${_syncctl_was_nounset:-0}" == "0" ]] && set +u
+unset _syncctl_was_nounset 2>/dev/null || true

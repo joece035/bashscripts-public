@@ -250,7 +250,7 @@ slink(){
    local tar="${2:?SELECT TARGET}"
    
    # 2. คัดลอกและแบ็คอัพ
-   cp -r "${src}" "$(dirname "${tar}")" && mv "${src}" "${src}bk"
+   cp -r "${src}" "${tar}" && mv "${src}" "${src}bk"
    
    # 3. สร้าง Symlink และแสดงผล (แก้เรื่องการซ้อน Quotes และคำผิดนิดหน่อย)
    ln -s "${tar}" "${src}" && echo "done symbolic link ${src} --> ${tar}"

@@ -55,6 +55,7 @@ export BRAVE_SEARCH_API_KEY="BSAfPRWzAVe_En3GTQ-cZHcy3MXk8hB"  # Replace with yo
 export BRAVE_API_KEY="${BRAVE_SEARCH_API_KEY}"
 export ALPHA_DIR="$msync/alpha-workspace"
 export alpha=${ALPHA_DIR}
+export storage="/storage/emulated/0/" # sdcrd
 # ============================================================  
 # Dynamic env switching
 # ============================================================
