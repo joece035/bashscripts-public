@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "command": "bash tools/agent-pre-commit.sh",
+        "timeout": 10
+      }
+    ]
+  }
+}

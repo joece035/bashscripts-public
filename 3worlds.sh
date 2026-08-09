@@ -30,7 +30,7 @@ _detect_world() {
     TERMUX)   printf 'termux' ;;
     WSL)      printf 'wsl' ;;
     GIT-BASH) printf 'git-bash' ;;
-    MUMU)     printf 'mumu' ;;
+    BST)     printf 'BST' ;;
     *)        printf 'unknown' ;;
   esac
 }
@@ -83,12 +83,12 @@ _rsync_from() {
 # tm — SSH into Termux (Android)
 tm()  { _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" "$@"; }
 
-# mumu — SSH into Termux on MuMuPlayer (uses dedicated key id_ed25519_mumu)
+# BST — SSH into Termux on BSTPlayer (uses dedicated key id_ed25519_BST)
 bst() {
-  local key="${HOME}/.ssh/id_ed25519_mumu"
+  local key="${HOME}/.ssh/id_ed25519_bst"
   [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
-  ssh -i "$key" -p "${NODE_MUMU_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
-      "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" "$@"
+  ssh -i "$key" -p "${NODE_BST_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
+      "${NODE_BST_USER}@${NODE_BST_HOST}" "$@"
 }
 
 # tw — SSH into Windows แล้วเปิด Git Bash (interactive)
@@ -197,11 +197,11 @@ fi
 
 managetm() {
   cn 141 b "--- 3-Worlds Commands ---"
-  cn 226   "SSH:"   ; echo "   tm | tw | wsl | tdb | mumu"
+  cn 226   "SSH:"   ; echo "   tm | tw | wsl | tdb | BST"
   cn 82    "cpw2t"  ; echo " : Copy WSL → Termux (Tab Complete)"
   cn 82    "cpt2w"  ; echo " : Copy Termux → WSL (Tab Complete)"
-  cn 82    "cpw2m"  ; echo " : Copy WSL → Mumu (scp)"
-  cn 82    "cpm2w"  ; echo " : Copy Mumu → WSL (scp)"
+  cn 82    "cpw2m"  ; echo " : Copy WSL → BST (scp)"
+  cn 82    "cpm2w"  ; echo " : Copy BST → WSL (scp)"
   cn 82    "mvw2t"  ; echo " : Move WSL → Termux"
   cn 82    "mvt2w"  ; echo " : Move Termux → WSL"
   cn 82    "push"   ; echo "  : Push local file to Termux (no overwrite)"
@@ -240,22 +240,22 @@ mvt2w() {
 }
 
 # ============================================================
-# MUMU FILE TRANSFER (WSL ↔ MuMuPlayer Termux)
-# Uses scp (Mumu has no rsync). Functions mirror cpw2t/cpt2w.
+# BST FILE TRANSFER (WSL ↔ BSTPlayer Termux)
+# Uses scp (BST has no rsync). Functions mirror cpw2t/cpt2w.
 # ============================================================
 
-# cpw2m — Copy: WSL → Mumu
+# cpw2m — Copy: WSL → BST
 cpw2m() {
-  [[ $# -ne 2 ]] && { echo "Usage: cpw2m <local_src> <mumu_dst>"; return 1; }
-  echo "📤 WSL → Mumu: $1 → $2"
-  scp -P "${NODE_MUMU_PORT}" "$1" "${NODE_MUMU_USER}@${NODE_MUMU_HOST}:$2"
+  [[ $# -ne 2 ]] && { echo "Usage: cpw2m <local_src> <BST_dst>"; return 1; }
+  echo "📤 WSL → BST: $1 → $2"
+  scp -P "${NODE_BST_PORT}" "$1" "${NODE_BST_USER}@${NODE_BST_HOST}:$2"
 }
 
-# cpm2w — Copy: Mumu → WSL
+# cpm2w — Copy: BST → WSL
 cpm2w() {
-  [[ $# -ne 2 ]] && { echo "Usage: cpm2w <mumu_src> <local_dst>"; return 1; }
-  echo "📥 Mumu → WSL: $1 → $2"
-  scp -P "${NODE_MUMU_PORT}" "${NODE_MUMU_USER}@${NODE_MUMU_HOST}:$1" "$2"
+  [[ $# -ne 2 ]] && { echo "Usage: cpm2w <BST_src> <local_dst>"; return 1; }
+  echo "📥 BST → WSL: $1 → $2"
+  scp -P "${NODE_BST_PORT}" "${NODE_BST_USER}@${NODE_BST_HOST}:$1" "$2"
 }
 
 # Aliases
@@ -295,7 +295,7 @@ whichworld() {
   cn lb    "  WSL:        ${NODE_WSL_USER}@${NODE_WSL_HOST}"
   cn lg    "  Termux:     ${NODE_TERMUX_USER}@${NODE_TERMUX_HOST}"
   cn lm    "  Windows:    ${NODE_WIN_HOST}"
-  cn m     "  MumuPlayer: ${NODE_MUMU_USER}@${NODE_MUMU_HOST} (key: id_ed25519_mumu)"
+  cn m     "  BSTPlayer: ${NODE_BST_USER}@${NODE_BST_HOST} (key: id_ed25519_BST)"
 }
 
 # ============================================================
@@ -378,7 +378,7 @@ syncthing_auto() {
     TERMUX)   _st_autostart "TERMUX"   "${NODE_TERMUX_ST_URL}" "${NODE_TERMUX_ST_KEY}" "${NODE_TERMUX_ST_PORT}" ;;
     WSL)      _st_autostart "WSL"      "${NODE_WSL_ST_URL}"    "${NODE_WSL_ST_KEY}"    "${NODE_WSL_ST_PORT}"    ;;
     GIT-BASH) _st_autostart "GIT-BASH" "${NODE_WIN_ST_URL}"    "${NODE_WIN_ST_KEY}"    "${NODE_WIN_ST_PORT}"    ;;
-    MUMU)     _st_autostart "MUMU"     "${NODE_MUMU_ST_URL}"   "${NODE_MUMU_ST_KEY}"   "${NODE_MUMU_ST_PORT}"   ;;
+    BST)     _st_autostart "BST"     "${NODE_BST_ST_URL}"   "${NODE_BST_ST_KEY}"   "${NODE_BST_ST_PORT}"   ;;
   esac
 }
 
@@ -389,7 +389,7 @@ syncthing_status_() {
     TERMUX)   label="ST TERMUX"; target_url="${NODE_TERMUX_ST_URL}"; api_key="${NODE_TERMUX_ST_KEY}" ;;
     WSL)      label="ST WSL";    target_url="${NODE_WSL_ST_URL}";    api_key="${NODE_WSL_ST_KEY}"    ;;
     GIT-BASH) label="ST WIN";    target_url="${NODE_WIN_ST_URL}";    api_key="${NODE_WIN_ST_KEY}"    ;;
-    MUMU)     label="ST MUMU";   target_url="${NODE_MUMU_ST_URL}";   api_key="${NODE_MUMU_ST_KEY}"   ;;
+    BST)     label="ST BST";   target_url="${NODE_BST_ST_URL}";   api_key="${NODE_BST_ST_KEY}"   ;;
     *)        echo "🔄 SYNCTHING : ❓ N/A"; return ;;
   esac
 
@@ -425,7 +425,7 @@ check_syncthing() {
   _st_fetch "TERMUX"  "${NODE_TERMUX_ST_URL}" "${NODE_TERMUX_ST_KEY}"
   _st_fetch "WSL    " "${NODE_WSL_ST_URL}"    "${NODE_WSL_ST_KEY}"
   _st_fetch "WIN"     "${NODE_WIN_ST_URL}"    "${NODE_WIN_ST_KEY}"
-  _st_fetch "MUMU"    "${NODE_MUMU_ST_URL}"   "${NODE_MUMU_ST_KEY}"
+  _st_fetch "BST"    "${NODE_BST_ST_URL}"   "${NODE_BST_ST_KEY}"
 
   c 51 b "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
 }
@@ -440,7 +440,7 @@ _get_syncthing_raw() {
     TERMUX)   target_url="${NODE_TERMUX_ST_URL}"; api_key="${NODE_TERMUX_ST_KEY}" ;;
     WSL)      target_url="${NODE_WSL_ST_URL}";    api_key="${NODE_WSL_ST_KEY}"    ;;
     GIT-BASH) target_url="${NODE_WIN_ST_URL}";    api_key="${NODE_WIN_ST_KEY}"    ;;
-    MUMU)     target_url="${NODE_MUMU_ST_URL}";   api_key="${NODE_MUMU_ST_KEY}"   ;;
+    BST)     target_url="${NODE_BST_ST_URL}";   api_key="${NODE_BST_ST_KEY}"   ;;
     *)        echo "OFFLINE|🔴"; return ;;
   esac
 
@@ -486,7 +486,7 @@ _st_api() {
     TERMUX)   _ST_API_URL="${NODE_TERMUX_ST_URL}"; _ST_API_KEY="${NODE_TERMUX_ST_KEY}" ;;
     WSL)      _ST_API_URL="${NODE_WSL_ST_URL}";    _ST_API_KEY="${NODE_WSL_ST_KEY}"    ;;
     GIT-BASH) _ST_API_URL="${NODE_WIN_ST_URL}";    _ST_API_KEY="${NODE_WIN_ST_KEY}"    ;;
-    MUMU)     _ST_API_URL="${NODE_MUMU_ST_URL}";   _ST_API_KEY="${NODE_MUMU_ST_KEY}"   ;;
+    BST)     _ST_API_URL="${NODE_BST_ST_URL}";   _ST_API_KEY="${NODE_BST_ST_KEY}"   ;;
     *)        _ST_API_URL=""; _ST_API_KEY="" ;;
   esac
 }
@@ -590,17 +590,17 @@ st_register_all() {
     [wsl]="$NODE_WSL_ST_ID|$NODE_WSL_ST_URL|$NODE_WSL_ST_KEY"
     [WIN]="$NODE_WIN_ST_ID|$NODE_WIN_ST_URL|$NODE_WIN_ST_KEY"
     [TERMUX]="$NODE_TERMUX_ST_ID|$NODE_TERMUX_ST_URL|$NODE_TERMUX_ST_KEY"
-    [mumu]="$NODE_MUMU_ST_ID|$NODE_MUMU_ST_URL|$NODE_MUMU_ST_KEY"
+    [BST]="$NODE_BST_ST_ID|$NODE_BST_ST_URL|$NODE_BST_ST_KEY"
   )
 
   # canonical device map: <id>:<name> (SSOT)
   local canonical=""
-  for n in wsl WIN TERMUX mumu; do
+  for n in wsl WIN TERMUX BST; do
     canonical="$canonical ${NODES[$n]%%|*}:$n"
   done
 
   # วนไปทุกเครื่องที่ online
-  for n in wsl WIN TERMUX mumu; do
+  for n in wsl WIN TERMUX BST; do
     local entry="${NODES[$n]}"
     local url="${entry#*|}"; url="${url%%|*}"
     local key="${entry##*|}"

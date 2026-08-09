@@ -167,7 +167,7 @@ export NODE_WIN_ST_ID="FJXVHAJ-ORMJNPA-6KAAGRW-ZJC4UN5-ZNY7RWD-EMON3TO-EXBZX3G-Y
 export NODE_WIN_ST_URL="http://${NODE_WIN_HOST}:${NODE_WIN_ST_PORT}"
 
 # --- BSTPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
-export NODE_BST_HOST="bst"
+export NODE_BST_HOST="bluestack"
 export NODE_BST_USER="u0_a104"
 export NODE_BST_PORT="8020"
 export NODE_BST_ST_PORT="8386"

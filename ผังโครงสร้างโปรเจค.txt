@@ -1,143 +1,124 @@
-.
-├── .stfolder
-│   └── syncthing-folder-91f16a.txt
-├── .vscode
-│   └── settings.json
-├── 00-env.sh
-├── 01-colors.sh
-├── 02-aliases.sh
-├── 3worlds.sh
-├── AGENT.md
-├── bash-manager.sh
-├── functions
-│   ├── 00-fm-loader.sh
-│   ├── 00.1-function-tools.sh
-│   ├── 02-systems.sh
-│   ├── 03-fpath.sh
-│   ├── 04-openclaw.sh
-│   ├── 05-pathx.sh
-│   ├── 05-project.sh
-│   ├── 07-wth.sh
-│   ├── 08-nexus.sh
-│   ├── 09-all_block_status.sh
-│   ├── 10-ai.sh
-│   ├── joe-block
-│   │   ├── README.md
-│   │   ├── block
-│   │   │   ├── layout.sh
-│   │   │   ├── layout.sh.bak
-│   │   │   ├── renderer.sh
-│   │   │   ├── status.sh
-│   │   │   ├── theme.sh
-│   │   │   └── utils.sh
-│   │   ├── cheat_sheet.sh
-│   │   ├── entry.sh
-│   │   └── styles
-│   │       └── block_style.sh
-│   └── saaa
-├── joe.sh
-├── lessons
-│   ├── bash-fundamentals.md
-│   ├── custom_style.sh
-│   ├── test_m_animate.sh
-│   └── test_offsets.sh
-├── refactor_JOE_BLOCK.md
-├── theme.sh
-├── tools
-│   ├── ai_block.sh
-│   ├── merge.sh
-│   ├── tools.sh
-│   └── wtf.sh
-├── tree_structure.txt
+bashscripts/                          # SSOT — Syncthing-backed dotfile repo
+│
+├── .editorconfig
+├── .gitattributes
+├── .gitignore
+├── .zsh-bash-compat.sh
+├── 3worlds.sh                        # Multi-env awareness (termux/wsl/windows)
+├── AGENT.md                          # AI agent instructions
+├── profiles.sh                       # Profile switching
+├── syncthing_control.md              # Syncthing docs
+│
+│  ── Core Shell Infrastructure ──
+├── 00-env.sh                         # Environment bootstrap (variables, paths)
+├── 01-colors.sh                      # Color system SSOT (c/rc/ctab/hline)
+├── 02-aliases.sh                     # Shell aliases
+├── theme.sh                          # Terminal theme
+│
+│  ── Shell Entry Points ──
+├── joe.sh                            # Joe CLI (block rendering demo)
+├── ble-test.sh                       # Bleach shell test
+│
+│  ── Functions Library ──
+├── functions/
+│   ├── 00-fm-loader.sh               # Function manager loader
+│   ├── 00.1-function-tools.sh        # Function utility helpers
+│   ├── 02-systems.sh                 # System detection functions
+│   ├── 03-fpath.sh                   # fpath management
+│   ├── 04-openclaw.sh                # OpenClaw integration
+│   ├── 05-pathx.sh                   # PATH management
+│   ├── 05-project.sh                 # Project helpers
+│   ├── 07-wtf.sh                     # WTF (debug) functions
+│   ├── 08-nexus.sh                   # Nexus functions
+│   ├── 09-all_block_status.sh        # All-block status display
+│   ├── 10-ai.sh                      # AI helper functions
+│   ├── 11-bash-manager.sh            # Bash manager
+│   ├── 12-git.sh                     # Git helper functions
+│   ├── tools.sh                      # General tool functions
+│   └── joe-block/                    # ┌─ Block Engine ──────────────┐
+│       ├── README.md                 # │ Block engine docs            │
+│       ├── entry.sh                  # │ Block engine entry point     │
+│       ├── cheat_sheet.sh            # │ Cheat sheet display          │
+│       ├── block/                    # │ Core block modules           │
+│       │   ├── layout.sh             # │   Layout calculation         │
+│       │   ├── renderer.sh           # │   Terminal renderer          │
+│       │   ├── status.sh             # │   Status bar                 │
+│       │   ├── theme.sh              # │   Block theme                │
+│       │   └── utils.sh              # │   Block utilities            │
+│       └── styles/                   # │ Style definitions            │
+│           ├── block_style.sh        # │   Block style configs        │
+│           └── symbols.sh            # │   Symbol sets                │
+│                                     # └─────────────────────────────┘
+│
+│  ── Lessons & Exercises ──
+├── lessons/
+│   ├── bash-fundamentals.md          # Bash fundamentals guide
+│   └── exercise/
+│       ├── 00-exercise_color_config.sh
+│       ├── 01-exercise_joe.sh
+│       ├── 02-exercise_block_style.sh
+│       ├── 03-exercise _status.sh
+│       ├── test_case_w.sh
+│       └── test_case_w_HINT.sh
+│
+│  ── Tools ──
+├── tools/
+│   ├── agent-pre-commit.sh           # AI agent pre-commit hook
+│   ├── ai_block.sh                   # AI block helper
+│   ├── cli-cheatsheet.md             # CLI cheat sheet
+│   ├── color-chart.sh                # Color chart display
+│   ├── Fresh_termux_fullsetup_SSOT.sh # Fresh Termux full setup
+│   ├── git-easy.sh                   # Git easy wrapper
+│   ├── hermes.sh                     # Hermes tool
+│   ├── merge.sh                      # Merge utility
+│   ├── patch_theme.sh                # Theme patcher
+│   ├── safe-edit.sh                  # Safe file editor
+│   ├── ssot-audit.sh                 # SSOT integrity audit
+│   ├── test_glob.zsh                 # Glob test script
+│   ├── wtf.sh                        # WTF debug tool
+│   ├── zshrc_termux.zsh              # Termux zshrc
+│   ├── .zshrc                        # Zsh config
+│   ├── syncctl.zip                   # Syncctl archive
+│   └── syncctl/                      # ┌─ Syncctl ──────────────────┐
+│       ├── README.md                 # │ Syncctl docs                │
+│       ├── syncctl                   # │ Main executable             │
+│       ├── fix_report.md             # │ Fix report                  │
+│       ├── lib/                      # │ Core modules                │
+│       │   ├── api.sh                # │   Syncthing REST API        │
+│       │   ├── checkpoint.sh         # │   Checkpoint management     │
+│       │   ├── config.sh             # │   Configuration             │
+│       │   ├── doctor.sh             # │   Health checks             │
+│       │   ├── handover.sh           # │   Master handover           │
+│       │   ├── lock.sh               # │   Locking mechanism         │
+│       │   ├── mock.sh               # │   Mock API for testing      │
+│       │   ├── ownership.sh          # │   Ownership tracking        │
+│       │   ├── renderer.sh           # │   Status rendering          │
+│       │   └── state.sh              # │   State management          │
+│       └── tests/                    # │ Test suite                   │
+│           ├── run.sh                # │   Test runner               │
+│           └── fixtures/             # │   Test fixtures             │
+│               ├── cluster-clean/    # │     Clean cluster scenarios │
+│               │   ├── master.txt    # │       Master state          │
+│               │   ├── termux/       # │       Termux API responses  │
+│               │   ├── windows/      # │       Windows API responses │
+│               │   └── wsl/          # │       WSL API responses     │
+│               └── cluster-conflict/ # │     Conflict scenarios      │
+│                   ├── termux/       # │       Termux API responses  │
+│                   ├── windows/      # │       Windows API responses │
+│                   └── wsl/          # │       WSL API responses     │
+│                                     # └─────────────────────────────┘
+│
+├── .github/
+│   ├── hooks/
+│   │   └── pre-commit.json
+│   ├── instructions/
+│   │   └── joe-block.instructions.md
+│   ├── prompts/
+│   │   └── handover-report.prompt.md
+│   └── skills/
+│       └── syncctl/
+│           └── SKILL.md
+│
 └── ผังโครงสร้างโปรเจค.txt
 
-9 directories, 43 files
-
-
-Read [](file://wsl.localhost/Ubuntu/home/usercivenz/bashscripts/lessons/example/example_joe.sh#30-30), lines 30 to 55
-
-Read [](file://wsl.localhost/Ubuntu/home/usercivenz/bashscripts/lessons/example/example_joe.sh)
-
-เข้าใจแล้วครับ! 01-colors.sh เป็นต้นทางของ `c()`, `rc()`, `_c()` ที่ engine ใช้อยู่ ผม trace ทั้งสาย color แล้วเจอ **2 จุดที่ยังพัง** ใน engine:
-
-**จุด 1:** `_MID_L_C` ถูกลบจาก top level แต่ยังไม่ได้ย้ายเข้า function → `_blk_gen_borders()` ใช้ตัวแปรที่ไม่มีค่า
-
-**จุด 2:** `_MID_L_C` เดิมรันก่อน style load → `MID_LINE_C`/`MID_LINE` ยังว่าง ต้องย้ายเข้าไปคำนวณตอน render 
-
-
-
-
-```
-
-```
-Let me verify the engine is clean now: 
-
-Read [](file://wsl.localhost/Ubuntu/home/usercivenz/bashscripts/lessons/example/example_joe.sh#25-25), lines 25 to 150
-
-Now let me also clean up the blank lines left from the removal: 
-
-
-
-
-```
-
-```
-Let me do a final trace of the complete color flow across all 3 files: 
-
-Read [](file://wsl.localhost/Ubuntu/home/usercivenz/bashscripts/lessons/example/example_joe.sh#20-20), lines 20 to 30
-
-Read [](file://wsl.localhost/Ubuntu/home/usercivenz/bashscripts/lessons/example/example_block_style.sh#1-1), lines 1 to 15
-
-Searched for text `_pvar` (`**/functions/**`), 13 results
-
-Searched for text `LABEL_C|VALUE_C|TOP_BORDER_C|BOT_BORDER_C|MID_LINE_C|ROW_FRAME_C|MID_FRAME_C` (`**/lessons/example/example_joe.sh`), 2 results
-
-引擎清理干净แล้วครับ! ผม trace สาย color ทั้งหมดให้ดู:
-
-## Color Flow — สมบูรณ์ ✅
-
-```
-01-colors.sh (SSOT ต้นทาง)
-├── c() / color()     ← engine ใช้เรียกสี
-├── rc()              ← engine ใช้สุ่มสี border
-├── _c()              ← แปลง 256 code → escape
-└── ตัวแปร $r $g $b $gr $lb $lg ...  ← escape sequences
-         │
-         ▼
-example_color_config.sh (COLOR PRESETS)
-├── _apply_color_preset("default") → set_ MID_LINE_C 'gr ""'
-├── _apply_color_preset("a")       → set_ TOP_BORDER_C 'lg b'
-├── _apply_color_preset("rainbow") → สุ่มสี runtime
-└── ไม่ source อะไรเพิ่ม — ใช้ set_() ที่มีอยู่แล้ว
-         │
-         ▼
-example_block_style.sh (SYMBOLS + LAYOUT + COLOR CALL)
-├── source example_color_config.sh  ← load presets
-├── set_() ← นิยามไว้ก่อน (ใช้ _pvar จาก utils.sh)
-├── _default_() → set_ TOP_BORDER "━" + _apply_color_preset "default"
-├── _a_()       → set_ TOP_BORDER "◙" + _apply_color_preset "a"
-└── _random_()  → สุ่ม symbols + _apply_color_preset "rainbow"
-         │
-         ▼
-example_joe.sh (ENGINE)
-├── source 01-colors.sh (guard)
-├── example_dashboard()
-│   ├── eval "$_load_style"   ← trigger style function
-│   ├── _blk_gen_borders()
-│   │   ├── _MID_L_C = eval(MID_LINE_C + MID_LINE) ← ย้ายเข้า function แล้ว
-│   │   └── rc b "$_BLK_TOP_BORDER" ← สุ่มสี border
-│   └── _blk_frame_mid() uses c gr "" "$_BLK_MID_INNER"
-└── ไม่ hardcoded สีแล้ว ✅
-```
-
-### สิ่งที่แก้:
-
-| จุด | ก่อน | หลัง |
-|-----|------|------|
-| `_MID_L_C` | คำนวณ top level (ก่อน style load → ค่าว่าง) | คำนวณใน `_blk_gen_borders()` (หลัง style load ✅) |
-| `LABEL_C` / `VALUE_C` | hardcoded ที่ top level (override style) | ลบออก — ให้ style เป็นคนตั้ง ✅ |
-| OFFSET | มีอยู่แล้วใน style + engine | ทำงานถูกต้อง `-1`=ซ้าย `0`=กลาง `1`=ขวา ✅ |
-
-Engine ใช้ได้แล้วครับ ไฟล์ไม่พัง ไม่มี hardcoded สีเหลือ 🎉
-
-Made changes.
+Total: ~70 files across 15 directories (excluding .git/)
