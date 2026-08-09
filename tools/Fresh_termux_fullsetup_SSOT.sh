@@ -257,7 +257,7 @@ else
     fi
 
     if [[ ! -d "$SSOT_DIR/.git" ]]; then
-        git clone git@github.com:sitthawat035/bashscripts.git "$SSOT_DIR" 2>/dev/null \
+        git clone git@github.com:joece035/bashscripts.git "$SSOT_DIR" 2>/dev/null \
             || warn "Git clone skipped — relies on Syncthing sync"
     fi
 fi

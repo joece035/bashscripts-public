@@ -9,7 +9,7 @@
 
 ```bash
 # 1. Clone
-git clone https://github.com/sitthawat035/bashscripts.git
+git clone git@github.com:joece035/bashscripts.git
 cd bashscripts
 
 # 2. Install (auto-detects Termux/WSL/Git Bash)

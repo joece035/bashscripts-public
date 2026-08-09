@@ -333,6 +333,53 @@ case "$JOE_ENV" in
         ;;
 esac
 
+ternux_fresh() {
+    pkg update -y && pkg upgrade -y
+
+pkg install -y \
+  bash \
+  zsh \
+  coreutils \
+  util-linux \
+  procps \
+  findutils \
+  grep \
+  sed \
+  gawk \
+  diffutils \
+  less \
+  file \
+  which \
+  tree \
+  ncurses-utils \
+  readline \
+  bc \
+  openssl \
+  curl \
+  wget \
+  rsync \
+  openssh \
+  git \
+  tar \
+  gzip \
+  bzip2 \
+  xz \
+  zip \
+  unzip \
+  p7zip \
+  nano \
+  vim \
+  micro \
+  jq \
+  yq \
+  python \
+  nodejs \
+  ripgrep \
+  fd \
+  bat \
+  eza \
+  tmux
+}
 
 
 
