@@ -42,16 +42,16 @@ fi
 # Ensure SCRIPTS_PATH is set (needed for sourcing other modules)
 export SCRIPTS_PATH="${SCRIPTS_PATH:-$HOME/bashscripts}"
 
-# Source colors from SSOT (01-colors.sh) if not already loaded
+# Source colors from SSOT (core/01-colors.sh) if not already loaded
 if ! command -v c >/dev/null 2>&1; then
-  _colors_file="$SCRIPTS_PATH/01-colors.sh"
+  _colors_file="$SCRIPTS_PATH/core/01-colors.sh"
   [[ -f "$_colors_file" ]] && source "$_colors_file"
   unset _colors_file
 fi
 
-# Source env vars from SSOT (00-env.sh) if not already loaded
+# Source env vars from SSOT (bootstrap/00-env.sh) if not already loaded
 if [[ -z "$TERMUX_IP" ]]; then
-  _env_file="$SCRIPTS_PATH/00-env.sh"
+  _env_file="$SCRIPTS_PATH/bootstrap/00-env.sh"
   [[ -f "$_env_file" ]] && source "$_env_file"
   unset _env_file
 fi

@@ -107,11 +107,11 @@ fi
 
 # ── Step 2: Source all modules using SCRIPTS_PATH ──
 
-# Environment variables & paths
-[ -f "$SCRIPTS_PATH/00-env.sh" ] && source "$SCRIPTS_PATH/00-env.sh"
+# Environment variables & paths (SSOT: bootstrap/00-env.sh)
+[ -f "$SCRIPTS_PATH/bootstrap/00-env.sh" ] && source "$SCRIPTS_PATH/bootstrap/00-env.sh"
 
 # Colors & Styles (must be sourced BEFORE sshd block — it uses cn)
-[ -f "$SCRIPTS_PATH/01-colors.sh" ] && source "$SCRIPTS_PATH/01-colors.sh"
+[ -f "$SCRIPTS_PATH/core/01-colors.sh" ] && source "$SCRIPTS_PATH/core/01-colors.sh"
 
 # Auto-start sshd if not running (guarded for git-bash which lacks pgrep)
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
@@ -134,16 +134,16 @@ else
 fi
 
 #-----SSH and 3-Worlds (tm, tw, push, pull, world)
-[ -f "$SCRIPTS_PATH/3worlds.sh" ] && source "$SCRIPTS_PATH/3worlds.sh"
+[ -f "$SCRIPTS_PATH/core/3worlds.sh" ] && source "$SCRIPTS_PATH/core/3worlds.sh"
 
 #-----Aliases
-[ -f "$SCRIPTS_PATH/02-aliases.sh" ] && source "$SCRIPTS_PATH/02-aliases.sh"
+[ -f "$SCRIPTS_PATH/core/02-aliases.sh" ] && source "$SCRIPTS_PATH/core/02-aliases.sh"
 
 #-----Profiiles switching
-[ -f "$SCRIPTS_PATH/profiles.sh" ] && source "$SCRIPTS_PATH/profiles.sh"
+[ -f "$SCRIPTS_PATH/core/profiles.sh" ] && source "$SCRIPTS_PATH/core/profiles.sh"
 
-#----Theme  
-[ -f "$COLOR_PATH/theme.sh" ] && source "$COLOR_PATH/theme.sh"
+#----Theme
+[ -f "$SCRIPTS_PATH/core/theme.sh" ] && source "$SCRIPTS_PATH/core/theme.sh"
 
 # Function Modules
 # Skip Syncthing conflict files (*.sync-conflict-*.sh) — they have broken

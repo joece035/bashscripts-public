@@ -1,5 +1,5 @@
 ﻿#!/bin/bash
-THEME_FILE="$HOME/bashscripts/theme.sh"
+THEME_FILE="$HOME/bashscripts/core/theme.sh"
 
 cat > /tmp/theme_zsh.txt << 'EOF'
 # ── Shell-aware prompt registration ──

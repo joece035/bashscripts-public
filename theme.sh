@@ -1,1 +1,0 @@
-core/theme.sh

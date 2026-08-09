@@ -1,1 +1,0 @@
-core/3worlds.sh
