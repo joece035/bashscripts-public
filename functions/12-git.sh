@@ -82,6 +82,8 @@ gcmsg() {
 }
 
 # ---- gcm "<msg>" : alias for gcmsg (shorter to type) ----
+# Guard against oh-my-zsh git plugin alias conflict
+unalias gcm 2>/dev/null
 gcm() { gcmsg "$@"; }
 
 # ---- gac "<msg>" : add all + commit ----

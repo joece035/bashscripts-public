@@ -86,6 +86,7 @@ alias dbpush='dbsync'
 
  if [[ -f "$JOE_PLUGINS/block_engine/entry.sh" ]]; then
    source $JOE_PLUGINS/block_engine/entry.sh
+ fi
 # Scripts with 'exit' or standalone output will kill the shell if sourced!
 if [[ -d "$SSOT/tools" ]]; then
     for sh in "$SSOT/tools"/{ai_block,tools,merge,wtf}.sh; do

@@ -22,7 +22,7 @@
 # ============================================================
 
 case "$JOE_ENV" in
-    TERMUX|MUMU)
+    TERMUX|BSTACK)
          export HERMES_DIR="/data/data/com.termux/files/home/.hermes"
          export PYTHON_VENV="$HOME/.dash_venv/bin/activate"
          export SDCARD_PATH="/storage/emulated/0/"     
@@ -55,7 +55,6 @@ export BRAVE_SEARCH_API_KEY="BSAfPRWzAVe_En3GTQ-cZHcy3MXk8hB"  # Replace with yo
 export BRAVE_API_KEY="${BRAVE_SEARCH_API_KEY}"
 export ALPHA_DIR="$msync/alpha-workspace"
 export alpha=${ALPHA_DIR}
-export storage="/storage/emulated/0/" # sdcrd
 # ============================================================  
 # Dynamic env switching
 # ============================================================
@@ -139,17 +138,8 @@ export CURRENT_OC_PROFILE="${CURRENT_OC_PROFILE:-None (Default)}"
 #   ST_KEY    — Syncthing API key
 #   ST_URL    — Syncthing base URL (no trailing slash)
 # ============================================================
-# -- TAILSCALING: All nodes must have Tailscale installed and running.
-export TAILSCALE_BIN="$(which tailscale)"
-export TAILSCALE_STATUS="$(tailscale status 2>/dev/null || echo "tailscale not running")"
-export TAILSCALE_IP="$(tailscale ip -4 2>/dev/null || echo "tailscale not running")"
-export TAILSCALE_IP_TERMUX=100.110.26.16
-export TAILSCALE_IP_WINDOW=100.69.181.45
-export TAILSCALE_IP_WSL=100.80.195.120
-export TAILSCALE_IP_MUMU=100.100.176.94
-
+ device=2KJ2HQ3-IKVNAXI-IRSVMRM-2MITVS4-3TTZS3C-Z5PQFCD-SORNAU7-ALCCRAL
 # --- Termux (Android) ---
-export NODE_TERMUX_IP="$TAILSCALE_IP_TERMUX"
 export NODE_TERMUX_HOST="termux"
 export NODE_TERMUX_USER="u0_a331"
 export NODE_TERMUX_PORT="8022"
@@ -159,7 +149,6 @@ export NODE_TERMUX_ST_ID="OJE25GP-CUVXSOC-A2K47O3-GPIYOW5-UFQI4UM-TQD7FLA-45AKEI
 export NODE_TERMUX_ST_URL="http://${NODE_TERMUX_HOST}:${NODE_TERMUX_ST_PORT}"
 
 # --- WSL (Linux) ---
-export NODE_WSL_IP="$TAILSCALE_IP_WSL"
 export NODE_WSL_HOST="wsl"
 export NODE_WSL_USER="usercivenz"
 export NODE_WSL_PORT="22"
@@ -169,7 +158,6 @@ export NODE_WSL_ST_ID="3S42YWK-JLYGQXU-NR37KDQ-7WFSODG-42TZPEX-XLTGR3W-XNK67EL-K
 export NODE_WSL_ST_URL="http://${NODE_WSL_HOST}:${NODE_WSL_ST_PORT}"
 
 # --- Windows ---
-export NODE_WIN_IP="$TAILSCALE_IP_WINDOW"
 export NODE_WIN_HOST="window"
 export NODE_WIN_USER="User"
 export NODE_WIN_ST_PORT="8384"
@@ -177,15 +165,14 @@ export NODE_WIN_ST_KEY="9AQa4xCCRuZEDs2qDNUY9s6T27NJS9sU"
 export NODE_WIN_ST_ID="FJXVHAJ-ORMJNPA-6KAAGRW-ZJC4UN5-ZNY7RWD-EMON3TO-EXBZX3G-YMUXEAA"
 export NODE_WIN_ST_URL="http://${NODE_WIN_HOST}:${NODE_WIN_ST_PORT}"
 
-# --- MUMUPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
-export NODE_MUMU_IP="$TAILSCALE_IP_MUMU"
-export NODE_MUMU_HOST="mumu"
-export NODE_MUMU_USER="u0_a62"
-export NODE_MUMU_PORT="8020"
-export NODE_MUMU_ST_PORT="8386"
-export NODE_MUMU_ST_KEY="zMGe2P6CmaSoczYLvPtXLgTQaRL4vE6C"
-export NODE_MUMU_ST_ID="PQP2YQT-GQXIJGV-BHOTC4Y-PXWVL2C-EMJIRZP-J6QI7RP-VXJ7GF7-WUYSZQ6"
-export NODE_MUMU_ST_URL="http://${NODE_MUMU_HOST}:${NODE_MUMU_ST_PORT}"
+# --- BSTACKPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
+export NODE_BSTACK_HOST="BSTACK"
+export NODE_BSTACK_USER="u0_a104"
+export NODE_BSTACK_PORT="8020"
+export NODE_BSTACK_ST_PORT="8386"
+export NODE_BSTACK_ST_KEY="DCnKoGJ4tRXUqc7UWa44pNvrkiVRshZQ"
+export NODE_BSTACK_ST_ID="JAWP2TM-NNLE4IU-GNPGLLP-BSRFFNC-YQ3RKEU-TEDBZIW-5EMZ2ME-V3F7DQB"
+export NODE_BSTACK_ST_URL="http://${NODE_BSTACK_HOST}:${NODE_BSTACK_ST_PORT}"
 
 # --- Debian (proot inside Termux) ---
 export NODE_DEBIAN_HOST="${NODE_DEBIAN_HOST:-debian}"
@@ -199,7 +186,7 @@ export NODE_DEBIAN_PORT="${NODE_DEBIAN_PORT:-22}"
 # ============================================================
 
 # Termux compat
-export TERMUX_IP="${NODE_TERMUX_HOST:-$NODE_TERMUX_IP}"
+export TERMUX_IP="$NODE_TERMUX_HOST"
 export TERMUX_USER="$NODE_TERMUX_USER"
 export TERMUX_PORT="$NODE_TERMUX_PORT"
 export TERMUX_TELSCAIL_IP="$NODE_TERMUX_HOST"
@@ -208,7 +195,7 @@ export ST_PORT_TERMUX="$NODE_TERMUX_ST_PORT"
 export URL_TERMUX="${NODE_TERMUX_ST_URL}/"
 
 # WSL compat
-export WSL_IP="${NODE_WSL_HOST:-$NODE_WSL_IP}"
+export WSL_IP="$NODE_WSL_HOST"
 export WSL_USER="$NODE_WSL_USER"
 export WSL_TELSCAIL_IP="$NODE_WSL_HOST"
 export ST_KEY_WSL="$NODE_WSL_ST_KEY"
@@ -219,23 +206,23 @@ export URL_WSL="${NODE_WSL_ST_URL}/"
 # WIN_GIT_BASH: path ของ Git Bash บน Windows (ใช้โดย tw() ใน 3worlds.sh)
 # Windows OpenSSH default shell = PowerShell — tw() ต้องเรียกผ่าน PS call operator
 export WIN_GIT_BASH="${WIN_GIT_BASH:-C:\Program Files\Git\bin\bash.exe}"
-export WINDOWS_IP="${NODE_WIN_HOST:-$NODE_WIN_IP}"
+export WINDOWS_IP="$NODE_WIN_HOST"
 export WINDOWS_USER="$NODE_WIN_USER"
 export ST_KEY_WIN="$NODE_WIN_ST_KEY"
 export ST_PORT_WIN="$NODE_WIN_ST_PORT"
 export URL_WIN="${NODE_WIN_ST_URL}/"
 
-# MUMUPlayer compat (Android emulator peer)
-export MUMU_IP="${NODE_MUMU_HOST:-$NODE_MUMU_IP}"
-export MUMU_USER="$NODE_MUMU_USER"
-export MUMU_PORT="$NODE_MUMU_PORT"
-export MUMU_TELSCAIL_IP="$NODE_MUMU_HOST"
-export ST_KEY_MUMU="$NODE_MUMU_ST_KEY"
-export ST_PORT_MUMU="$NODE_MUMU_ST_PORT"
-export URL_MUMU="${NODE_MUMU_ST_URL}/"
+# BSTACKPlayer compat (Android emulator peer)
+export BSTACK_IP="$NODE_BSTACK_HOST"
+export BSTACK_USER="$NODE_BSTACK_USER"
+export BSTACK_PORT="$NODE_BSTACK_PORT"
+export BSTACK_TELSCAIL_IP="$NODE_BSTACK_HOST"
+export ST_KEY_BSTACK="$NODE_BSTACK_ST_KEY"
+export ST_PORT_BSTACK="$NODE_BSTACK_ST_PORT"
+export URL_BSTACK="${NODE_BSTACK_ST_URL}/"
 
 # Debian compat
-export DEBIAN_IP="${NODE_DEBIAN_HOST:-$NODE_DEBIAN_IP}"
+export DEBIAN_IP="$NODE_DEBIAN_HOST"
 export DEBIAN_USER="$NODE_DEBIAN_USER"
 export DEBIAN_PORT="$NODE_DEBIAN_PORT"
 
@@ -317,7 +304,7 @@ mkdir -p "$BACKUP_DIR" 2>/dev/null
 # ============================================================
 
 case "$JOE_ENV" in
-    WSL|TERMUX|MUMU)
+    WSL|TERMUX|BSTACK)
         if command -v micro >/dev/null 2>&1; then
             export EDITOR="micro"
             export VISUAL="micro"
@@ -345,53 +332,6 @@ case "$JOE_ENV" in
         ;;
 esac
 
-ternux_fresh() {
-    pkg update -y && pkg upgrade -y
-
-    pkg install -y \
-  bash \
-  zsh \
-  coreutils \
-  util-linux \
-  procps \
-  findutils \
-  grep \
-  sed \
-  gawk \
-  diffutils \
-  less \
-  file \
-  which \
-  tree \
-  ncurses-utils \
-  readline \
-  bc \
-  openssl \
-  curl \
-  wget \
-  rsync \
-  openssh \
-  git \
-  tar \
-  gzip \
-  bzip2 \
-  xz \
-  zip \
-  unzip \
-  p7zip \
-  nano \
-  vim \
-  micro \
-  jq \
-  yq \
-  python \
-  nodejs \
-  ripgrep \
-  fd \
-  bat \
-  eza \
-  tmux
-}
 
 
 
