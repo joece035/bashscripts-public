@@ -1,8 +1,7 @@
 # ================================================================
-# zshrc_termux.zsh — JOE SSOT ZSH Config (Termux)
-# MASTER: WSL | SSOT: ~/bashscripts/tools/zshrc_termux.zsh
-# Deployed by: Fresh_termux_fullsetup_SSOT.sh (symlink to ~/.zshrc)
-# Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
+# zshrc_termux.zsh — DEPRECATED (moved to profiles/termux/.zshrc)
+# Kept as fallback for setup scripts that haven't been updated.
+# SSOT canonical: ~/bashscripts/profiles/termux/.zshrc
 # ================================================================
 
 # -- Shell Options (Prevent glob errors & duplicate fpath) ------

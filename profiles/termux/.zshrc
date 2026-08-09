@@ -1,7 +1,7 @@
 # ================================================================
 # ~/.zshrc - JOE SSOT ZSH Config (Termux)
-# MASTER: WSL | SSOT: ~/bashscripts/tools/zshrc_termux.zsh
-# Deployed by: Fresh_termux_fullsetup_SSOT.sh (links to ~/.zshrc)
+# MASTER: WSL | SSOT: ~/bashscripts/profiles/termux/.zshrc
+# Deployed by: Fresh_termux_fullsetup_SSOT.sh (symlink to ~/.zshrc)
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 

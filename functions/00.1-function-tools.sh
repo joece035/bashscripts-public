@@ -999,8 +999,8 @@ sc() {
     return 1
   fi
 
-  if [[ -f "$_ssot/tools/syncctl/syncctl" ]]; then
-    source "$_ssot/tools/syncctl/syncctl" 2>/dev/null
+  if [[ -f "$_ssot/plugins/syncctl/syncctl" ]]; then
+    source "$_ssot/plugins/syncctl/syncctl" 2>/dev/null
   else
     cn 220 bi "syncctl.sh not found in $_ssot/tools/"
     return 1
