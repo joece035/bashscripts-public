@@ -22,7 +22,7 @@
 # ============================================================
 
 case "$JOE_ENV" in
-    TERMUX|BST)
+    TERMUX|MUMU)
          export HERMES_DIR="/data/data/com.termux/files/home/.hermes"
          export PYTHON_VENV="$HOME/.dash_venv/bin/activate"
          export SDCARD_PATH="/storage/emulated/0/"     
@@ -139,7 +139,7 @@ export CURRENT_OC_PROFILE="${CURRENT_OC_PROFILE:-None (Default)}"
 #   ST_KEY    — Syncthing API key
 #   ST_URL    — Syncthing base URL (no trailing slash)
 # ============================================================
- device=2KJ2HQ3-IKVNAXI-IRSVMRM-2MITVS4-3TTZS3C-Z5PQFCD-SORNAU7-ALCCRAL
+
 # --- Termux (Android) ---
 export NODE_TERMUX_HOST="termux"
 export NODE_TERMUX_USER="u0_a331"
@@ -238,6 +238,7 @@ export MUMU_PORT="$NODE_MUMU_PORT"
 export ST_KEY_MUMU="$NODE_MUMU_ST_KEY"
 export ST_PORT_MUMU="$NODE_MUMU_ST_PORT"
 export URL_MUMU="${NODE_MUMU_ST_URL}/"
+export MUMU_TELSCAIL_IP="$NODE_MUMU_HOST"
 
 # Debian compat
 export DEBIAN_IP="$NODE_DEBIAN_HOST"
@@ -322,7 +323,7 @@ mkdir -p "$BACKUP_DIR" 2>/dev/null
 # ============================================================
 
 case "$JOE_ENV" in
-    WSL|TERMUX|BST)
+    WSL|TERMUX|MUMU)
         if command -v micro >/dev/null 2>&1; then
             export EDITOR="micro"
             export VISUAL="micro"
