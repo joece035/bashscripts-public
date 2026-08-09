@@ -50,7 +50,7 @@ fi
 # Priority: _BLOCK_ROOT > BASH_SOURCE[0] (bash) / funcsourcetrace (zsh) > fallback
 if [[ -n "${_BLOCK_ROOT:-}" ]]; then
     # Already set by entry.sh — use as-is
-    _THEME_DIR="${_BLOCK_ROOT}/functions/joe-block/block"
+    _THEME_DIR="${_BLOCK_ROOT}/plugins/block_engine/block"
 elif [[ -n "${BASH_VERSION:-}" && -n "${BASH_SOURCE[0]:-}" ]]; then
     _THEME_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     _BLOCK_ROOT="${_THEME_DIR}/../../.."
@@ -59,8 +59,8 @@ elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
     _THEME_DIR="$(cd "$(dirname "${funcsourcetrace[1]%%:*}")" && pwd)"
     _BLOCK_ROOT="${_THEME_DIR}/../../.."
 else
-    _THEME_DIR="${SCRIPTS_PATH:-$HOME/bashscripts}/functions/joe-block/block"
-    _BLOCK_ROOT="${SCRIPTS_PATH:-$HOME/bashscripts}"
+    _THEME_DIR="${JOE_PLUGINS:-$HOME/bashscripts/plugins}/block_engine/block"
+    _BLOCK_ROOT="${JOE_ROOT:-$HOME/bashscripts}"
 fi
 
 # ============================================================
@@ -74,18 +74,18 @@ _load_theme() {
 
     # -- Source colors first (needed by _apply_color_to)
     if [[ -z "${RESET:-}" ]]; then
-        [[ -f "${_BLOCK_ROOT}/01-colors.sh" ]] && source "${_BLOCK_ROOT}/01-colors.sh" && shopt -s expand_aliases 2>/dev/null
+        [[ -f "${JOE_CORE}/01-colors.sh" ]] && source "${JOE_CORE}/01-colors.sh" && shopt -s expand_aliases 2>/dev/null
     fi
 
     # -- Source function tools (needed by bc_() and tp() used in _style_* OFFSET calc)
     if ! declare -f bc_ &>/dev/null; then
-        [[ -f "${_BLOCK_ROOT}/functions/00.1-function-tools.sh" ]] && source "${_BLOCK_ROOT}/functions/00.1-function-tools.sh" 2>/dev/null
+        [[ -f "${JOE_FUNCTIONS}/00.1-function-tools.sh" ]] && source "${JOE_FUNCTIONS}/00.1-function-tools.sh" 2>/dev/null
     fi
 
     # -- Source block_style.sh (guard against double-source in same invocation)
-    [[ -f "${_BLOCK_ROOT}/functions/joe-block/styles/block_style.sh" ]] && source "${_BLOCK_ROOT}/functions/joe-block/styles/block_style.sh"
+    [[ -f "${JOE_PLUGINS}/block_engine/styles/block_style.sh" ]] && source "${JOE_PLUGINS}/block_engine/styles/block_style.sh"
     # -- Source custom styles if exist
-    [[ -f "${_BLOCK_ROOT}/lessons/custom_style.sh" ]] && source "${_BLOCK_ROOT}/lessons/custom_style.sh"
+    [[ -f "${JOE_ROOT}/lessons/custom_style.sh" ]] && source "${JOE_ROOT}/lessons/custom_style.sh"
 
     # -- Invoke the style function (it uses set_() to write globals)
     # -- Clear OFFSET and random state before calling style to ensure fresh values

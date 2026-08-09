@@ -115,4 +115,4 @@ alias saveinfra='[ -f "$SCRIPTS_PATH/sync-infra.sh" ] && source "$SCRIPTS_PATH/s
 alias pipedash='cd ~/pipeline-dashboard && ~/dashboard/.venv/bin/python3 app.py'
 alias pipedash-stop='pkill -f "pipeline-dashboard/app.py" && echo "Dashboard stopped"'
 
-alias merge='source $SSOT/tools/merge.sh && merge_functions'
+alias merge='source $JOE_ROOT/tools/merge.sh && merge_functions'

@@ -92,8 +92,8 @@ ai_block_render() {
     local ai_data=$(ai_status_data)
     
     # Use JOE_BLOCK engine to render
-    if [[ -f "$SSOT/functions/joe-block/entry.sh" ]]; then
-        source "$SSOT/functions/joe-block/entry.sh"
+    if [[ -f "$JOE_PLUGINS/block_engine/entry.sh" ]]; then
+        source "$JOE_PLUGINS/block_engine/entry.sh"
         echo "$ai_data" | dashboard
     else
         # Fallback: simple display

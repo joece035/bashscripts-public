@@ -882,7 +882,7 @@ agent_md() {
 
 hm() {
     [[ -z "$1" ]] && { echo "Usage: hm <mode> [args...]"; return 1; }
-    [[ -f $SSOT/tools/hermes.sh ]] && source $SSOT/tools/hermes.sh
+    [[ -f $JOE_PLUGINS/hermes/hermes.sh ]] && source $JOE_PLUGINS/hermes/hermes.sh
     
    local mode=${1:-}
    shift
@@ -955,7 +955,7 @@ sc() {
   fi
 
   if [[ -f "$_ssot/tools/syncctl/syncctl" ]]; then
-    source "$_ssot/tools/syncctl/syncctl" 2>/dev/null
+    source "$JOE_PLUGINS/syncctl/syncctl" 2>/dev/null
   else
     cn 220 bi "syncctl.sh not found in $_ssot/tools/"
     return 1

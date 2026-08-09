@@ -36,12 +36,12 @@ _blk_source_modules() {
     if [[ -n "$_self" ]]; then
         _D="$(cd "$(dirname "$_self")" && pwd)/block"
     else
-        # Last resort: assume functions/joe-block/block/ relative to SSOT
-        _D="${SCRIPTS_PATH:-$HOME/bashscripts}/functions/joe-block/block"
+        # Last resort: assume plugins/block_engine/block/ relative to JOE_ROOT
+        _D="${JOE_PLUGINS:-$HOME/bashscripts/plugins}/block_engine/block"
     fi
     # Export _BLOCK_ROOT so theme.sh can use it (avoids BASH_SOURCE issue in zsh)
-    # _BLOCK_ROOT must point to bashscripts/ root (one level up from functions/)
-    _BLOCK_ROOT="$(cd "${_D}/../../.." && pwd)"   # bashscripts/ root (block → joe-block → functions → bashscripts)
+    # _BLOCK_ROOT must point to bashscripts/ root (two levels up from block_engine/)
+    _BLOCK_ROOT="$(cd "${_D}/../../.." && pwd)"   # bashscripts/ root (block → block_engine → plugins → bashscripts)
     export _BLOCK_ROOT
     [[ -f "${_D}/utils.sh"    ]] && source "${_D}/utils.sh"
     [[ -f "${_D}/layout.sh"   ]] && source "${_D}/layout.sh"

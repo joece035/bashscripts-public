@@ -18,7 +18,7 @@
 _EX_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 _BS_ROOT="$(cd "${_EX_DIR}/../.." && pwd)"
 
-[[ -f "${_BS_ROOT}/00-colors.sh" ]] && source "${_BS_ROOT}/00-colors.sh"
+[[ -f "${_BS_ROOT}/core/01-colors.sh" ]] && source "${_BS_ROOT}/core/01-colors.sh"
 [[ -f "${_BS_ROOT}/functions/00.1-function-tools.sh" ]] && source "${_BS_ROOT}/functions/00.1-function-tools.sh"
 [[ -f "${_EX_DIR}/02-exercise_block_style.sh" ]] && source "${_EX_DIR}/02-exercise_block_style.sh"
 [[ -f "${_EX_DIR}/03-exercise _status.sh" ]] && source "${_EX_DIR}/03-exercise _status.sh"
