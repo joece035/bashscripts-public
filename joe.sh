@@ -105,25 +105,13 @@ if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
 
 fi
 
-# ── Step 2: Source all modules using JOE_ROOT paths ──
-
-# Set JOE_ROOT if not already set
-JOE_ROOT="${JOE_ROOT:-$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)}"
-export JOE_ROOT
-export JOE_CORE="$JOE_ROOT/core"
-export JOE_FUNCTIONS="$JOE_ROOT/functions"
-export JOE_PLUGINS="$JOE_ROOT/plugins"
-export JOE_TOOLS="$JOE_ROOT/tools"
-
-# Backward compatibility
-SCRIPTS_PATH="$JOE_ROOT"
-SSOT="$JOE_ROOT"
+# ── Step 2: Source all modules using SCRIPTS_PATH ──
 
 # Environment variables & paths
-[ -f "$JOE_ROOT/bootstrap/00-env.sh" ] && source "$JOE_ROOT/bootstrap/00-env.sh"
+[ -f "$SCRIPTS_PATH/00-env.sh" ] && source "$SCRIPTS_PATH/00-env.sh"
 
 # Colors & Styles (must be sourced BEFORE sshd block — it uses cn)
-[ -f "$JOE_CORE/01-colors.sh" ] && source "$JOE_CORE/01-colors.sh"
+[ -f "$SCRIPTS_PATH/01-colors.sh" ] && source "$SCRIPTS_PATH/01-colors.sh"
 
 # Auto-start sshd if not running (guarded for git-bash which lacks pgrep)
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
@@ -146,38 +134,38 @@ else
 fi
 
 #-----SSH and 3-Worlds (tm, tw, push, pull, world)
-[ -f "$JOE_CORE/3worlds.sh" ] && source "$JOE_CORE/3worlds.sh"
+[ -f "$SCRIPTS_PATH/3worlds.sh" ] && source "$SCRIPTS_PATH/3worlds.sh"
 
 #-----Aliases
-[ -f "$JOE_CORE/02-aliases.sh" ] && source "$JOE_CORE/02-aliases.sh"
+[ -f "$SCRIPTS_PATH/02-aliases.sh" ] && source "$SCRIPTS_PATH/02-aliases.sh"
 
 #-----Profiiles switching
-[ -f "$JOE_CORE/profiles.sh" ] && source "$JOE_CORE/profiles.sh"
+[ -f "$SCRIPTS_PATH/profiles.sh" ] && source "$SCRIPTS_PATH/profiles.sh"
 
 #----Theme  
-[ -f "$JOE_CORE/theme.sh" ] && source "$JOE_CORE/theme.sh"
+[ -f "$COLOR_PATH/theme.sh" ] && source "$COLOR_PATH/theme.sh"
 
 # Function Modules
 # Skip Syncthing conflict files (*.sync-conflict-*.sh) — they have broken
 # half-merged state and will produce syntax errors when sourced.
-# Top-level files only — nested modules (e.g. block_engine/block/*.sh) must
+# Top-level files only — nested modules (e.g. joe-block/block/*.sh) must
 # be sourced by their own entry point to avoid double-source + banner spam.
-if [ -d "$JOE_FUNCTIONS" ]; then
-    for func_file in "$JOE_FUNCTIONS"/*.sh; do
+if [ -d "$SCRIPTS_PATH/functions" ]; then
+    for func_file in "$SCRIPTS_PATH"/functions/*.sh; do
         [[ "$func_file" == *.sync-conflict-* ]] && continue
         [ -f "$func_file" ] && source "$func_file"
     done
-    # block_engine is a subdir with its own _blk_source_modules() — call it
+    # joe-block is a subdir with its own _blk_source_modules() — call it
     # explicitly so block/*.sh are loaded, but cheat_sheet.sh (which prints
     # a huge banner) is NOT auto-sourced.
-    if [ -f "$JOE_PLUGINS/block_engine/entry.sh" ]; then
-        source "$JOE_PLUGINS/block_engine/entry.sh"
+    if [ -f "$SCRIPTS_PATH/functions/joe-block/entry.sh" ]; then
+        source "$SCRIPTS_PATH/functions/joe-block/entry.sh"
     fi
 fi
 
 # syncctl — Syncthing ownership controller (sourced as function)
-if [ -f "$JOE_PLUGINS/syncctl/syncctl" ]; then
-    source "$JOE_PLUGINS/syncctl/syncctl"
+if [ -f "$SCRIPTS_PATH/tools/syncctl/syncctl" ]; then
+    source "$SCRIPTS_PATH/tools/syncctl/syncctl"
 fi
 
 

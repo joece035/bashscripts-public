@@ -1,0 +1,11 @@
+{
+  "id": "bashscripts",
+  "label": "bashscripts",
+  "type": "receiveonly",
+  "path": "/c/Users/User/bashscripts",
+  "devices": [
+    {"deviceID": "3S42YWK-..."},
+    {"deviceID": "FJXVHAJ-..."},
+    {"deviceID": "2KJ2HQ3-..."}
+  ]
+}

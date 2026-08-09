@@ -1,0 +1,292 @@
+#!/bin/bash
+# ============================================================
+# syncctl — Syncthing ownership controller (CLI entry)
+# ============================================================
+# Source order:
+#   1. Load repo env (00-env.sh) if available — provides NODE_*_ST_ID,
+#      ST_KEY_*, ST_URL_*, JOE_ENV, SSOT
+#   2. Load config.sh (paths + device registry)
+#   3. Load other libs as needed
+#
+# Can be sourced (from joe.sh) or run as a standalone script.
+# When sourced, defines functions only. When run directly, calls main "$@".
+# ============================================================
+
+# Save nounset state so sourcing does NOT pollute the interactive shell
+_syncctl_was_nounset=0
+[[ -o nounset ]] 2>/dev/null && _syncctl_was_nounset=1 || true
+set -u
+
+
+
+SYNCCTL_DEBUG="${SYNCCTL_DEBUG:-0}"
+# Portable script path detection (bash: BASH_SOURCE, zsh: $0 or funcfiletrace)
+# NOTE: zsh-only prompt-expansion forms (${(%):-%x}) were removed here —
+# they are a PARSE-TIME "bad substitution" error in bash, which broke
+# `syncctl` in Git-Bash/WSL-bash. ${0:-} + the absolute fallbacks below
+# cover every real environment (zsh direct, zsh sourced via joe.sh, bash).
+SYNCCTL_SELF=""
+_cands=(
+    "${BASH_SOURCE[0]:-}"
+    "${0:-}"
+    "${SSOT:-}/tools/syncctl/syncctl"
+    "${SCRIPTS_PATH:-}/tools/syncctl/syncctl"
+    "$HOME/bashscripts/tools/syncctl/syncctl"
+    "/data/data/com.termux/files/home/bashscripts/tools/syncctl/syncctl"
+    "/home/usercivenz/bashscripts/tools/syncctl/syncctl"
+)
+for _cand in "${_cands[@]}"; do
+    if [[ -n "$_cand" && -f "$_cand" && "$_cand" == */syncctl ]]; then
+        SYNCCTL_SELF="$(readlink -f "$_cand" 2>/dev/null || echo "$_cand")"
+        break
+    fi
+done
+unset _cands _cand
+SYNCCTL_LIB_DIR="$(cd "$(dirname "$SYNCCTL_SELF")" && pwd)/lib"
+
+# Try to load 00-env.sh from common locations
+_load_env() {
+    local env_path=""
+    for p in \
+        "${SSOT:-}/00-env.sh" \
+        "$HOME/bashscripts/00-env.sh" \
+        "${SCRIPTS_PATH:-}/00-env.sh" \
+        "/home/usercivenz/bashscripts/00-env.sh"; do
+        [[ -n "$p" && -f "$p" ]] && { env_path="$p"; break; }
+    done
+    if [[ -n "$env_path" ]]; then
+        # 00-env.sh reads $JOE_ENV without default; temporarily lift set -u
+        set +u
+        source "$env_path" 2>/dev/null || true
+        set -u
+    fi
+}
+_load_env
+
+# Source 01-colors.sh for cn() / c() helpers (V4 SSOT)
+_colors_path=""
+for p in \
+    "${SSOT:-}/01-colors.sh" \
+    "$HOME/bashscripts/01-colors.sh" \
+    "${SCRIPTS_PATH:-}/01-colors.sh" \
+    "/home/usercivenz/bashscripts/01-colors.sh"; do
+    [[ -n "$p" && -f "$p" ]] && { _colors_path="$p"; break; }
+done
+[[ -n "$_colors_path" ]] && source "$_colors_path" 2>/dev/null
+
+# Source all libs
+for lib in config api state lock checkpoint ownership handover renderer doctor; do
+    # shellcheck source=/dev/null
+    source "$SYNCCTL_LIB_DIR/${lib}.sh"
+done
+
+# ──────────────────────────────────────────────────────────
+# Helpers
+# ──────────────────────────────────────────────────────────
+_log() {
+    [[ "$SYNCCTL_DEBUG" == "1" ]] && echo "[$(date +%H:%M:%S)] $*" >&2
+}
+
+_die() {
+    echo "syncctl: $*" >&2
+    exit 1
+}
+
+# ──────────────────────────────────────────────────────────
+# Subcommands
+# ──────────────────────────────────────────────────────────
+cmd_status()  {
+    # Suppress job control notifications ($(cmd) subshells trigger [N] Done in ble.sh)
+    local _saved_m; [[ -o monitor ]] && _saved_m=1 || _saved_m=0
+    set +m 2>/dev/null
+    render_status
+    [[ "$_saved_m" == "1" ]] && set -m 2>/dev/null
+}
+cmd_who()     {
+    local _saved_m; [[ -o monitor ]] && _saved_m=1 || _saved_m=0
+    set +m 2>/dev/null
+    render_who
+    [[ "$_saved_m" == "1" ]] && set -m 2>/dev/null
+}
+cmd_help()    { render_help; }
+
+cmd_checkpoint() {
+    local master
+    master="$(state_reconcile_master | sed -n 's/^master=//p' | cut -d'|' -f1)"
+    _log "checkpoint start (master=$master)"
+    if checkpoint_run "$master"; then
+        render_checkpoint "$SYNCCTL_CHECKPOINT_ID" pass 0
+    else
+        render_checkpoint "$SYNCCTL_CHECKPOINT_ID" fail 0
+        return 1
+    fi
+}
+
+cmd_transfer() {
+    [[ $# -ge 1 ]] || _die "usage: syncctl transfer <device> [--force] [--dry-run] [--reason \"...\"]"
+    transfer_master "$@"
+}
+
+cmd_init() {
+    [[ $# -ge 1 ]] || _die "usage: syncctl init <device> [--reason \"...\"]"
+    init_master "$@"
+}
+
+cmd_lock() {
+    if lock_acquire; then
+        echo "✓ Lock acquired"
+        # Don't release on exit — stays locked
+        trap - RETURN
+    else
+        _die "could not acquire lock"
+    fi
+}
+
+cmd_unlock() {
+    lock_release force
+    echo "✓ Lock released"
+}
+
+cmd_conflicts() {
+    render_conflicts
+}
+
+cmd_resolve() {
+    local file="" keep="newer"
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --keep) keep="$2"; shift 2 ;;
+            *) file="$1"; shift ;;
+        esac
+    done
+    [[ -z "$file" ]] && _die "usage: syncctl resolve <file> [--keep newer|master]"
+
+    if [[ ! -f "$file" ]]; then
+        _die "file not found: $file"
+    fi
+
+    # Archive the conflict
+    local archive_dir="$SYNCCTL_CONFLICT_ARCHIVE/$(date +%Y-%m-%d)"
+    mkdir -p "$archive_dir"
+    cp "$file" "$archive_dir/" && rm -f "$file"
+    audit_log "resolve" "file=$file" "keep=$keep" "action=archive"
+    echo "✓ Resolved (archived to $archive_dir)"
+    echo "  Winner: $file"
+    echo "  Loser: archived"
+}
+
+cmd_recover() {
+    recover_stale_handover
+}
+
+cmd_doctor() {
+    doctor_run
+}
+
+cmd_logs() {
+    local n="${1:-20}"
+    tail -n "$n" "$SYNCCTL_AUDIT_LOG" 2>/dev/null || echo "(no logs yet)"
+}
+
+cmd_fix_types() {
+    # Validate flags + collect them, then pass to fix_types which has its own parser.
+    # This way we reject unknown flags up front but don't lose --dry-run/--reason VALUE.
+    local args=()
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --dry-run)
+                args+=("--dry-run")
+                shift
+                ;;
+            --reason)
+                [[ $# -ge 2 ]] || _die "--reason requires a value"
+                args+=("--reason" "$2")
+                shift 2
+                ;;
+            *)
+                _die "unknown flag for fix-types: $1 (try syncctl help)"
+                ;;
+        esac
+    done
+    fix_types "${args[@]}"
+}
+
+cmd_set_type() {
+    [[ $# -ge 2 ]] || _die "usage: syncctl set-type <device> <sendonly|receiveonly|sendreceive>"
+    set_type_device "$1" "$2"
+}
+
+cmd_types() {
+    ownership_table
+}
+
+# ──────────────────────────────────────────────────────────
+# Main dispatch
+# ──────────────────────────────────────────────────────────
+main() {
+    # Parse global flags
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --debug) SYNCCTL_DEBUG=1; shift ;;
+            --help|-h) cmd_help; exit 0 ;;
+            --) shift; break ;;
+            -*) _die "unknown flag: $1 (try syncctl help)" ;;
+            *) break ;;
+        esac
+    done
+
+    [[ $# -ge 1 ]] || { cmd_help; exit 0; }
+
+    local cmd="$1"; shift
+    _log "cmd=$cmd args=$*"
+
+    case "$cmd" in
+        status)        cmd_status "$@" ;;
+        who)           cmd_who "$@" ;;
+        checkpoint|chk) cmd_checkpoint "$@" ;;
+        transfer|tx)   cmd_transfer "$@" ;;
+        init)          cmd_init "$@" ;;
+        lock)          cmd_lock "$@" ;;
+        unlock)        cmd_unlock "$@" ;;
+        conflicts|cf)  cmd_conflicts "$@" ;;
+        resolve)       cmd_resolve "$@" ;;
+        recover)       cmd_recover "$@" ;;
+        doctor)        cmd_doctor "$@" ;;
+        logs)          cmd_logs "$@" ;;
+        fix-types|fix) cmd_fix_types "$@" ;;
+        set-type)      cmd_set_type "$@" ;;
+        types)         cmd_types "$@" ;;
+        help|--help|-h) cmd_help ;;
+        *) _die "unknown command: $cmd (try syncctl help)" ;;
+    esac
+}
+
+# Define wrapper function so `syncctl` command is available when sourced into shell
+syncctl() {
+    # Lock-holding commands run in a child bash process: their auto-release
+    # relies on `trap 'lock_release' RETURN`, which is BASH-ONLY — in zsh the
+    # trap fails ("undefined signal: RETURN") and every transfer/init leaks
+    # the lock inside the live shell (later surfacing as a stale lock).
+    # Read-only commands run in-process for speed.
+    case "${1:-}" in
+        transfer|init|fix-types|lock|unlock)
+            bash "$SYNCCTL_SELF" "$@"
+            ;;
+        *)
+            main "$@"
+            ;;
+    esac
+}
+
+# Only run main when executed directly, not when sourced (e.g. from joe.sh)
+if [[ -n "${BASH_VERSION:-}" ]]; then
+    [[ "${BASH_SOURCE[0]}" == "$0" ]] && main "$@"
+else
+    # In zsh, ZSH_EVAL_CONTEXT contains ':file' when sourced (safe default 'file')
+    # prevents main() from running when ZSH_EVAL_CONTEXT is unset (Termux edge case)
+    [[ "${ZSH_EVAL_CONTEXT:-file}" != *:file* ]] && main "$@"
+fi
+
+# Restore nounset to its original state (don't pollute the interactive shell)
+[[ "${_syncctl_was_nounset:-0}" == "0" ]] && set +u
+unset _syncctl_was_nounset 2>/dev/null || true

@@ -81,11 +81,6 @@ gcmsg() {
   git -C "$REPO_ROOT" commit -m "$1"
 }
 
-# ---- gcm "<msg>" : alias for gcmsg (shorter to type) ----
-# Guard against oh-my-zsh git plugin alias conflict
-unalias gcm 2>/dev/null
-gcm() { gcmsg "$@"; }
-
 # ---- gac "<msg>" : add all + commit ----
 gac() {
   if ! _git_need_repo; then return 1; fi
@@ -299,7 +294,6 @@ git helpers (Alpha SSOT)
   gaa           git add -A
   gcmsg "msg"   git commit -m
   gac  "msg"    add all + commit
-  gcm  "msg"    alias for gcmsg (shorter)
   gpl           git pull (rebase if local commits)
   gp            git push (auto -u on first push)
   gsync         gpl + gp (full sync)

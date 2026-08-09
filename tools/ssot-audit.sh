@@ -8,9 +8,9 @@
 
 set -uo pipefail 2>/dev/null || setopt PIPE_FAIL 2>/dev/null
 
-ROOT="${1:-${JOE_ROOT:-$HOME/bashscripts}}"
-COLORS_FILE="$ROOT/core/01-colors.sh"
-ENV_FILE="$ROOT/bootstrap/00-env.sh"
+ROOT="${1:-$HOME/bashscripts}"
+COLORS_FILE="$ROOT/01-colors.sh"
+ENV_FILE="$ROOT/00-env.sh"
 JOE_FILE="$ROOT/joe.sh"
 
 err()   { echo -e "\e[38;5;196m❌ $1\e[0m"; }

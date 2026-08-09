@@ -22,7 +22,7 @@
 # ============================================================
 
 case "$JOE_ENV" in
-    TERMUX|BSTACK)
+    TERMUX|BST)
          export HERMES_DIR="/data/data/com.termux/files/home/.hermes"
          export PYTHON_VENV="$HOME/.dash_venv/bin/activate"
          export SDCARD_PATH="/storage/emulated/0/"     
@@ -55,6 +55,7 @@ export BRAVE_SEARCH_API_KEY="BSAfPRWzAVe_En3GTQ-cZHcy3MXk8hB"  # Replace with yo
 export BRAVE_API_KEY="${BRAVE_SEARCH_API_KEY}"
 export ALPHA_DIR="$msync/alpha-workspace"
 export alpha=${ALPHA_DIR}
+export storage="/storage/emulated/0/" # sdcrd
 # ============================================================  
 # Dynamic env switching
 # ============================================================
@@ -165,14 +166,23 @@ export NODE_WIN_ST_KEY="9AQa4xCCRuZEDs2qDNUY9s6T27NJS9sU"
 export NODE_WIN_ST_ID="FJXVHAJ-ORMJNPA-6KAAGRW-ZJC4UN5-ZNY7RWD-EMON3TO-EXBZX3G-YMUXEAA"
 export NODE_WIN_ST_URL="http://${NODE_WIN_HOST}:${NODE_WIN_ST_PORT}"
 
-# --- BSTACKPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
-export NODE_BSTACK_HOST="BSTACK"
-export NODE_BSTACK_USER="u0_a104"
-export NODE_BSTACK_PORT="8020"
-export NODE_BSTACK_ST_PORT="8386"
-export NODE_BSTACK_ST_KEY="DCnKoGJ4tRXUqc7UWa44pNvrkiVRshZQ"
-export NODE_BSTACK_ST_ID="JAWP2TM-NNLE4IU-GNPGLLP-BSRFFNC-YQ3RKEU-TEDBZIW-5EMZ2ME-V3F7DQB"
-export NODE_BSTACK_ST_URL="http://${NODE_BSTACK_HOST}:${NODE_BSTACK_ST_PORT}"
+# --- BSTPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
+export NODE_BST_HOST="bst"
+export NODE_BST_USER="u0_a104"
+export NODE_BST_PORT="8020"
+export NODE_BST_ST_PORT=""
+export NODE_BST_ST_KEY=""
+export NODE_BST_ST_ID=""
+export NODE_BST_ST_URL="http://${NODE_BST_HOST}:${NODE_BST_ST_PORT}"
+
+# --- MuMuPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
+export NODE_MUMU_HOST="mumu"
+export NODE_MUMU_USER="u0_a62"
+export NODE_MUMU_PORT="8020"
+export NODE_MUMU_ST_PORT="8386"
+export NODE_MUMU_ST_KEY="zMGe2P6CmaSoczYLvPtXLgTQaRL4vE6C"
+export NODE_MUMU_ST_ID="PQP2YQT-GQXIJGV-BHOTC4Y-PXWVL2C-EMJIRZP-J6QI7RP-VXJ7GF7-WUYSZQ6"
+export NODE_MUMU_ST_URL="http://${NODE_MUMU_HOST}:${NODE_MUMU_ST_PORT}"
 
 # --- Debian (proot inside Termux) ---
 export NODE_DEBIAN_HOST="${NODE_DEBIAN_HOST:-debian}"
@@ -212,14 +222,22 @@ export ST_KEY_WIN="$NODE_WIN_ST_KEY"
 export ST_PORT_WIN="$NODE_WIN_ST_PORT"
 export URL_WIN="${NODE_WIN_ST_URL}/"
 
-# BSTACKPlayer compat (Android emulator peer)
-export BSTACK_IP="$NODE_BSTACK_HOST"
-export BSTACK_USER="$NODE_BSTACK_USER"
-export BSTACK_PORT="$NODE_BSTACK_PORT"
-export BSTACK_TELSCAIL_IP="$NODE_BSTACK_HOST"
-export ST_KEY_BSTACK="$NODE_BSTACK_ST_KEY"
-export ST_PORT_BSTACK="$NODE_BSTACK_ST_PORT"
-export URL_BSTACK="${NODE_BSTACK_ST_URL}/"
+# BSTPlayer compat (Android emulator peer)
+export BST_IP="$NODE_BST_HOST"
+export BST_USER="$NODE_BST_USER"
+export BST_PORT="$NODE_BST_PORT"
+export BST_TELSCAIL_IP="$NODE_BST_HOST"
+export ST_KEY_BST="$NODE_BST_ST_KEY"
+export ST_PORT_BST="$NODE_BST_ST_PORT"
+export URL_BST="${NODE_BST_ST_URL}/"
+
+# MuMuPlayer compat
+export MUMU_IP="$NODE_MUMU_HOST"
+export MUMU_USER="$NODE_MUMU_USER"
+export MUMU_PORT="$NODE_MUMU_PORT"
+export ST_KEY_MUMU="$NODE_MUMU_ST_KEY"
+export ST_PORT_MUMU="$NODE_MUMU_ST_PORT"
+export URL_MUMU="${NODE_MUMU_ST_URL}/"
 
 # Debian compat
 export DEBIAN_IP="$NODE_DEBIAN_HOST"
@@ -304,7 +322,7 @@ mkdir -p "$BACKUP_DIR" 2>/dev/null
 # ============================================================
 
 case "$JOE_ENV" in
-    WSL|TERMUX|BSTACK)
+    WSL|TERMUX|BST)
         if command -v micro >/dev/null 2>&1; then
             export EDITOR="micro"
             export VISUAL="micro"

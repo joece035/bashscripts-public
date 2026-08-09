@@ -882,7 +882,7 @@ agent_md() {
 
 hm() {
     [[ -z "$1" ]] && { echo "Usage: hm <mode> [args...]"; return 1; }
-    [[ -f $JOE_PLUGINS/hermes/hermes.sh ]] && source $JOE_PLUGINS/hermes/hermes.sh
+    [[ -f $SSOT/tools/hermes.sh ]] && source $SSOT/tools/hermes.sh
     
    local mode=${1:-}
    shift
@@ -942,9 +942,9 @@ sc() {
   local _ssot=""
   for p in \
       "${SSOT:-}" \
-      "${JOE_ROOT:-}" \
       "$HOME/bashscripts" \
       "$SCRIPTS_PATH" \
+      "/home/usercivenz/bashscripts" \
       "/data/data/com.termux/files/home/bashscripts"; do
     [[ -n "$p" && -d "$p" ]] && { _ssot="$p"; break; }
   done
@@ -954,10 +954,10 @@ sc() {
     return 1
   fi
 
-  if [[ -f "$JOE_PLUGINS/syncctl/syncctl" ]]; then
-    source "$JOE_PLUGINS/syncctl/syncctl" 2>/dev/null
+  if [[ -f "$_ssot/tools/syncctl/syncctl" ]]; then
+    source "$_ssot/tools/syncctl/syncctl" 2>/dev/null
   else
-    cn 220 bi "syncctl.sh not found in $JOE_PLUGINS/syncctl/"
+    cn 220 bi "syncctl.sh not found in $_ssot/tools/"
     return 1
   fi
 
@@ -999,8 +999,8 @@ sc() {
     return 1
   fi
 
-  if [[ -f "$_ssot/plugins/syncctl/syncctl" ]]; then
-    source "$_ssot/plugins/syncctl/syncctl" 2>/dev/null
+  if [[ -f "$_ssot/tools/syncctl/syncctl" ]]; then
+    source "$_ssot/tools/syncctl/syncctl" 2>/dev/null
   else
     cn 220 bi "syncctl.sh not found in $_ssot/tools/"
     return 1
@@ -1017,70 +1017,3 @@ sc() {
       *) stc "$@" ;;
   esac
 }
-
-#----symbolic link----#
-slink_() {
-    # สลับไฟล์จริง(src)กับไฟล์ที่สร้างลิงก์ไปหา(tar) แล้วค่อยสร้างลิงก์ใหม่
-    # กรณีไฟล์จริงอยู่บน termux ต้องการ link ไป sd card 
-    local src="${1:?SELECT SOURCE}" #-- file จริงๆ
-    local tar="${2:?SELECT TARGET}" #-- link ที่จะทำ
-    cp -r "${src}" "${tar}" &&   #-- คัดลอกเนื้อหาไปใส่ไฟล์ปลายทางก่อน
-    mv "${src}" "${src}.bk" &&  #-- backup file จริง
-    ln -s "${tar}" "${src}" &&     #-- สร้าง symbolic link
-    echo "done symbolic link $tar --> $src" 
-    rm -rf "${src}.bk"            #-- ลบไฟล์สำรอง
-    # -- ไฟล์จริงจะย้ายไปอยู่ใน sd card และสร้าง link มาแทนที่ตัวเอง
-}
-
-
-ssh_kgen_(){
-  #-- สร้าง public/private key หากยังไม่มี
-  local machine="${1:?SELECT machine}"
-  local keyfile="$HOME/.ssh/id_ed25519_${machine}"
-  
-  if [[ -f "$keyfile" ]]; then
-    echo "SSH key already exists at $keyfile"
-  else
-    ssh-keygen -t ed25519 -C "${machine}" -f "${keyfile}"
-  fi
-  local output=$(cat "${keyfile}.pub")
-  clipboard_out "${output}"
-  c 10 b "$output"
-}
-
-ssh_kadd_(){
-  #-- เพิ่ม Public Key ลงใน authorized_keys ของเครื่องปลายทาง (ป้องกันการเพิ่มซ้ำ)
-  local pubkey="${1:-$(clipboard_in)}"
-  [[ -z "$pubkey" ]] && { echo "No public key provided or found in clipboard"; return 1; }
-  local auth_file="$HOME/.ssh/authorized_keys"
-
-  [[ -d "$HOME/.ssh" ]] || mkdir -p "$HOME/.ssh"
-  chmod 700 "$HOME/.ssh"
-  touch "$auth_file"
-  chmod 600 "$auth_file"
-
-  if grep -qF "$pubkey" "$auth_file"; then
-    echo "Key already exists in $auth_file"
-  else
-    echo "${pubkey}" >> "$auth_file"
-    echo "done adding ssh key"
-  fi
-}
-clipboard_out() {
-  _p_clip_write "$@" 
-}
-
-clipboard_in() {
-  _p_clip_read 
-}
-
-test_clipboard() {
-
-    clipboard_out "$(pwd)"
-    local input=$(clipboard_in)
-    local output=$(c 45 b "${input}";mc b "  WRIT and READ from clipboard test done")
-
-    echo "$output"
-    
-}
-

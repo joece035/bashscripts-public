@@ -1,0 +1,7 @@
+{
+  "id": "bashscripts",
+  "label": "bashscripts",
+  "type": "receiveonly",
+  "path": "/data/data/com.termux/files/home/bashscripts",
+  "devices": []
+}

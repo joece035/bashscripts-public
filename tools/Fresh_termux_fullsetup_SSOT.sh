@@ -257,7 +257,7 @@ else
     fi
 
     if [[ ! -d "$SSOT_DIR/.git" ]]; then
-        git clone git@github.com:joece035/bashscripts.git "$SSOT_DIR" 2>/dev/null \
+        git clone git@github.com:sitthawat035/bashscripts.git "$SSOT_DIR" 2>/dev/null \
             || warn "Git clone skipped — relies on Syncthing sync"
     fi
 fi
@@ -278,14 +278,14 @@ else
 fi
 
 # ============================================================
-# STAGE 9 -- Wire ~/.zshrc to SSOT profiles/termux/.zshrc (symlink)
-#   SSOT template lives in bashscripts/profiles/termux/.zshrc
+# STAGE 9 -- Wire ~/.zshrc to SSOT zshrc_termux.zsh (symlink)
+#   SSOT template lives in bashscripts/tools/zshrc_termux.zsh
 #   which is synced from WSL master via Syncthing.
 #   On Termux: ~/.zshrc is a symlink -> SSOT (read-only on device).
 # ============================================================
-log "Stage 9: Wire ~/.zshrc -> profiles/termux/.zshrc (SSOT symlink)"
+log "Stage 9: Wire ~/.zshrc -> zshrc_termux.zsh (SSOT symlink)"
 ZSHRC_DEST="$TERMUX_HOME/.zshrc"
-ZSHRC_SRC="$SSOT_DIR/profiles/termux/.zshrc"
+ZSHRC_SRC="$SSOT_DIR/tools/zshrc_termux.zsh"
 
 if [[ ! -f "$ZSHRC_SRC" ]]; then
     warn "zshrc_termux.zsh not found at $ZSHRC_SRC"
