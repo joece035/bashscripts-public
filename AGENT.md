@@ -4,99 +4,128 @@ description: Agent for working with Joe's Bashscripts ecosystem. Must follow SSO
 tools: Read, Grep, Glob, Bash
 ---
 
-# 🏗️ Bashscripts Agent — SSOT Architecture Rules
+# 🏗️ Bashscripts Agent — JOE_ENV Architecture Rules
 
 > **⚠️ MANDATORY: Every agent working in this repo MUST follow these rules. No exceptions.**
 
 ## 1. Project Overview
 
-**Purpose:** Joe's Personal Command Center — a cross-platform bash scripts ecosystem that works on **WSL, Termux (incl. MuMu emulator), and Git Bash**. It provides environment detection, SSH tunneling between devices, file management, and a unified CLI experience.
+**Purpose:** Joe's Personal Command Center — a cross-platform bash/zsh scripts ecosystem that works on **Termux, WSL, and Git Bash**. It provides environment detection, SSH tunneling between devices, file management, and a unified CLI experience.
 
 **Key Design Principle:** **Single Source of Truth (SSOT)** — each domain has ONE canonical file that owns its variables/functions. All other files reference (never redefine) these definitions.
 
-## 2. Architecture Overview (Single Source of Truth)
+**Path System:** All files use `JOE_ROOT`-based paths (`$JOE_CORE`, `$JOE_FUNCTIONS`, `$JOE_PLUGINS`, `$JOE_TOOLS`). Legacy aliases `SSOT` and `SCRIPTS_PATH` are kept for backward compat only.
 
-This repo uses a **strict layered architecture** where each file is the **canonical SSOT** for its domain. When creating or modifying scripts, you **MUST** reference existing variables/functions — never redefine or hardcode them.
+## 2. Architecture Overview (JOE_ENV + SSOT)
 
-### Load Order (set by `joe.sh` — verified 2026-07-27)
+This repo uses a **JOE_ENV directory structure** with strict SSOT rules. Each file is the **canonical source** for its domain. When creating or modifying scripts, you **MUST** reference existing variables/functions via `JOE_*` paths — never redefine or hardcode them.
+
+### Directory Structure
+
+```
+bashscripts/
+├── joe.sh                    ← MAIN ENTRY POINT
+├── bootstrap/
+│   ├── 00-env.sh             ← Environment variables (SSOT)
+│   └── setup.sh              ← Installer
+├── core/
+│   ├── 01-colors.sh          ← Color engine (SSOT)
+│   ├── 02-aliases.sh         ← All aliases (SSOT)
+│   ├── 3worlds.sh            ← SSH/transfer (SSOT)
+│   ├── profiles.sh           ← AI profile switching
+│   ├── theme.sh              ← Prompt customization
+│   └── .zsh-bash-compat.sh   ← Zsh/Bash compat
+├── functions/                ← Function modules (loaded by joe.sh glob)
+├── plugins/
+│   ├── block_engine/         ← Terminal block renderer
+│   ├── syncctl/              ← Syncthing controller
+│   └── hermes/               ← Hermes AI
+├── modules/                  ← Optional helpers
+├── tools/                    ← Standalone executables
+├── profiles/                 ← Shell profile templates
+├── lessons/                  ← Learning materials
+└── tests/                    ← Test suite
+```
+
+### Path Variable System
+
+| Variable | Value | Use |
+|----------|-------|-----|
+| `JOE_ROOT` | `$HOME/bashscripts` | Repo root |
+| `JOE_CORE` | `$JOE_ROOT/core` | Core modules |
+| `JOE_FUNCTIONS` | `$JOE_ROOT/functions` | Function modules |
+| `JOE_PLUGINS` | `$JOE_ROOT/plugins` | Plugin modules |
+| `JOE_TOOLS` | `$JOE_ROOT/tools` | Standalone tools |
+| `SSOT` | `$JOE_ROOT` | Backward compat alias |
+| `SCRIPTS_PATH` | `$JOE_ROOT` | Backward compat alias |
+
+### Load Order (set by `joe.sh` — verified 2026-08-09)
 
 > **⚠️ This is the AUTHORITATIVE order.** When adding new modules, integrate
 > into the correct stage below. Do NOT add `source` calls outside of `joe.sh`.
 
 ```
-~/.bashrc
+~/.bashrc or ~/.zshrc
   └─ source joe.sh                          [BOOSTER — only entry point]
-       ├─ Step 0: detect JOE_ENV            (auto fallback if ~/.env missing)
+       ├─ Step 0: detect JOE_ENV            (TERMUX | MUMU | WSL | GIT-BASH)
        ├─ Step 1: set SSOT, SCRIPTS_PATH, hpc/htm/hwsl, DASHBOARD_DIR
-       ├─ Step 2: source 00-env.sh          ← env, OC_KEY_*, IPs, ports
-       ├─ Step 3: source 01-colors.sh       ← c()/cn()/color(), _c/_r/_b/_d/_i/_u, ctab, hline, rc()
-       ├─ Step 4: source 3worlds.sh         ← tm/tw/wsl SSH helpers
-       ├─ Step 5: source 02-aliases.sh      ← cls, h, reload, etc.
-       ├─ Step 6: source theme.sh           ← prompt & PROMPT_COMMAND
-       ├─ Step 7: source functions/*.sh     ← loop: 00-fm-loader..10-ai
-       └─ Step 8: define ai_profile() + alias pf
+       ├─ Step 1.5: CRLF self-heal          (auto-fix Windows line endings)
+       ├─ Step 2: set JOE_ROOT/JOE_CORE/JOE_PLUGINS/JOE_TOOLS
+       │
+       ├─ source bootstrap/00-env.sh        ← env vars, paths, keys
+       ├─ source core/01-colors.sh          ← c()/cn()/color(), ctab, hline, rc()
+       ├─ auto-start sshd & ssh-agent
+       ├─ source core/3worlds.sh            ← tm/tw/wsl/push/pull
+       ├─ source core/02-aliases.sh         ← cls, h, reload, etc.
+       ├─ source core/profiles.sh           ← ai_profile() + alias pf
+       ├─ source core/theme.sh              ← prompt & PROMPT_COMMAND
+       │
+       ├─ source functions/*.sh             ← glob: all function modules
+       │   └─ source plugins/block_engine/entry.sh  ← m/dashboard
+       ├─ source plugins/syncctl/syncctl    ← syncthing controller
+       │
+       └─ startup tasks                     ← syncthing_auto, rc_del
 ```
 
 **Critical invariants:**
-- `00-env.sh` is sourced BEFORE any `functions/*.sh` — every function
+- `bootstrap/00-env.sh` is sourced BEFORE any `functions/*.sh` — every function
   module can safely read `$OC_KEY_*`, `$WINDOWS_IP`, `$ST_KEY_*`, etc.
-- `01-colors.sh` is sourced BEFORE any function module that prints
+- `core/01-colors.sh` is sourced BEFORE any function module that prints
   colorized output (e.g. `cn 202 b "msg"`).
 - Functions in `functions/*.sh` may source each other freely (alphabetical
   loop order: 00-fm-loader → 00.1-function-tools → 02-systems → ...).
 - `ai_profile()` is the **only** function that mutates `OPENCODE_*` vars
   at runtime. Never reassign these from other files.
-- Path variables: `SSOT` is the canonical name (set in joe.sh Step 1),
-  `SCRIPTS_PATH` is an alias (`= $SSOT`) kept for backward compat.
+- Path variables: `JOE_ROOT` is the canonical name (set in joe.sh Step 2),
+  `SSOT`/`SCRIPTS_PATH` are aliases kept for backward compat.
 
-### SSOT File Map (อัปเดต 2026-08-01 — rescan หลัง reinstall Termux)
+### SSOT File Map (อัปเดต 2026-08-09 — JOE_ENV restructure)
 
-> **JOE_ENV มีค่าเดียวเท่านั้น: `TERMUX | WSL | GIT-BASH | MUMU`** (FLUX/DEBIAN/LINUX ถูกลบแล้ว)
-> `joe.sh` Step 0 จะ auto-detect JOE_ENV ถ้า `~/.env` ยังไม่ set
+> **JOE_ENV มีค่าเดียวเท่านั้น: `TERMUX | MUMU | WSL | GIT-BASH`**
+> All files now use `JOE_ROOT`-based paths (`$JOE_CORE`, `$JOE_PLUGINS`, etc.)
 
 | File | Domain | What it owns |
 |------|--------|-------------|
-| `joe.sh` | Boot | `JOE_ENV` (Step 0 detect), `hpc`, `htm`, `hwsl`, `SSOT`, `SCRIPTS_PATH`, `COLOR_PATH`, `DASHBOARD_DIR`, `main_sync`, `pp()`, `ai_profile()` |
-| `00-env.sh` | Environment | `oppc`, `dpc`, `dtpc`, `hmp`, `HERMES_DIR`, `HERMES_LOG_DIR`, `ENGINES_DIR`, `DASHBOARD_PYTHON`, `PYTHONIOENCODING`, `NODE_COMPILE_CACHE`, `OPENCLAW_*`, Node Registry (`NODE_*`), compat layer (`TERMUX_IP`, `WSL_IP`, `WINDOWS_IP`, `MUMU_IP`, `DEBIAN_IP`, `ST_KEY_*`, `ST_PORT_*`, `URL_*`), **OpenCode keys** (`$OC_KEY_MOM`, `$OC_KEY_JOE`, `$OC_KEY_ZEN`, `$OC_BASE_URL`), crypto addresses, FB/Shopee tokens, `BACKUP_DIR`, `EDITOR`/`VISUAL` |
-| `01-colors.sh` | Colors | helpers `c()` (no newline — ต่อสี), `cn()` (newline — จบบรรทัด), `color()` (legacy), `_c/_r/_b/_d/_i/_u` (escape), `ctab()` (ตาราง), `hline()` (เส้นคั่น), `rc()`, `rc1()`, `rc2()`, `cmp`, `cmp2`, `c256`, `rainbo` + internal short vars (`R`..`ORA`, lowercase palettes) — **V3: ไม่มีตัวแปรสี V2 หลงเหลือใน repo** (`ST_B/ST_D/ST_I/ST_U`/`R0` ถูกลบ 2026-08-02 → ใช้ `$(_b)`ฯลฯ) |
-| `02-aliases.sh` | Aliases | ALL aliases (`cls`, `h`, `spy`, `oppc`, `dtpc`, `hmp`, `reload`, `re`, `ktmux`, `fmr`, `fmoff`, `enp`, `opjs`, `s-start/stop/status`, `merge`, `loadinfra`, `saveinfra`, etc.) |
-| `functions/00-fm-loader.sh` | FM loader | `scripts_sync()`, `tskg()`, `dbsync()`, learn/block/tools bootstrapping |
-| `functions/00.1-function-tools.sh` | Function tools | `agent_md()`, backup helpers, `mth()`, math helpers |
-| `functions/02-systems.sh` | System utils | `kp()`, `fpk()`, `gpc()`, `opmb()`, `adb()`, scrcpy env |
-| `functions/03-fpath.sh` | Function paths | `FUNC_DIR`, `fn()`, `ep()`, `hop()`, `sd()`, `cdc()` |
-| `functions/04-openclaw.sh` | OpenClaw | `op_profile()`, `oc()`, `op()`, `opc()`, `OP_DIR`, `OPENCLAW_STATE_DIR`, `openclaw_service()` |
-| `functions/05-pathx.sh` | Path explorer | path navigation utilities |
-| `functions/05-project.sh` | Project runners | `opdb()`, `opall()`, `tsc()`, `full_pipe()`, `cmdp()`, `pysync()`, `prompt_enhancement()` |
-| `functions/07-wtf.sh` | Diagnostic | `wtf()` (มี `tools/wtf.sh` เป็นตัวเดิมที่ถูก shadow — ใช้ตัวนี้) |
-| `functions/08-nexus.sh` | Nexus utilities | `pull_termux_to_windows()`, `cptw`, `auto_write_file()` |
-| `functions/09-all_block_status.sh` | Block status | `opstats_data()`, `opstatus2()`, `jenv()` |
-| `functions/10-ai.sh` | AI helpers | `joe_ai()`, `_joe_status()`, `_joe_monitor()`, `ai_status()` |
-| `functions/11-bash-manager.sh` | File Manager | `fm` (ls/cp/mv/tree/ssh/push/pull...), `xfm` (cross-machine), `merge_functions()` alias อยู่ที่ tools/merge.sh |
-| `functions/joe-block/` | Block engine | `m()` (style selector), `status_new()`, `op_()`, `joe_test()`, `m_random()` |
-| `3worlds.sh` | SSH/Transfer | `tm()`, `tw()`, `wsl()`, `mumu()`, `tdb()`, `tac()`, `cpw2t`, `cpt2w`, `cpw2m`, `cpm2w`, `push`, `update`, `_st_fetch`, `syncthing_auto`, `check_syncthing`, `st_register_all` (+ `st-pause/resume/override/push-tm/status/register-all`), `_MY_WORLD` (plain text) |
-| `theme.sh` | Prompt | `_git_prompt()`, `_exit_status()`, `_set_prompt()`, `PROMPT_COMMAND`, `curmv()`, `draw_()` |
-| `profiles.sh` | AI profile | `ai_profile()` + alias `pf`, `current_stats()` + alias `stc`, `clear_cache`, `reinstall_pkg` |
-| `functions/joe-block/styles/block_style.sh` | Block styles | `set_()`, `_style_*()` definitions for JOE_BLOCK engine |
-| `tools/safe-edit.sh` | Pre-commit guard | V3-aware: blocks short-color ANSI (30-37/40-47/90-97/100-107), V2 vars, hardcoded IPs/keys |
-| `tools/ssot-audit.sh` | SSOT auditor | Detects drift, V3-ANSI, syntax (excludes lessons/) — run: `bash tools/ssot-audit.sh` |
-| `tools/merge.sh` | Tree/Merge | `treegu()` + alias `t`, `merge_functions()` (duplicate detector) |
-| `tools/syncctl/syncctl` | Syncctl CLI | `cmd_*()` dispatch, sourced by joe.sh (defines functions only, `main` guarded by `BASH_SOURCE[0] == $0`) |
-| `tools/syncctl/lib/config.sh` | Syncctl config | Paths, device registry (`SYNCCTL_DEVICES`, `SYNCCTL_API_URLS`, `SYNCCTL_API_KEYS`), folder ID (`qrkzm-pecck`), `syncctl_jq()`, `syncctl_get_api_url()`, `syncctl_get_api_key()` |
-| `tools/syncctl/lib/api.sh` | Syncctl API | `api_call()` (curl wrapper), `api_device()`, `get_folder_config()`, `set_folder_type()`, `get_completion()` |
-| `tools/syncctl/lib/handover.sh` | Syncctl handover | `init_master()`, `transfer_master()` — two-phase commit with stale-state recovery |
-| `tools/syncctl/lib/checkpoint.sh` | Syncctl checkpoint | `checkpoint_run()`, `check_local_state()`, `check_cluster_state()`, `check_folder_types()` |
-| `tools/syncctl/lib/ownership.sh` | Syncctl ownership | `apply_ownership()`, `promote_to_master()`, `demote_from_master()` |
+| `joe.sh` | Boot | `JOE_ENV` (Step 0 detect), `JOE_ROOT/JOE_CORE/JOE_PLUGINS/JOE_TOOLS`, `hpc/htm/hwsl`, `SSOT`, `SCRIPTS_PATH`, `DASHBOARD_DIR`, `pp()`, `ai_profile()` |
+| `bootstrap/00-env.sh` | Environment | `HERMES_DIR`, `PYTHON_VENV`, `SDCARD_PATH`, `oppc`, `dpc`, `hmp`, Node Registry (`NODE_*`), compat layer (`ST_KEY_*`, `ST_PORT_*`, `URL_*`), OpenCode keys (`$OC_KEY_*`), crypto addresses, `BACKUP_DIR` |
+| `core/01-colors.sh` | Colors | `c()` (no newline), `cn()` (newline), `color()` (legacy), `_c/_r/_b/_d/_i/_u` (escape), `ctab()` (table), `hline()` (divider), `rc()`, palette |
+| `core/02-aliases.sh` | Aliases | ALL aliases (`cls`, `h`, `reload`, `merge`, `fm`, etc.) — sources `$JOE_TOOLS/merge.sh` |
+| `core/3worlds.sh` | SSH/Transfer | `tm()`, `tw()`, `wsl()`, `push()`, `update()`, `cptw/cpw2t`, `_ssh_node`, `_rsync_to/_rsync_from`, Syncthing auto |
+| `core/profiles.sh` | AI Profile | `ai_profile()` + alias `pf`, `current_stats()` + alias `stc`, `clear_cache` |
+| `core/theme.sh` | Prompt | `_git_prompt()`, `_exit_status()`, `_set_prompt()`, `PROMPT_COMMAND` |
+| `functions/00-fm-loader.sh` | FM Loader | `scripts_sync()`, `tskg()`, `dbsync()`, learn/block/tools bootstrapping |
+| `functions/00.1-function-tools.sh` | Function Tools | `agent_md()`, backup helpers, `mth()`, math helpers — uses `$JOE_PLUGINS/syncctl/syncctl`, `$JOE_PLUGINS/hermes/hermes.sh` |
+| `functions/03-fpath.sh` | Function Paths | `FUNC_DIR=$JOE_FUNCTIONS`, `fn()`, `ep()`, `hop()`, `sd()`, `cdc()` |
+| `functions/11-bash-manager.sh` | File Manager | `fm` (ls/cp/mv/tree/ssh/push/pull...), `xfm` (cross-machine) — uses `$JOE_CORE/01-colors.sh`, `$JOE_ROOT/bootstrap/00-env.sh` |
+| `plugins/block_engine/entry.sh` | Block Engine | `m()` (style selector), `dashboard()`, `dashboard_array()`, `_blk_source_modules()` |
+| `plugins/block_engine/block/theme.sh` | Block Theme | `_load_theme()`, `_apply_color_to()` — uses `$JOE_CORE/01-colors.sh`, `$JOE_FUNCTIONS/00.1-function-tools.sh`, `$JOE_PLUGINS/block_engine/styles/block_style.sh` |
+| `plugins/syncctl/syncctl` | Syncthing | `cmd_*()` dispatch, sourced by joe.sh — uses `$JOE_ROOT/bootstrap/00-env.sh`, `$JOE_CORE/01-colors.sh` |
+| `tools/safe-edit.sh` | Pre-commit Guard | V4-aware: blocks inline ANSI, V2 vars, hardcoded IPs/keys — uses `$JOE_CORE/01-colors.sh`, `$JOE_ROOT/bootstrap/00-env.sh` |
+| `tools/ssot-audit.sh` | SSOT Auditor | Detects drift, ANSI, syntax — uses `$ROOT/core/01-colors.sh`, `$ROOT/bootstrap/00-env.sh` |
+| `tests/test_joe_env.sh` | Test Suite | 55 tests covering structure, paths, cross-deps, bash+zsh compat |
 
-> **⚠️ SYNCTHING CAVEAT (เจอจริง 2026-08-01):** `~/bashscripts` ถูก sync ด้วย Syncthing
-> ข้ามเครื่อง (WSL ↔ Termux ↔ Win ↔ MuMu) — ถ้าเครื่องอื่นมี copy เก่า มันจะ **revert** การแก้
-> ของเราได้ (เจอใน 3worlds.sh / 11-bash-manager.sh) หลังแก้ไฟล์ทุกครั้งต้อง verify:
-> `bash -n <file> && grep -c '\$\{GREEN\}' <file>` หรือ pause syncthing ก่อน migration
-
-> **🔗 FULL MESH (เพิ่ม 2026-08-01):** ทุกเครื่องเชื่อมหากันแบบ P2P (ไม่ต้องผ่าน hub)
-> - `NODE_*_ST_ID` ใน `00-env.sh` = syncthing device ID ของแต่ละเครื่อง (SSOT)
-> - `st-register-all` — รันจากเครื่องใดก็ได้ที่ syncthing online → ยืนยัน myID จริง → ลบ device เก่า → PUT/rename device ทั้งหมด → ทุกเครื่องรู้จักกันหมด
-> - ใช้เมื่อ: เพิ่มเครื่องใหม่ / reinstall / device id เปลี่ยน (เช่น reinstall Termux → id เปลี่ยน!)
-> - `st-status` ดู mesh, `st-pause/resume` ควบคุม sync, `st-override` บังคับเครื่องนี้เป็น master
+> **⚠️ SYNCTHING CAVEAT:** `~/bashscripts` is synced via Syncthing across devices.
+> After editing files, verify: `bash -n <file>` and check test suite passes.
 
 ## 2. ❌ FORBIDDEN Patterns (NEVER do this)
 
