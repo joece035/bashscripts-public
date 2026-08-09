@@ -9,8 +9,8 @@
 
 set -euo pipefail 2>/dev/null || setopt PIPE_FAIL 2>/dev/null
 
-SSOT_COLORS_FILE="${HOME}/bashscripts/01-colors.sh"
-SSOT_ENV_FILE="${HOME}/bashscripts/00-env.sh"
+SSOT_COLORS_FILE="${JOE_CORE:-${HOME}/bashscripts/core}/01-colors.sh"
+SSOT_ENV_FILE="${JOE_ROOT:-${HOME}/bashscripts}/bootstrap/00-env.sh"
 # V4 allowlist: files allowed to contain raw ANSI (V4 = only color engine + test + tools that need to print before SSOT loaded)
 ALLOWLIST=(
     "01-colors.sh"            # THE color engine

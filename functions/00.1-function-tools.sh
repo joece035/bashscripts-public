@@ -942,9 +942,9 @@ sc() {
   local _ssot=""
   for p in \
       "${SSOT:-}" \
+      "${JOE_ROOT:-}" \
       "$HOME/bashscripts" \
       "$SCRIPTS_PATH" \
-      "/home/usercivenz/bashscripts" \
       "/data/data/com.termux/files/home/bashscripts"; do
     [[ -n "$p" && -d "$p" ]] && { _ssot="$p"; break; }
   done
@@ -954,10 +954,10 @@ sc() {
     return 1
   fi
 
-  if [[ -f "$_ssot/tools/syncctl/syncctl" ]]; then
+  if [[ -f "$JOE_PLUGINS/syncctl/syncctl" ]]; then
     source "$JOE_PLUGINS/syncctl/syncctl" 2>/dev/null
   else
-    cn 220 bi "syncctl.sh not found in $_ssot/tools/"
+    cn 220 bi "syncctl.sh not found in $JOE_PLUGINS/syncctl/"
     return 1
   fi
 

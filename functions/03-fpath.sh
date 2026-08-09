@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 #----------PHAT FOR FUNCTION----------#
-  export FUNC_DIR="$SCRIPTS_PATH/functions"
+  export FUNC_DIR="$JOE_FUNCTIONS"
  #--------- FUNCTION FORM ------------#
 
 #-------------------------------------#   
@@ -26,7 +26,7 @@ sd() {
 
 #-------PHAT For FUNCTION/LEARN ------#  
 # fn <file>           → $FUNC_DIR/<file>  (functions/)
-# fn j <file>         → $SSOT/joe.learn/<file>
+# fn j <file>         → $JOE_ROOT/joe.learn/<file>
 
 #--------------------------------------#   
 cdc() {
@@ -35,12 +35,12 @@ cdc() {
 }
 #--------------------------------------#
 fn() {
-  local j=$(echo "$SSOT/functions/00.1-function-tools.sh")
-  local jb="$(dirname $j)/joe-block/entry.sh"
+  local j=$(echo "$JOE_FUNCTIONS/00.1-function-tools.sh")
+  local jb="$(dirname $j)/block_engine/entry.sh"
   case "$1" in
     j)
       if (( $# >= 2 )); then
-        printf '%s\n' "$SSOT/joe.learn/$2"   # fn j <file> → $SSOT/joe.learn/<file>
+        printf '%s\n' "$JOE_ROOT/joe.learn/$2"   # fn j <file> → $JOE_ROOT/joe.learn/<file>
       else
         printf '%s' "$j"
       fi
@@ -48,9 +48,9 @@ fn() {
     jb) source "$jb" ;;
     *) 
       if (( $# == 0 )); then
-        printf '%s' "$SSOT/functions"
+        printf '%s' "$JOE_FUNCTIONS"
       else
-        printf '%s\n' "$SSOT/functions/$@"
+        printf '%s\n' "$JOE_FUNCTIONS/$@"
       fi
     ;;
   esac  
