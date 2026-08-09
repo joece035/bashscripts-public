@@ -6,10 +6,10 @@
 # ============================================================
 
 # ── 1. Bash-compatible shell options ──
-setopt SH_WORD_SPLIT 2>/dev/null    # Word splitting like bash
-setopt GLOB_SUBST 2>/dev/null       # Glob expansion like bash
+# NOTE: SH_WORD_SPLIT & GLOB_SUBST REMOVED (2026-08-09)
+#   These cause micro/TUI apps to freeze with black screen
+#   because zsh misinterprets escape sequences as glob/split targets.
 setopt NULL_GLOB 2>/dev/null        # No error on empty globs
-setopt KSH_ARRAYS 2>/dev/null       # 0-indexed arrays like bash
 setopt NO_NOMATCH 2>/dev/null       # Don't error on unmatched globs
 
 # ── 2. BASH_SOURCE array shim for ZSH ──

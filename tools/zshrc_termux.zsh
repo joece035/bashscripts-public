@@ -1,7 +1,7 @@
 # ================================================================
-# ~/.zshrc - JOE SSOT ZSH Config (Termux)
+# zshrc_termux.zsh — JOE SSOT ZSH Config (Termux)
 # MASTER: WSL | SSOT: ~/bashscripts/tools/zshrc_termux.zsh
-# Deployed by: Fresh_termux_fullsetup_SSOT.sh (links to ~/.zshrc)
+# Deployed by: Fresh_termux_fullsetup_SSOT.sh (symlink to ~/.zshrc)
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 
@@ -88,12 +88,12 @@ fi
 
 if zle -la 2>/dev/null | grep -q history-substring-search; then
     bindkey '^[[A' history-substring-search-up   2>/dev/null
-    bindkey '^[[B' history-substring-search-down 2>/dev/null
+    bindkey '^[[B' history-substring-search-down  2>/dev/null
     bindkey "$terminfo[kcuu1]" history-substring-search-up   2>/dev/null
     bindkey "$terminfo[kcud1]" history-substring-search-down 2>/dev/null
 else
     bindkey '^[[A' up-line-or-history   2>/dev/null
-    bindkey '^[[B' down-line-or-history 2>/dev/null
+    bindkey '^[[B' down-line-or-history  2>/dev/null
 fi
 
 GITSTATUS_LOG_LEVEL=OFF
@@ -105,20 +105,18 @@ GITSTATUS_LOG_LEVEL=OFF
 # micro ค้างจอดำเพราะ escape sequences จาก p10k/color engine
 # ชนกับ alternate screen buffer ของ micro
 micro() {
-    # เคลียร์ terminal state ก่อนเปิด micro
     command printf '\e[?1049l' 2>/dev/null  # ออกจาก alternate screen ถ้าค้าง
     command printf '\e[0m' 2>/dev/null      # reset สีทั้งหมด
     command printf '\e[?25h' 2>/dev/null    # แสดง cursor กลับมา
     command printf '\e[2J\e[H' 2>/dev/null  # clear screen
     command micro "$@"
     local ret=$?
-    # เคลียร์หลังปิด micro
     command printf '\e[?1049l' 2>/dev/null
     command printf '\e[0m' 2>/dev/null
     return $ret
 }
 
-# -- pnpm (global bin dir; removed by an accidental WIP edit 2026-08-08) --
+# -- pnpm (global bin dir) -------------------------------------
 export PNPM_HOME="/data/data/com.termux/files/home/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
