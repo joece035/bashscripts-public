@@ -11,7 +11,7 @@
 if [[ -z "${JOE_ENV:-}" ]]; then
     if [[ -d "/data/data/com.termux" ]]; then
         # Termux (หรือ MuMuPlayer ที่รัน Termux อยู่) — เช็ค build prop แยก
-        if grep -qiE "netease|mumu" /system/build.prop 2>/dev/null; then
+        if grep -qiE "netease|mumu" /system/build.prop 2>/dev/null || [[ "${EMULATOR}" == "Mumu player" ]]; then
             export JOE_ENV="MUMU"
         else
             export JOE_ENV="TERMUX"
@@ -28,7 +28,6 @@ fi
 
 #-- Global shell refresh
 pp() {
-
     clear
     case $JOE_ENV in
         TERMUX|MUMU) source "$HOME/.zshrc" ;;
@@ -44,15 +43,23 @@ pp() {
 
 # ── Step 2: Set derived paths based on JOE_ENV ──
 case "$JOE_ENV" in
-    TERMUX|MUMU)
+    TERMUX)
         export SSOT="/data/data/com.termux/files/home/bashscripts"
         export DASHBOARD_DIR="$HOME/dashboard"
         export OBSIDIAN_VAULT="/storage/emulated/0/syncthing/hermes_vault"
         export home="$HOME"
         export nexus_vault="$HOME/nexus_vault"
         export MAIN_SYNC_DIR="$HOME/main_sync"
-        
-
+        export SSH_PORT=8022
+        ;;
+    MUMU)
+        export SSOT="/data/data/com.termux/files/home/bashscripts"
+        export DASHBOARD_DIR="$HOME/dashboard"
+        export OBSIDIAN_VAULT="/storage/emulated/0/syncthing/hermes_vault"
+        export home="$HOME"
+        export nexus_vault="$HOME/nexus_vault"
+        export MAIN_SYNC_DIR="$HOME/main_sync"
+        export SSH_PORT=8020
         ;;
     WSL)
         export SSOT="$HOME/bashscripts"
@@ -64,6 +71,7 @@ case "$JOE_ENV" in
         export home="$HOME"
         export nexus_vault="$HOME/nexus_vault"
         export MAIN_SYNC_DIR="$HOME/main_sync"
+        export SSH_PORT=22
         ;;
     GIT-BASH)
         export SSOT="$HOME/bashscripts"
@@ -74,6 +82,7 @@ case "$JOE_ENV" in
         export home="$hwsl" 
         export nexus_vault="$hpc/DESKTOP/nexus_vault"
         export MAIN_SYNC_DIR="$HOME/DESKTOP/main_sync"
+        export SSH_PORT=2222
         ;;
 esac
 
@@ -89,6 +98,11 @@ esac
 # syntax error ทันที — ตรงนี้แปลงกลับเป็น LF ให้อัตโนมัติก่อน source
 # หมายเหตุ: ถ้า joe.sh ตัวเองเป็น CRLF จะ parse ไม่ผ่านมาถึงตรงนี้
 # → ต้องมี guard ใน .bashrc ด้วย (ดู .bashrc section 6)
+export SSH_MUMU_PORT=8020
+export SSH_TERMUX_PORT=8022
+export SSH_WSL_PORT=22
+export SSH_WIN_PORT=2222
+
 if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
     _crlf_files="$(grep -rlU $'\r' "$SSOT" --include="*.sh" 2>/dev/null)"
     if [[ -n "$_crlf_files" ]]; then
@@ -105,7 +119,7 @@ if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
 
 fi
 
-# ── Step 2: Source all modules using SCRIPTS_PATH ──
+# ── Step 2: Source all modules using SCRIP S_PATH ──
 
 # Environment variables & paths (SSOT: bootstrap/00-env.sh)
 [ -f "$SCRIPTS_PATH/bootstrap/00-env.sh" ] && source "$SCRIPTS_PATH/bootstrap/00-env.sh"
@@ -115,23 +129,29 @@ fi
 
 # Auto-start sshd if not running (guarded for git-bash which lacks pgrep)
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
+# Auto-start ssh-agent if not running (needed for tm/tw key auth)
 if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l &>/dev/null; then
     eval "$(ssh-agent -s)" >/dev/null 2>&1
     ssh-add ~/.ssh/id_ed25519 2>/dev/null
 fi
-if command -v pgrep >/dev/null 2>&1; then
-    if ! pgrep -x "sshd" >/dev/null 2>&1; then
-        sshd >/dev/null 2>&1 && cn 10 b "SSH Daemon started successfully." >&2 || cn 9 b "Failed to start sshd." >&2
+
+# Auto-start sshd guarded by JOE_ENV
+if [[ "$JOE_ENV" == "WSL" ]]; then
+    # WSL: ใช้ service ssh
+    if ! service ssh status >/dev/null 2>&1; then
+        sudo service ssh start >/dev/null 2>&1 && cn 10 b "SSH Service (WSL) started successfully." >&2 || cn 9 b "Failed to start SSH Service." >&2
     else
-        # STDOUT-quiet: send ssh status to STDERR only so Powerlevel10k
-        # instant prompt (sourced first in .zshrc) is not invalidated.
-        # p10k is strict — ANY stdout during init triggers a warning.
-        cn 10 bi "ssh activated" >&2
+        cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
     fi
-else
-    # No pgrep (git-bash / WSL busybox) — try service, fall back silently
-    service ssh status >/dev/null 2>&1 || service ssh start >/dev/null 2>&1 || true
+elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
+    # Termux / MuMu: ใช้ sshd binary ตรงๆ
+    if command -v pgrep >/dev/null 2>&1 && ! pgrep -x "sshd" >/dev/null 2>&1; then
+        sshd -p "$SSH_PORT" >/dev/null 2>&1 && cn 10 b "SSH Daemon started successfully port : ${SSH_PORT}." >&2 || cn 9 b "Failed to start sshd." >&2
+    else
+        cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
+    fi
 fi
+
 
 #-----SSH and 3-Worlds (tm, tw, push, pull, world)
 [ -f "$SCRIPTS_PATH/core/3worlds.sh" ] && source "$SCRIPTS_PATH/core/3worlds.sh"

@@ -1,7 +1,7 @@
 # ================================================================
 # ~/.zshrc - JOE SSOT ZSH Config (Termux)
-# MASTER: WSL | SSOT: ~/bashscripts/profiles/termux/.zshrc
-# Deployed by: Fresh_termux_fullsetup_SSOT.sh (symlink to ~/.zshrc)
+# MASTER: WSL | SSOT: ~/bashscripts/tools/zshrc_termux.zsh
+# Deployed by: Fresh_termux_fullsetup_SSOT.sh (links to ~/.zshrc)
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 
@@ -63,18 +63,10 @@ fi
 
 # -- ZSH/Bash compat layer (BEFORE joe.sh) ---------------------
 SSOT_PATH="${SSOT:-$HOME/bashscripts}"
-[[ -f "$SSOT_PATH/core/.zsh-bash-compat.sh" ]] && source "$SSOT_PATH/core/.zsh-bash-compat.sh"
-
-# -- JOE_ENV override (BEFORE joe.sh detection) -----------------
-# ~/.env lets per-machine JOE_ENV override auto-detection
-# (e.g. MuMu → MUMU instead of TERMUX when build.prop has no netease tag)
-[[ -f "$HOME/.env" ]] && source "$HOME/.env"
+[[ -f "$SSOT_PATH/.zsh-bash-compat.sh" ]] && source "$SSOT_PATH/.zsh-bash-compat.sh"
 
 # -- JOE SSOT single entry point --------------------------------
 # joe.sh: JOE_ENV detection -> 00-env.sh -> 01-colors.sh -> functions
-# JOE_ROOT must be set BEFORE sourcing joe.sh because BASH_SOURCE[0]
-# is empty in zsh (no bash compat), so joe.sh can't self-detect.
-export JOE_ROOT="$SSOT_PATH"
 [[ -f "$SSOT_PATH/joe.sh" ]] && source "$SSOT_PATH/joe.sh"
 
 # -- Powerlevel10k config --------------------------------------
@@ -104,27 +96,10 @@ else
     bindkey '^[[B' down-line-or-history 2>/dev/null
 fi
 
-GITSTATUS_LOG_LEVEL=OFF
+GITSTATUS_LOG_LEVEL=DEBUG
 
 # -- Powerlevel10k finalize ------------------------------------
 (( ! ${+functions[p10k]} )) || p10k finalize
-
-# -- Micro editor wrapper (fix TUI freeze on Termux) ----------
-# micro ค้างจอดำเพราะ escape sequences จาก p10k/color engine
-# ชนกับ alternate screen buffer ของ micro
-micro() {
-    # เคลียร์ terminal state ก่อนเปิด micro
-    command printf '\e[?1049l' 2>/dev/null  # ออกจาก alternate screen ถ้าค้าง
-    command printf '\e[0m' 2>/dev/null      # reset สีทั้งหมด
-    command printf '\e[?25h' 2>/dev/null    # แสดง cursor กลับมา
-    command printf '\e[2J\e[H' 2>/dev/null  # clear screen
-    command micro "$@"
-    local ret=$?
-    # เคลียร์หลังปิด micro
-    command printf '\e[?1049l' 2>/dev/null
-    command printf '\e[0m' 2>/dev/null
-    return $ret
-}
 
 # -- pnpm (global bin dir; removed by an accidental WIP edit 2026-08-08) --
 export PNPM_HOME="/data/data/com.termux/files/home/.local/share/pnpm"
