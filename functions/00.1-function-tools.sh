@@ -1029,3 +1029,11 @@ cmd_ens() {
         return 1
     fi
 }
+#-------------------------
+# clone_bsc
+#-------------------------
+clone_bsc() {
+    cd &&
+    git clone "git@github.com:joece035/bashscripts.git" ".bashscripts" &&
+    cn 10 bi "Done!" 
+}
