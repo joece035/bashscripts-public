@@ -10,32 +10,11 @@
 # ค่าที่ใช้ได้: TERMUX | WSL | GIT-BASH | MUMU
 if [[ -z "${JOE_ENV:-}" ]]; then
     if [[ -d "/data/data/com.termux" ]]; then
-        # Termux หรือ MuMuPlayer — เช็คหลาย signal เรียง priority
-        # P1: manual flag file (สร้างใน MuMu home ครั้งเดียว)
-        # P2: ro.kernel.qemu=1 หรือ fingerprint มี generic/emulator (emulator indicator)
-        # P3: EMULATOR_TYPE env var
-        # P4: /system/build.prop (อาจ permission denied บน Termux user)
-        _mumu_detected=0
-        [[ -f "/data/data/com.termux/files/home/.mumu_env" ]] && _mumu_detected=1
-        if [[ $_mumu_detected -eq 0 ]] && command -v getprop >/dev/null 2>&1; then
-            _qemu="$(getprop ro.kernel.qemu 2>/dev/null)"
-            _fp="$(getprop ro.build.fingerprint 2>/dev/null)"
-            _mfr="$(getprop ro.product.manufacturer 2>/dev/null)"
-            if [[ "$_qemu" == "1" ]] || \
-               echo "$_fp"  | grep -qiE "generic|sdk_gphone|emulator|mumu|netease" || \
-               echo "$_mfr" | grep -qiE "netease|mumu"; then
-                _mumu_detected=1
-            fi
-            unset _qemu _fp _mfr
-        fi
-        [[ $_mumu_detected -eq 0 && "${EMULATOR_TYPE:-}" == *[Mm]umu* ]] && _mumu_detected=1
-        [[ $_mumu_detected -eq 0 ]] && grep -qiE "netease|mumu" /system/build.prop 2>/dev/null && _mumu_detected=1
-        if [[ $_mumu_detected -eq 1 ]]; then
-            export JOE_ENV="MUMU"
-        else
-            export JOE_ENV="TERMUX"
-        fi
-        unset _mumu_detected
+        case "$MY_DEVICE" in
+          mumu_player) export JOE_ENV="MUMU";;
+          tumux)       export JOE_ENV="TERMUX";;
+          *) cn r b "UNKNOWN" ;;
+        esac  
     elif grep -qi "microsoft" /proc/version 2>/dev/null; then
         export JOE_ENV="WSL"
     elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
