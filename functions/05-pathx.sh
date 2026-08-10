@@ -83,7 +83,7 @@ p() {
   local raw converted drive rest distro
 
   # 1. Input: $1 หรือ clipboard
-  raw="${1:-$(_p_clip_read)}"
+  raw="${1:-$(clipboard_read)}"
   [[ -z "$raw" ]] && { echo "[p] No input." >&2; return 1; }
 
   # 2. Normalize whitespace + backslash → /
@@ -135,10 +135,10 @@ raw="${raw//\'/}"   # ลบ single quote ออกด้วยเ
 
   # 4. Output + clipboard
   echo "$converted"
-  _p_clip_write "$converted"
+  clipboard_copy "$converted"
 }
 
-_p_clip_read() {
+clipboard_read() {
   if   command -v powershell.exe &>/dev/null; then
     powershell.exe -NoProfile -Command "Get-Clipboard" 2>/dev/null | tr -d '\r'
   elif command -v xclip &>/dev/null; then xclip -selection clipboard -o 2>/dev/null
@@ -146,7 +146,7 @@ _p_clip_read() {
   fi
 }
 
-_p_clip_write() {
+clipboard_copy() {
   if   command -v powershell.exe &>/dev/null; then
     echo -n "$1" | powershell.exe -NoProfile -Command \
       "[Console]::In.ReadToEnd() | Set-Clipboard" 2>/dev/null
@@ -159,5 +159,7 @@ imma_jump_to_the_fucking_god_damn_windows_path_from_wsl_by_typing_only_fuckin_j(
    cdc "$(p)"
 }
 alias j='imma_jump_to_the_fucking_god_damn_windows_path_from_wsl_by_typing_only_fuckin_j' 
+
+
 
 

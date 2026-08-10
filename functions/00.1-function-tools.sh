@@ -973,47 +973,59 @@ sc() {
   esac
 }
 
-# NOTE: A stray "symlink" line used to live here — it was a function
-# definition that got deleted but the bare name remained, which zsh
-# then tried to execute as a system command, producing this on Termux:
-#   "No command symlink found, did you mean: ..."
-# That also broke Powerlevel10k instant prompt (any console output
-# during zsh init does). Removed 2026-08-08.
+# ==============================================================================
+# Helper: ensure <cmd> [package_name]
+# ------------------------------------------------------------------------------
+# ตรวจสอบว่ามีคำสั่ง <cmd> ในระบบหรือไม่ หากไม่มีจะติดตั้งแพ็กเกจให้อัตโนมัติ
+# รองรับทั้ง Termux (pkg) และ WSL/Linux (apt) ตาม SSOT JOE_ENV
+# ==============================================================================
+ensure() {
+    local cmd="$1"
+    local pkg="${2:-$1}" # ถ้าไม่ระบุชื่อ pkg ให้ใช้ชื่อ cmd เป็นชื่อ pkg
 
-#---syncctl shortcut---#
-sc() {
-  # Resolve SSOT (bashscripts repo) — fallback chain because $SSOT
-  # may not be set yet on Termux/acodex depending on boot order.
-  local _ssot=""
-  for p in \
-      "${SSOT:-}" \
-      "$HOME/bashscripts" \
-      "$SCRIPTS_PATH" \
-      "/home/usercivenz/bashscripts" \
-      "/data/data/com.termux/files/home/bashscripts"; do
-    [[ -n "$p" && -d "$p" ]] && { _ssot="$p"; break; }
-  done
+    # 1. เช็คว่ามี command อยู่แล้วหรือไม่
+    if command -v "$cmd" >/dev/null 2>&1; then
+        return 0
+    fi
 
-  if [[ -z "$_ssot" ]]; then
-    cn 196 bi "sc: cannot locate bashscripts repo (SSOT empty)"
-    return 1
-  fi
+    cn 220 bi "⚠️ Command '$cmd' not found. Installing package '$pkg'..." >&2
 
-  if [[ -f "$_ssot/tools/syncctl/syncctl" ]]; then
-    source "$_ssot/tools/syncctl/syncctl" 2>/dev/null
-  else
-    cn 220 bi "syncctl.sh not found in $_ssot/tools/"
-    return 1
-  fi
+    # 2. ตรวจสอบ Package Manager ตาม JOE_ENV / OS
+    if command -v pkg >/dev/null 2>&1; then
+        # Termux / MuMu
+        pkg install -y "$pkg"
+    elif command -v apt-get >/dev/null 2>&1; then
+        # WSL / Ubuntu / Debian
+        if [[ $EUID -eq 0 ]]; then
+            apt-get update -qq && apt-get install -y "$pkg"
+        else
+            sudo apt-get update -qq && sudo apt-get install -y "$pkg"
+        fi
+    else
+        cn 196 bi "❌ Error: No supported package manager found (pkg/apt) to install '$pkg'." >&2
+        return 1
+    fi
 
-  if [[ $# -eq 0 ]]; then
-    syncctl --help
-    return 0
-  fi
-  case "$1" in
-     tm) syncctl transfer termux --reason "edit on termux via acodex" ;;
-    wsl) syncctl transfer wsl --reason "edit on wsl" ;;
-    win) syncctl transfer windows --reason "edit on windows" ;;
-      *) stc "$@" ;;
-  esac
+    # 3. ยืนยันการติดตั้ง
+    if command -v "$cmd" >/dev/null 2>&1; then
+        cn 10 bi "✅ Successfully installed '$pkg' ($cmd)." >&2
+        return 0
+    else
+        cn 9 bi "❌ Failed to install '$pkg'." >&2
+        return 1
+    fi
+}
+
+cmd_ens() {
+    
+    local cmd="${1:?SELECT COMMAND}"
+    command -v $cmd >/dev/null 2>&1
+    
+    if [[ $? == 0 ]]; then
+        cn 10 bi "✅ '$cmd' is ready"
+        return 0
+    else
+        cn 198 bi "❌ '$cmd' not found"
+        return 1
+    fi
 }

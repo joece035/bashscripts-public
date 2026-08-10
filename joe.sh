@@ -11,7 +11,7 @@
 if [[ -z "${JOE_ENV:-}" ]]; then
     if [[ -d "/data/data/com.termux" ]]; then
         # Termux (หรือ MuMuPlayer ที่รัน Termux อยู่) — เช็ค build prop แยก
-        if grep -qiE "netease|mumu" /system/build.prop 2>/dev/null || [[ "${EMULATOR}" == "Mumu player" ]]; then
+        if grep -qiE "netease|mumu" /system/build.prop 2>/dev/null || [[ "${EMULATOR_TYPE}" == "Mumu player" ]]; then
             export JOE_ENV="MUMU"
         else
             export JOE_ENV="TERMUX"
