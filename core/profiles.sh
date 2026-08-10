@@ -154,6 +154,6 @@ reinstall_pkg(){
 }
 alias rpkg="reinstall_pkg"
 
-for conf in $SSOT/*conflict*.sh; do
- rm -f "$conf"
+for conf in "$SSOT"/*conflict*.sh(N); do
+  [ -f "$conf" ] && rm -f "$conf"
 done

@@ -114,3 +114,13 @@ fi
 
 echo
 ok "All done! $((new + mod + del)) file(s) saved and uploaded. 👍"
+
+
+git_() {
+    local repo=${SSOT}
+
+    cd $repo && git status
+    git add -A
+    git commit -m "${1}"
+
+}

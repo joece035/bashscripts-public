@@ -8,8 +8,8 @@
 # Usage: curmv <command> [count]
 # ============================================================
 
-# -- help function for curmv
-_(){ echo -e ""; }
+# -- helper: print blank line (renamed from _ to avoid oh-my-zsh alias conflict)
+_newline(){ echo -e ""; }
 
 
 # ============================================================
@@ -896,16 +896,19 @@ hm() {
 
 # -- delete all .rc_* files in $HOME
 rc_del() {
-  if [[ "$JOE_ENV" == "TERMUX" ]]; then
+  if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     local rc
-    for rc in "$HOME"/.rc_*; do
+    local count=0
+    for rc in "$HOME"/.rc_*(N); do
        if [[ -f "$rc" ]]; then
          rm -f "$rc" && cn 28 "deleted $rc"
-         c 10 bi "ALL done"
-       else  c 220 b "No _rc_* files found"
+         count=$((count+1))
        fi
     done
-  fi   
+    if [[ $count -gt 0 ]]; then
+      c 10 bi "ALL done"
+    fi
+  fi
 }
 
  
@@ -1030,10 +1033,3 @@ cmd_ens() {
     fi
 }
 #-------------------------
-# clone_bsc
-#-------------------------
-clone_bsc() {
-    cd &&
-    git clone "git@github.com:joece035/bashscripts.git" ".bashscripts" &&
-    cn 10 bi "Done!" 
-}

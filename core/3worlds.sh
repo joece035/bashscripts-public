@@ -374,8 +374,8 @@ _st_autostart() {
         ;;
     esac
     # Start detached — closing shell will NOT kill Syncthing
-    nohup syncthing serve --gui-address="0.0.0.0:${port}" &>/dev/null 2>&1 & &&
-    disown 2>/dev/null &&
+    nohup syncthing serve --gui-address="0.0.0.0:${port}" &>/dev/null 2>&1 &
+    disown 2>/dev/null
     cn lg b "SYNCTHING STARTED 🟢"
   fi
 }
