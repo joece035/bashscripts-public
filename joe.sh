@@ -187,7 +187,7 @@ fi
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 {
-  syncthing_auto
+  #syncthing_auto
   rc_delete
 } >&2
 

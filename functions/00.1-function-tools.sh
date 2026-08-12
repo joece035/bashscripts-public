@@ -1058,11 +1058,31 @@ conf_del(){
 
 
 git_() {
-    local repo=${SSOT:-"~/bashscripts"}
+    local repo=${SSOT:-"$HOME/bashscripts"}
 
     cd $repo && git status
     git add -A
     git commit -m "${1}" &&
     git push && cn 10 bi "DONE push"
 
+}
+
+clone_ssot() {
+    local repo="${SSOT:-$HOME/bashscripts}"
+    if [[ -f "${repo}" ]]; then
+         rm -rf "${repo}" &&
+         cd $HOME
+         git "clone" "git@github.com:joece035/bashscripts.git" &&
+         echo "Done"
+    else
+         cd $HOME
+         git "clone" "git@github.com:joece035/bashscripts.git" &&
+         echo "Done"
+    fi
+
+    case "$JOE_ENV" in
+        TERMUX|MUMU) exec zsh ;;
+        WSL|GIT-BASH) exec bash ;;
+        *) return 0
+    esac      
 }
