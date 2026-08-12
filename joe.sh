@@ -8,31 +8,7 @@
 
 # ── Step 0: JOE_ENV detection (fallback — ปกติ set จาก ~/.env หรือ .bashrc) ──
 # ค่าที่ใช้ได้: TERMUX | WSL | GIT-BASH | MUMU
-if [[ -z "${JOE_ENV:-}" ]]; then
-    if [[ -d "/data/data/com.termux" ]]; then
-        # Permission-safe Auto-Detect: Avoid getprop to prevent SELinux permission errors on MuMu
-        if [[ "${MY_DEVICE:-}" == "MUMU" ]]; then
-            export JOE_ENV="MUMU"
-        elif [[ "${MY_DEVICE:-}" == "TERMUX" ]]; then
-            export JOE_ENV="TERMUX"
-        elif grep -qiE 'intel|amd|hypervisor|vbox|nemu|qemu' /proc/cpuinfo /proc/version 2>/dev/null || \
-             [[ "$(uname -m 2>/dev/null)" == "x86_64" || "$(uname -m 2>/dev/null)" == "i686" ]]; then
-            export JOE_ENV="MUMU"
-        else
-            export JOE_ENV="TERMUX"
-        fi
-        export MY_DEVICE="${MY_DEVICE:-$JOE_ENV}"
-    elif grep -qi "microsoft" /proc/version 2>/dev/null; then
-        export JOE_ENV="WSL"
-    elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
-        export JOE_ENV="GIT-BASH"
-    else
-        # Linux ทั่วไป (non-WSL) → ใช้ semantics เดียวกับ WSL
-        export JOE_ENV="WSL"
-    fi
-fi
-
-[[ -n "${MY_DEVICE:-}" ]] && export JOE_ENV=${MY_DEVICE}
+[[ -n "${MY_DEVICE:-}" ]] && export JOE_ENV=${MY_DEVICE:-$JOE_ENV}
 
 #-- Global shell refresh
 pp() {

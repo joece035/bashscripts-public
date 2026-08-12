@@ -1047,10 +1047,22 @@ conf_del(){
     
     for files_name in $conf_files; do
         rm -f $files_name
+        c 10 bi "all $fiiles_name were deleted suscessfully"
     done
 
     c 10 bi "all"; c 45 bi "$files_count"; cn 10 bi "conflict files are removed"
    
 
+
+}
+
+
+git_() {
+    local repo=${SSOT:-"~/bashscripts"}
+
+    cd $repo && git status
+    git add -A
+    git commit -m "${1}" &&
+    git push && cn 10 bi "DONE push"
 
 }
