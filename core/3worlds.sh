@@ -362,19 +362,12 @@ _st_autostart() {
     printf -v _full "%s%*s" "$_line" $_pad ""
     c 208 b "${_full}"
   else
-    case "$JOE_ENV" in
-      WSL|GIT-BASH) 
-        color y b " 🔄 ${name} : OFFLINE 🔴"
-        [[ "$ts_val" == "OFFLINE" ]] && cn lr b " 🔌🚫 CHECK TAILSCALE FIRST"
-        cn lm bu "THEN RESTART SYNCTHING WILL BE !"
-        cn lg bi "STARTING AUTOMATICALLY 🔄"
-        ;; 
-      TERMUX|MUMU)
-        [[ "$ts_val" == "OFFLINE" ]] && c 208 b "  🔄 ${name} is using tailsacle application 🚉"
-        ;;
-    esac
+    color y b " 🔄 ${name} : OFFLINE 🔴"
+    [[ "$ts_val" == "OFFLINE" ]] && cn lr b " 🔌🚫 CHECK TAILSCALE FIRST"
+    cn lm bu "THEN RESTART SYNCTHING WILL BE !"
+    cn lg bi "STARTING AUTOMATICALLY 🔄"
     # Start detached — closing shell will NOT kill Syncthing
-    nohup syncthing serve --gui-address="0.0.0.0:${port}" &>/dev/null 2>&1 &
+    nohup syncthing serve --gui-address="0.0.0.0:${port}" >/dev/null 2>&1 &
     disown 2>/dev/null
     cn lg b "SYNCTHING STARTED 🟢"
   fi
@@ -723,7 +716,7 @@ PYEOF
   cn lg b "✅ เสร็จ — รอ ~10 วิ แล้วรัน st-status เพื่อดู mesh"
 }
 
-alias st-register-all='st_register_all'
+alias st_regis_all='st_register_all'
 
 # st_status — สรุปสถานะ folder ที่สนใจ (default: bashscripts)
 st_status() {

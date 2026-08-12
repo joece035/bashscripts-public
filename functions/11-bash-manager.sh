@@ -19,25 +19,7 @@
 # ─────────────────────────────────────────────────────────────────
 # This file relies on variables set by joe.sh → 00-env.sh → 01-colors.sh
 # If sourced standalone (without joe.sh), we load the minimum needed.
-if [[ -z "$JOE_ENV" ]]; then
-  # Attempt to source joe.sh if available
-  for _candidate in "$HOME/bashscripts/joe.sh" "$SCRIPTS_PATH/joe.sh"; do
-    [[ -f "$_candidate" ]] && { source "$_candidate"; break; }
-  done
-  # Fallback: detect environment ourselves (mirrors joe.sh logic)
-  if [[ -z "$JOE_ENV" ]]; then
-    if [[ -d "/data/data/com.termux" ]]; then
-      export JOE_ENV="TERMUX"
-    elif grep -q "microsoft" /proc/version 2>/dev/null; then
-      export JOE_ENV="WSL"
-    elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
-      export JOE_ENV="GIT-BASH"
-    else
-      # Generic Linux (non-WSL) → treat as WSL semantics
-      export JOE_ENV="WSL"
-    fi
-  fi
-fi
+
 
 # Ensure SCRIPTS_PATH is set (needed for sourcing other modules)
 export SCRIPTS_PATH="${SCRIPTS_PATH:-$HOME/bashscripts}"

@@ -31,6 +31,9 @@ if [[ -z "${JOE_ENV:-}" ]]; then
         export JOE_ENV="WSL"
     fi
 fi
+
+[[ -n "${MY_DEVICE:-}" ]] && export JOE_ENV=${MY_DEVICE}
+
 #-- Global shell refresh
 pp() {
     clear
@@ -207,7 +210,7 @@ fi
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 {
-  #syncthing_auto
+  syncthing_auto
   rc_delete
 } >&2
 
