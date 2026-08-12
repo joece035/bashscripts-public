@@ -318,17 +318,16 @@ git_() {
   local repo=${SSOT:-"$HOME/bashscripts"}
   cd $repo &&
   if [[ -n "$1" ]]; then
-    case "${1:-}" in
+     case "${1:-}" in
         s|status) git status ;;
         c|commit) git commit -m "$2" ;;
         a|add)    git add -A ;;
-        "") git "$@" ;;
-    esac    
-  else        
-      git add -A &&
-      git commit -m "${1}" &&
-      git push && 
-      cn 10 bi "DONE push"
+        all)      git add -A && \
+                  git commit -m "${1}" && \
+                  git push && \ 
+                  cn 10 bi "DONE push" ;;
+        *)        git "$@" ;;
+     esac               
   fi
 }
 
