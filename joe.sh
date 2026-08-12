@@ -10,11 +10,18 @@
 # ค่าที่ใช้ได้: TERMUX | WSL | GIT-BASH | MUMU
 if [[ -z "${JOE_ENV:-}" ]]; then
     if [[ -d "/data/data/com.termux" ]]; then
-        case "$MY_DEVICE" in
-          mumu_player) export JOE_ENV="MUMU";;
-          tumux)       export JOE_ENV="TERMUX";;
-          *) cn r b "UNKNOWN" ;;
-        esac  
+        # Permission-safe Auto-Detect: Avoid getprop to prevent SELinux permission errors on MuMu
+        if [[ "${MY_DEVICE:-}" == "MUMU" ]]; then
+            export JOE_ENV="MUMU"
+        elif [[ "${MY_DEVICE:-}" == "TERMUX" ]]; then
+            export JOE_ENV="TERMUX"
+        elif grep -qiE 'intel|amd|hypervisor|vbox|nemu|qemu' /proc/cpuinfo /proc/version 2>/dev/null || \
+             [[ "$(uname -m 2>/dev/null)" == "x86_64" || "$(uname -m 2>/dev/null)" == "i686" ]]; then
+            export JOE_ENV="MUMU"
+        else
+            export JOE_ENV="TERMUX"
+        fi
+        export MY_DEVICE="${MY_DEVICE:-$JOE_ENV}"
     elif grep -qi "microsoft" /proc/version 2>/dev/null; then
         export JOE_ENV="WSL"
     elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
@@ -24,7 +31,6 @@ if [[ -z "${JOE_ENV:-}" ]]; then
         export JOE_ENV="WSL"
     fi
 fi
-
 #-- Global shell refresh
 pp() {
     clear
@@ -201,7 +207,7 @@ fi
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 {
-  syncthing_auto
+  #syncthing_auto
   rc_delete
 } >&2
 
