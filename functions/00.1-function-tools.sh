@@ -895,11 +895,11 @@ hm() {
 }
 
 # -- delete all .rc_* files in $HOME
-rc_del() {
+rc_delete() {
   if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     local rc
     local count=0
-    for rc in "$HOME"/.rc_*(N); do
+    for rc in "$HOME"/.rc_*; do
        if [[ -f "$rc" ]]; then
          rm -f "$rc" && cn 28 "deleted $rc"
          count=$((count+1))
@@ -1033,3 +1033,24 @@ cmd_ens() {
     fi
 }
 #-------------------------
+
+conf_del(){
+    local conf_dir=${1:-$SSOT}
+    local conf_files=$(find "$conf_dir" -type f -iname "*conflict*")
+    local files_count=$(find "$conf_dir" -type f -iname "*conflict*" | wc -l)
+    local files_name
+   
+    if [[ -z $conf_files ]] && [[ -z $files_name ]]; then
+        cn 198 bi "not found any conflict files"
+        return 1
+    fi
+    
+    for files_name in $conf_files; do
+        rm -f $files_name
+    done
+
+    c 10 bi "all"; c 45 bi "$files_count"; cn 10 bi "conflict files are removed"
+   
+
+
+}

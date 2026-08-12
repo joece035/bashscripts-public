@@ -202,7 +202,7 @@ fi
 # instant prompt and prints a multi-line warning to the user.
 {
   syncthing_auto
-  rc_del
+  rc_delete
 } >&2
 
 # Disable nounset after everything is loaded — ble.sh restores set -u

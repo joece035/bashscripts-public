@@ -146,14 +146,8 @@ clear_cache(){
 
 }
 
-
 reinstall_pkg(){
     clear
     pkg reinstall $(pkg list-installed | grep -v ok | cut -d/ -f1)
-
 }
 alias rpkg="reinstall_pkg"
-
-for conf in "$SSOT"/*conflict*.sh(N); do
-  [ -f "$conf" ] && rm -f "$conf"
-done
