@@ -312,3 +312,42 @@ workflow (most common):
   gs → gac "fix: thing" → gsync
 EOF
 }
+
+
+git_() {
+  local repo=${SSOT:-"$HOME/bashscripts"}
+  cd $repo &&
+  if [[ -n "$1" ]]; then
+    case "${1:-}" in
+        s|status) git status ;;
+        c|commit) git commit -m "$2" ;;
+        a|add)    git add -A ;;
+        "") git "$@" ;;
+    esac    
+  else        
+      git add -A &&
+      git commit -m "${1}" &&
+      git push && 
+      cn 10 bi "DONE push"
+  fi
+}
+
+clone_ssot() {
+    local repo="${SSOT:-$HOME/bashscripts}"
+    if [[ -f "${repo}" ]]; then
+         rm -rf "${repo}" &&
+         cd $HOME
+         git "clone" "git@github.com:joece035/bashscripts.git" &&
+         echo "Done"
+    else
+         cd $HOME
+         git "clone" "git@github.com:joece035/bashscripts.git" &&
+         echo "Done"
+    fi
+
+    case "$JOE_ENV" in
+        TERMUX|MUMU) exec zsh ;;
+        WSL|GIT-BASH) exec bash ;;
+        *) return 0
+    esac      
+}

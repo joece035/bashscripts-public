@@ -83,7 +83,7 @@ p() {
   local raw converted drive rest distro
 
   # 1. Input: $1 หรือ clipboard
-  raw="${1:-$(clipboard_read)}"
+  raw="${1:-$(cb_read)}"
   [[ -z "$raw" ]] && { echo "[p] No input." >&2; return 1; }
 
   # 2. Normalize whitespace + backslash → /
@@ -135,10 +135,10 @@ raw="${raw//\'/}"   # ลบ single quote ออกด้วยเ
 
   # 4. Output + clipboard
   echo "$converted"
-  clipboard_copy "$converted"
+  cb_copy "$converted"
 }
 
-clipboard_read() {
+cb_read() {
   if   command -v powershell.exe &>/dev/null; then
     powershell.exe -NoProfile -Command "Get-Clipboard" 2>/dev/null | tr -d '\r'
   elif command -v xclip &>/dev/null; then xclip -selection clipboard -o 2>/dev/null
@@ -146,7 +146,7 @@ clipboard_read() {
   fi
 }
 
-clipboard_copy() {
+cb_copy() {
   if   command -v powershell.exe &>/dev/null; then
     echo -n "$1" | powershell.exe -NoProfile -Command \
       "[Console]::In.ReadToEnd() | Set-Clipboard" 2>/dev/null
