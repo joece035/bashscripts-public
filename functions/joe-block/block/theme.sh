@@ -59,8 +59,8 @@ elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
     _THEME_DIR="$(cd "$(dirname "${funcsourcetrace[1]%%:*}")" && pwd)"
     _BLOCK_ROOT="${_THEME_DIR}/../../.."
 else
-    _THEME_DIR="${SCRIPTS_PATH:-$HOME/bashscripts}/functions/joe-block/block"
-    _BLOCK_ROOT="${SCRIPTS_PATH:-$HOME/bashscripts}"
+    _THEME_DIR="${SSOT:-$HOME/bashscripts}/functions/joe-block/block"
+    _BLOCK_ROOT="${SSOT:-$HOME/bashscripts}"
 fi
 
 # ============================================================

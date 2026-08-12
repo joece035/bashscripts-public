@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 #----------PHAT FOR FUNCTION----------#
-  export FUNC_DIR="$SCRIPTS_PATH/functions"
+  export FUNC_DIR="$SSOT/functions"
  #--------- FUNCTION FORM ------------#
 
 #-------------------------------------#   

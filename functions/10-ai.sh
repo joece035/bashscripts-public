@@ -368,7 +368,7 @@ _joe_status() {
     
     # Environment info
     cn w b "  🌍 Environment: ${JOE_ENV:-unknown}"
-    cn w b "  📂 Script Path: ${SCRIPTS_PATH:-unknown}"
+    cn w b "  📂 Script Path: ${SSOT:-unknown}"
     cn w b "  🏠 Home: ${HOME}"
     echo ""
     

@@ -8,6 +8,7 @@
 
 # ── Step 0: JOE_ENV detection (fallback — ปกติ set จาก ~/.env หรือ .bashrc) ──
 # ค่าที่ใช้ได้: TERMUX | WSL | GIT-BASH | MUMU
+
 [[ -n "${MY_DEVICE:-}" ]] && export JOE_ENV=${MY_DEVICE:-$JOE_ENV}
 
 #-- Global shell refresh
@@ -71,7 +72,7 @@ case "$JOE_ENV" in
 esac
 
 # -- Global varialble defined after done env detection process
-        export SCRIPTS_PATH="$SSOT"
+        export SCRIPTS_PATH=$SSOT
         export COLOR_PATH="$SSOT"
         export msync="$MAIN_SYNC_DIR"
         export htm="/data/data/com.termux/files/home"
@@ -106,10 +107,10 @@ fi
 # ── Step 2: Source all modules using SCRIP S_PATH ──
 
 # Environment variables & paths (SSOT: bootstrap/00-env.sh)
-[ -f "$SCRIPTS_PATH/bootstrap/00-env.sh" ] && source "$SCRIPTS_PATH/bootstrap/00-env.sh"
+[ -f "$SSOT/bootstrap/00-env.sh" ] && source "$SSOT/bootstrap/00-env.sh"
 
 # Colors & Styles (must be sourced BEFORE sshd block — it uses cn)
-[ -f "$SCRIPTS_PATH/core/01-colors.sh" ] && source "$SCRIPTS_PATH/core/01-colors.sh"
+[ -f "$SSOT/core/01-colors.sh" ] && source "$SSOT/core/01-colors.sh"
 
 # Auto-start sshd if not running (guarded for git-bash which lacks pgrep)
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
@@ -140,38 +141,38 @@ fi
 
 
 #-----SSH and 3-Worlds (tm, tw, push, pull, world)
-[ -f "$SCRIPTS_PATH/core/3worlds.sh" ] && source "$SCRIPTS_PATH/core/3worlds.sh"
+[ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
 
 #-----Aliases
-[ -f "$SCRIPTS_PATH/core/02-aliases.sh" ] && source "$SCRIPTS_PATH/core/02-aliases.sh"
+[ -f "$SSOT/core/02-aliases.sh" ] && source "$SSOT/core/02-aliases.sh"
 
 #-----Profiiles switching
-[ -f "$SCRIPTS_PATH/core/profiles.sh" ] && source "$SCRIPTS_PATH/core/profiles.sh"
+[ -f "$SSOT/core/profiles.sh" ] && source "$SSOT/core/profiles.sh"
 
 #----Theme
-[ -f "$SCRIPTS_PATH/core/theme.sh" ] && source "$SCRIPTS_PATH/core/theme.sh"
+[ -f "$SSOT/core/theme.sh" ] && source "$SSOT/core/theme.sh"
 
 # Function Modules
 # Skip Syncthing conflict files (*.sync-conflict-*.sh) — they have broken
 # half-merged state and will produce syntax errors when sourced.
 # Top-level files only — nested modules (e.g. joe-block/block/*.sh) must
 # be sourced by their own entry point to avoid double-source + banner spam.
-if [ -d "$SCRIPTS_PATH/functions" ]; then
-    for func_file in "$SCRIPTS_PATH"/functions/*.sh; do
+if [ -d "$SSOT/functions" ]; then
+    for func_file in "$SSOT"/functions/*.sh; do
         [[ "$func_file" == *.sync-conflict-* ]] && continue
         [ -f "$func_file" ] && source "$func_file"
     done
     # joe-block is a subdir with its own _blk_source_modules() — call it
     # explicitly so block/*.sh are loaded, but cheat_sheet.sh (which prints
     # a huge banner) is NOT auto-sourced.
-    if [ -f "$SCRIPTS_PATH/functions/joe-block/entry.sh" ]; then
-        source "$SCRIPTS_PATH/functions/joe-block/entry.sh"
+    if [ -f "$SSOT/functions/joe-block/entry.sh" ]; then
+        source "$SSOT/functions/joe-block/entry.sh"
     fi
 fi
 
 # syncctl — Syncthing ownership controller (sourced as function)
-if [ -f "$SCRIPTS_PATH/tools/syncctl/syncctl" ]; then
-    source "$SCRIPTS_PATH/tools/syncctl/syncctl"
+if [ -f "$SSOT/tools/syncctl/syncctl" ]; then
+    source "$SSOT/tools/syncctl/syncctl"
 fi
 
 

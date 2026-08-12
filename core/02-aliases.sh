@@ -24,7 +24,7 @@ alias htm='cd $htm'
 alias hwsl='cd $hwsl'
 alias hpc='cd $hpc'
 alias hmp='cd $hmp'
-alias bsc='cd $SCRIPTS_PATH && pwd'
+alias bsc='cd $SSOT && pwd'
 alias cdenp='cd $ENGINES_DIR && pwd'
 alias dbp='cd $DASHBOARD_DIR'
 alias sdc='cd $SDCARD_PATH && pwd'
@@ -98,8 +98,8 @@ alias giteasy='bash "${SSOT:-$HOME/bashscripts}/tools/git-easy.sh"'
 # INFRASTRUCTURE & SYNC
 # ============================================================
 
-alias loadinfra='[ -f "$SCRIPTS_PATH/sync-infra.sh" ] && source "$SCRIPTS_PATH/sync-infra.sh" || echo "sync-infra.sh not found"'
-alias saveinfra='[ -f "$SCRIPTS_PATH/sync-infra.sh" ] && source "$SCRIPTS_PATH/sync-infra.sh" push || echo "sync-infra.sh not found"'
+alias loadinfra='[ -f "$SSOT/sync-infra.sh" ] && source "$SSOT/sync-infra.sh" || echo "sync-infra.sh not found"'
+alias saveinfra='[ -f "$SSOT/sync-infra.sh" ] && source "$SSOT/sync-infra.sh" push || echo "sync-infra.sh not found"'
 
 # ============================================================
 # ALIASES COMPLETE

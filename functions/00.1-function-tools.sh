@@ -946,7 +946,7 @@ sc() {
   for p in \
       "${SSOT:-}" \
       "$HOME/bashscripts" \
-      "$SCRIPTS_PATH" \
+      "$SSOT" \
       "/home/usercivenz/bashscripts" \
       "/data/data/com.termux/files/home/bashscripts"; do
     [[ -n "$p" && -d "$p" ]] && { _ssot="$p"; break; }

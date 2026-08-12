@@ -27,7 +27,7 @@ _blk_source_modules() {
     #   zsh  : ${funcsourcetrace[1]} is "file:lineno" of the definition
     #          site — exact zsh equivalent of bash's BASH_SOURCE[0].
     #          Strip the ":lineno" suffix with %%:* to get the path.
-    #   both : fallback to SCRIPTS_PATH (SSOT).
+    #   both : fallback to SSOT (SSOT).
     if [[ -n "${BASH_VERSION:-}" && -n "${BASH_SOURCE[0]:-}" ]]; then
         _self="${BASH_SOURCE[0]}"
     elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
@@ -37,7 +37,7 @@ _blk_source_modules() {
         _D="$(cd "$(dirname "$_self")" && pwd)/block"
     else
         # Last resort: assume functions/joe-block/block/ relative to SSOT
-        _D="${SCRIPTS_PATH:-$HOME/bashscripts}/functions/joe-block/block"
+        _D="${SSOT:-$HOME/bashscripts}/functions/joe-block/block"
     fi
     # Export _BLOCK_ROOT so theme.sh can use it (avoids BASH_SOURCE issue in zsh)
     # _BLOCK_ROOT must point to bashscripts/ root (one level up from functions/)
