@@ -323,8 +323,8 @@ git_() {
         c|commit) git commit -m "$2" ;;
         a|add)    git add -A ;;
         all)      git add -A && \
-                  git commit -m "${1}" && \
-                  git push && \ 
+                  git commit -m "${2}" && \
+                  git push && \
                   cn 10 bi "DONE push" ;;
         *)        git "$@" ;;
      esac               

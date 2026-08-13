@@ -159,15 +159,9 @@ fi
 # be sourced by their own entry point to avoid double-source + banner spam.
 if [ -d "$SSOT/functions" ]; then
     for func_file in "$SSOT"/functions/*.sh; do
-        [[ "$func_file" == *.sync-conflict-* ]] && continue
         [ -f "$func_file" ] && source "$func_file"
     done
-    # joe-block is a subdir with its own _blk_source_modules() — call it
-    # explicitly so block/*.sh are loaded, but cheat_sheet.sh (which prints
-    # a huge banner) is NOT auto-sourced.
-    if [ -f "$SSOT/functions/joe-block/entry.sh" ]; then
-        source "$SSOT/functions/joe-block/entry.sh"
-    fi
+
 fi
 
 # syncctl — Syncthing ownership controller (sourced as function)

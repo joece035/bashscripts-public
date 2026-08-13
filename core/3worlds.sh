@@ -61,17 +61,25 @@ _ssh_node() {
 # ============================================================
 # Signatures are frozen. Internal implementation uses Transport Layer.
 
+# TM — SSH into Termux (Android)
+tm_() {
+  local key="${HOME}/.ssh/id_ed25519_termux"
+  [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
+  ssh -i "$key" -p "${NODE_TERMUX_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
+      "${NODE_TERMUX_USER}@${NODE_TERMUX_HOST}" "$@"
+}
 # tm — SSH into Termux (Android)
-ssh_tm()  { _ssh_node "${NODE_TERMUX_PORT}" "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "$@"; }
+tm()  { _ssh_node "${NODE_TERMUX_PORT}" "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "$@"; }
 
 # MUMU — SSH into Termux on MUMUPlayer (uses dedicated key id_ed25519_MUMU)
 mumu_() {
   local key="${HOME}/.ssh/id_ed25519_mumu"
   [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
+
   ssh -i "$key" -p "${NODE_MUMU_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
       "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" "$@"
 }
-ssh_mumu()  { _ssh_node "${NODE_MUMU_PORT}" "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "$@"; }
+mumu()  { _ssh_node "${NODE_MUMU_PORT}" "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "$@"; }
 
 # tw — SSH into Windows แล้วเปิด pwsh (interactive)
 # Windows OpenSSH default shell = PowerShell → เรียกผ่าน PS call operator (&)
@@ -82,7 +90,6 @@ tw() {
 ssh_win() {
   ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& '${WIN_GIT_BASH}' --login -i" "$@"
 }
-
 
 # wsl — SSH into WSL from another machine
 ssh_wsl() { ssh -i ~/.ssh/id_ed25519_wsl -p "${NODE_WSL_PORT}" "${NODE_WSL_USER}@${NODE_WSL_HOST}" "$@"; }
