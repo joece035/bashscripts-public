@@ -333,8 +333,8 @@ git_() {
 
 clone_ssot() {
 
-    local repo="${SSOT:-$HOME/bashscripts}"
-    if [[ -f "${repo}" ]]; then
+    local repo="$SSOT"
+    if [[ -d "${repo}" ]]; then
          rm -rf "${repo}" && cn 10 b " done deleted ~/bashscripts "
          cd $HOME
          git "clone" "git@github.com:joece035/bashscripts.git" &&
