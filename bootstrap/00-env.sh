@@ -56,6 +56,8 @@ export BRAVE_API_KEY="${BRAVE_SEARCH_API_KEY}"
 export ALPHA_DIR="$msync/alpha-workspace"
 export alpha=${ALPHA_DIR}
 export storage="/storage/emulated/0/" # sdcrd
+export ais_fiber="880-563-6522"
+export ais_phone="0814764210"   
 # ============================================================  
 # Dynamic env switching
 # ============================================================
@@ -150,7 +152,7 @@ export TAILSCALE_IP_MUMU=100.100.176.94
 
 # --- Termux (Android) ---
 export NODE_TERMUX_IP="$TAILSCALE_IP_TERMUX"
-export NODE_TERMUX_HOST="termux"
+export NODE_TERMUX_HOST="${termux:-$TAILSCALE_IP_TERMUX}"
 export NODE_TERMUX_USER="u0_a331"
 export NODE_TERMUX_PORT="$SSH_TERMUX_PORT"
 export NODE_TERMUX_ST_PORT="8383"
@@ -160,7 +162,7 @@ export NODE_TERMUX_ST_URL="http://${NODE_TERMUX_HOST}:${NODE_TERMUX_ST_PORT}"
 
 # --- WSL (Linux) ---
 export NODE_WSL_IP="$TAILSCALE_IP_WSL"
-export NODE_WSL_HOST="wsl"
+export NODE_WSL_HOST="${wsl:-$TAILSCALE_IP_WSL}"
 export NODE_WSL_USER="usercivenz"
 export NODE_WSL_PORT="$SSH_WSL_PORT"
 export NODE_WSL_ST_PORT="8385"
@@ -170,7 +172,7 @@ export NODE_WSL_ST_URL="http://${NODE_WSL_HOST}:${NODE_WSL_ST_PORT}"
 
 # --- Windows ---
 export NODE_WIN_IP="$TAILSCALE_IP_WINDOW"
-export NODE_WIN_HOST="window"
+export NODE_WIN_HOST="${window:-$TAILSCALE_IP_WINDOW}"
 export NODE_WIN_USER="User"
 export NODE_WIN_ST_PORT="8384"
 export NODE_WIN_ST_KEY="9AQa4xCCRuZEDs2qDNUY9s6T27NJS9sU"
@@ -179,7 +181,7 @@ export NODE_WIN_ST_URL="http://${NODE_WIN_HOST}:${NODE_WIN_ST_PORT}"
 
 # --- MUMUPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
 export NODE_MUMU_IP="$TAILSCALE_IP_MUMU"
-export NODE_MUMU_HOST="mumu"
+export NODE_MUMU_HOST="${mumu:-$TAILSCALE_IP_MUMU}"
 export NODE_MUMU_USER="u0_a62"
 export NODE_MUMU_PORT="$SSH_MUMU_PORT"
 export NODE_MUMU_ST_PORT="8386"
@@ -218,12 +220,13 @@ export URL_WSL="${NODE_WSL_ST_URL}/"
 # --- Windows compat
 # WIN_GIT_BASH: path ของ Git Bash บน Windows (ใช้โดย tw() ใน 3worlds.sh)
 # Windows OpenSSH default shell = PowerShell — tw() ต้องเรียกผ่าน PS call operator
-export WIN_GIT_BASH="${WIN_GIT_BASH:-C:\Program Files\Git\bin\bash.exe}"
+#export WIN_GIT_BASH="C:\PROGRA~1\Git\bin\bash.exe"
 export WINDOWS_IP="${NODE_WIN_HOST:-$NODE_WIN_IP}"
 export WINDOWS_USER="$NODE_WIN_USER"
 export ST_KEY_WIN="$NODE_WIN_ST_KEY"
 export ST_PORT_WIN="$NODE_WIN_ST_PORT"
 export URL_WIN="${NODE_WIN_ST_URL}/"
+export WIN_GIT_BASH="C:/Program Files/Git/bin/bash.exe"
 
 # MUMUPlayer compat (Android emulator peer)
 export MUMU_IP="${NODE_MUMU_HOST:-$NODE_MUMU_IP}"

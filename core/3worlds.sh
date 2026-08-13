@@ -49,11 +49,54 @@ unalias tac tm tw twpws wsl cpw2t cpt2w push 2>/dev/null
 # _ssh_node <user> <host> <port> [cmd...]
 #   → SSH into any node. Extra args forwarded to ssh.
 _ssh_node() {
-  local user="$1" host="$2" port="$3"
+  local port="$1" user="$2" host="$3" 
   shift 3
   ssh -p "$port" "${user}@${host}" "$@"
 }
 
+
+
+# ============================================================
+# SECTION 1: PUBLIC SSH API
+# ============================================================
+# Signatures are frozen. Internal implementation uses Transport Layer.
+
+# tm — SSH into Termux (Android)
+ssh_tm()  { _ssh_node "${NODE_TERMUX_PORT}" "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "$@"; }
+
+# MUMU — SSH into Termux on MUMUPlayer (uses dedicated key id_ed25519_MUMU)
+mumu_() {
+  local key="${HOME}/.ssh/id_ed25519_mumu"
+  [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
+  ssh -i "$key" -p "${NODE_MUMU_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
+      "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" "$@"
+}
+ssh_mumu()  { _ssh_node "${NODE_MUMU_PORT}" "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "$@"; }
+
+# tw — SSH into Windows แล้วเปิด pwsh (interactive)
+# Windows OpenSSH default shell = PowerShell → เรียกผ่าน PS call operator (&)
+tw() {
+   ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& \"${WIN_GIT_BASH}\" --% --login -i" "$@"
+ }
+#ssh_win = SSH into wondows แล้วเปิด Git Bash (interactive)
+ssh_win() {
+  ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& '${WIN_GIT_BASH}' --login -i" "$@"
+}
+
+
+# wsl — SSH into WSL from another machine
+ssh_wsl() { ssh -i ~/.ssh/id_ed25519_wsl -p "${NODE_WSL_PORT}" "${NODE_WSL_USER}@${NODE_WSL_HOST}" "$@"; }
+
+# tac — SSH into ACode server (ACODE_USER/ACODE_IP ยังไม่มีใน Node Registry)
+# TODO: ย้าย ACODE_* เข้า NODE registry ใน 00-env.sh เมื่อได้ค่าจริง
+tac() { ssh -p "${ACODE_PORT:-8158}" "${ACODE_USER:-root}@${ACODE_IP:-localhost}" "$@"; }
+
+# twpws — SSH into Windows PowerShell (default shell)
+twpws() { ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "$@"; }
+# Legacy alias
+alias Tw='twpws'
+
+# ---Helper functions---  
 # _rsync_to <user> <host> <port> <local_src> <remote_dst>
 #   → Push local file/dir to remote node via rsync over SSH.
 _rsync_to() {
@@ -74,44 +117,6 @@ _rsync_from() {
   local user="$1" host="$2" port="$3" src="$4" dst="$5"
   rsync -az --update --info=progress2 -e "ssh -p ${port}"         "${user}@${host}:${src}" "$dst"
 }
-
-# ============================================================
-# SECTION 2: PUBLIC SSH API
-# ============================================================
-# Signatures are frozen. Internal implementation uses Transport Layer.
-
-# tm — SSH into Termux (Android)
-tm()  { _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" "$@"; }
-
-# MUMU — SSH into Termux on MUMUPlayer (uses dedicated key id_ed25519_MUMU)
-mumu() {
-  local key="${HOME}/.ssh/id_ed25519_MUMU"
-  [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
-  ssh -i "$key" -p "${NODE_MUMU_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
-      "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" "$@"
-}
-
-# tw — SSH into Windows แล้วเปิด Git Bash (interactive)
-# Windows OpenSSH default shell = PowerShell → เรียกผ่าน PS call operator (&)
-tw() {
-  ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& '${WIN_GIT_BASH}' --login" "$@"
-}
-
-# wsl — SSH into WSL from another machine
-wsl() { ssh -i ~/.ssh/id_ed25519_wsl -p "${NODE_WSL_PORT}" "${NODE_WSL_USER}@${NODE_WSL_HOST}" "$@"; }
-
-# tdb — SSH into Debian/proot inside Termux
-tdb() { _ssh_node "${NODE_DEBIAN_USER}" "${NODE_DEBIAN_HOST}" "${NODE_DEBIAN_PORT}" "$@"; }
-
-# tac — SSH into ACode server (ACODE_USER/ACODE_IP ยังไม่มีใน Node Registry)
-# TODO: ย้าย ACODE_* เข้า NODE registry ใน 00-env.sh เมื่อได้ค่าจริง
-tac() { ssh -p "${ACODE_PORT:-8158}" "${ACODE_USER:-root}@${ACODE_IP:-localhost}" "$@"; }
-
-# twpws — SSH into Windows PowerShell (default shell)
-twpws() { ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "$@"; }
-# Legacy alias
-alias Tw='twpws'
-
 # ============================================================
 # SECTION 3: FILE TRANSFER LAYER (WSL ↔ Termux)
 # ============================================================

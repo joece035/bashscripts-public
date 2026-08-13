@@ -69,35 +69,44 @@ slink_() {
     # -- ไฟล์จริงจะย้ายไปอยู่ใน sd card และสร้าง link มาแทนที่ตัวเอง
 }
 
-
 ssh_kgen_(){
   #-- สร้าง public/private key หากยังไม่มี
   local machine="${1:?SELECT machine}"
   local keyfile="$HOME/.ssh/id_ed25519_${machine}"
   
   if [[ -f "$keyfile" ]]; then
-    echo "SSH key already exists at $keyfile"
+    cn y bi "SSH key already exists at $keyfile"
   else
     ssh-keygen -t ed25519 -C "${machine}" -f "${keyfile}"
   fi
-  cat "${keyfile}.pub"
+
+  export pub_key
+  pub_key=$(cat "${keyfile}.pub")
+  cn 10 bi "${pub_key}"
+  cb_copy "${pub_key}"
 }
 
 ssh_kadd_(){
   #-- เพิ่ม Public Key ลงใน authorized_keys ของเครื่องปลายทาง (ป้องกันการเพิ่มซ้ำ)
-  local pubkey="${1:?SELECT PUBLIC KEY}"
+  local pub_key_input="${1:-$(cb_read)}"
   local auth_file="$HOME/.ssh/authorized_keys"
+  local pub_key="${pub_key_input:-${pub_key}}"
+
+  if [[ -z "$pub_key" ]]; then
+    cn r bi "Error: Public key is empty or clipboard has no valid input!"
+    return 1
+  fi
 
   [[ -d "$HOME/.ssh" ]] || mkdir -p "$HOME/.ssh"
   chmod 700 "$HOME/.ssh"
   touch "$auth_file"
   chmod 600 "$auth_file"
 
-  if grep -qF "$pubkey" "$auth_file"; then
-    echo "Key already exists in $auth_file"
+  if grep -qF "$pub_key" "$auth_file"; then
+    cn y bi "Key already exists in $auth_file"
   else
-    echo "${pubkey}" >> "$auth_file"
-    echo "done adding ssh key"
+    echo "${pub_key}" >> "$auth_file"
+    cn 10 bi "done adding ssh key"
   fi
 }
 
