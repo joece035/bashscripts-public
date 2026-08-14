@@ -98,6 +98,26 @@ ssh_wsl() { ssh -i ~/.ssh/id_ed25519_wsl -p "${NODE_WSL_PORT}" "${NODE_WSL_USER}
 # TODO: ย้าย ACODE_* เข้า NODE registry ใน 00-env.sh เมื่อได้ค่าจริง
 tac() { ssh -p "${ACODE_PORT:-8158}" "${ACODE_USER:-root}@${ACODE_IP:-localhost}" "$@"; }
 
+# mumu-debug — Run MUMU environment debugger remotely
+# Usage:  mumu-debug [all|env|ssh|micro|zsh|joe|sync]
+#         mumu-debug --fix [micro|zsh|joe|all]
+mumu-debug() {
+    local script="$SSOT/tools/mumu-debug.sh"
+    if [[ ! -f "$script" ]]; then
+        printf "%s\n" "$(c 196 b 'x') mumu-debug.sh not found at $script" >&2
+        return 1
+    fi
+    # Run locally if on MUMU, otherwise SSH and execute remotely
+    if [[ "${JOE_ENV:-}" == "MUMU" ]]; then
+        bash "$script" "$@"
+    else
+        local ssh_opts=(-p "${NODE_MUMU_PORT}" -o ConnectTimeout=8 -o BatchMode=yes)
+        [[ -f "${HOME}/.ssh/id_ed25519_mumu" ]] && ssh_opts+=(-i "${HOME}/.ssh/id_ed25519_mumu")
+        # Copy script to remote and execute
+        cat "$script" | ssh "${ssh_opts[@]}" "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" "bash -s -- $*" 2>/dev/null
+    fi
+}
+
 # twpws — SSH into Windows PowerShell (default shell)
 twpws() { ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "$@"; }
 # Legacy alias

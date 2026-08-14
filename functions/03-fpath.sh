@@ -217,29 +217,3 @@ ensure() {
     cn 196 bi "❌ '$pkg' installed, but '$cmd' is still unavailable" >&2
     return 1
 }
-#--path resolve--#
-
-path_self_resovle() {
-    
-    local _D _self=""
-    if [[ -n "${BASH_VERSION:-}" && -n "${BASH_SOURCE[0]:-}" ]]; then
-        _self="${BASH_SOURCE[0]}"
-    elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
-        _self="${funcsourcetrace[1]%%:*}"
-    fi
-    if [[ -n "$_self" ]]; then
-        _D="$(cd "$(dirname "$_self")" && pwd)/block"
-    else
-        # Last resort: assume functions/joe-block/block/ relative to SSOT
-        _D="${SSOT:-$HOME/bashscripts}/functions/joe-block/block"
-    fi
-    # Export _BLOCK_ROOT so theme.sh can use it (avoids BASH_SOURCE issue in zsh)
-    # _BLOCK_ROOT must point to bashscripts/ root (one level up from functions/)
-    _BLOCK_ROOT="$(cd "${_D}/../../.." && pwd)"   # bashscripts/ root (block → joe-block → functions → bashscripts)
-    export _BLOCK_ROOT
-    [[ -f "${_D}/utils.sh"    ]] && source "${_D}/utils.sh"
-    [[ -f "${_D}/layout.sh"   ]] && source "${_D}/layout.sh"
-    [[ -f "${_D}/theme.sh"    ]] && source "${_D}/theme.sh"
-    [[ -f "${_D}/renderer.sh" ]] && source "${_D}/renderer.sh"
-    [[ -f "${_D}/status.sh"   ]] && source "${_D}/status.sh"
-}

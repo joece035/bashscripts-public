@@ -158,8 +158,8 @@ fi
 # Top-level files only — nested modules (e.g. joe-block/block/*.sh) must
 # be sourced by their own entry point to avoid double-source + banner spam.
 if [ -d "$SSOT/functions" ]; then
-    for func_files in "$SSOT"/functions/*.sh; do
-        [ -f "$func_files" ] && source "$func_file"
+    for func_file in "$SSOT"/functions/*.sh; do
+        [ -f "$func_file" ] && source "$func_file"
     done
 
 fi
