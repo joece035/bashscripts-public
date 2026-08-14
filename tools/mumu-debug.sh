@@ -198,6 +198,54 @@ mod_micro() {
 
         echo "=== MICRO_SYNTAX ==="
         zsh -n ~/.config/micro/settings.json 2>&1 || true
+
+        echo "=== TERM_VAR ==="
+        echo "TERM=$TERM"
+        echo "TERM_PROGRAM=${TERM_PROGRAM:-unset}"
+        echo "COLORTERM=${COLORTERM:-unset}"
+        echo "LINES=${LINES:-unset} COLUMNS=${COLUMNS:-unset}"
+
+        echo "=== TERMINFO ==="
+        infocmp "$TERM" >/dev/null 2>&1 && echo "TERMINFO_OK" || echo "TERMINFO_MISSING"
+
+        echo "=== MICRO_FREEZE_TEST ==="
+        timeout 3 micro -options false /dev/null 2>&1 && echo "FREEZE_TEST_PASS" || echo "FREEZE_TEST_TIMEOUT_OR_ERROR"
+
+        echo "=== KILLED_MICRO_PROCS ==="
+        pkill -9 micro 2>/dev/null && echo "KILLED_ORPHAN_MICRO" || echo "NO_ORPHAN_MICRO"
+
+        echo "=== MICRO_DEBUG_LOG ==="
+        timeout 5 micro -debug /dev/null 2>&1 || echo "DEBUG_TIMEOUT"
+
+        echo "=== MICRO_PLUGINS_LIST ==="
+        ls ~/.config/micro/plug/ 2>/dev/null | head -20 || echo "NO_PLUGINS"
+
+        echo "=== TTY_CHECK ==="
+        ls -la /dev/tty 2>&1 || echo "NO_TTY"
+
+        echo "=== STY_CHECK ==="
+        echo "STY=${STY:-unset} TMUX=${TMUX:-unset}"
+
+        echo "=== LOCALE_CHECK ==="
+        locale 2>&1 | head -5 || echo "NO_LOCALE"
+
+        echo "=== NANO_TEST ==="
+        timeout 3 nano --version 2>&1 | head -1 || echo "NO_NANO"
+
+        echo "=== VIM_TEST ==="
+        timeout 3 vim --version 2>&1 | head -1 || echo "NO_VIM"
+
+        echo "=== MICRO_ENV_FIX ==="
+        export TERM=xterm-256color
+        export MICRO_LOG=/tmp/micro-debug.log
+        timeout 3 micro -options false /dev/null 2>&1
+        if [[ -f /tmp/micro-debug.log ]]; then
+            echo "MICRO_LOG_CONTENT:"
+            cat /tmp/micro-debug.log | tail -30
+        else
+            echo "NO_MICRO_LOG"
+        fi
+        rm -f /tmp/micro-debug.log
     '
 
     local output
@@ -267,7 +315,50 @@ mod_micro() {
             printf '\n'
         done
     fi
-}
+
+    # ── FREEZE DIAGNOSTICS ──
+    _hdr "MICRO FREEZE DIAGNOSTICS"
+
+    # TERM variable
+    local term_val
+    term_val=$(echo "$output" | sed -n '/=== TERM_VAR ===/,/=== TERMINFO ===/p' | grep '^TERM=' | head -1 | cut -d= -f2)
+    if [[ "$term_val" == "xterm-256color" ]] || [[ "$term_val" == "xterm-color" ]]; then
+        _pass "TERM=$term_val (correct for micro)"
+    elif [[ -n "$term_val" ]]; then
+        _fail "TERM=$term_val (may cause freeze!)"
+        _info "Fix: export TERM=xterm-256color"
+    else
+        _fail "TERM not set!"
+        _info "Fix: export TERM=xterm-256color"
+    fi
+
+    # Terminfo
+    local terminfo
+    terminfo=$(echo "$output" | sed -n '/=== TERMINFO ===/,/=== MICRO_FREEZE_TEST ===/p' | tail -n +2 | head -1)
+    if [[ "$terminfo" == "TERMINFO_OK" ]]; then
+        _pass "Terminfo available for $term_val"
+    elif [[ "$terminfo" == "TERMINFO_MISSING" ]]; then
+        _fail "Terminfo MISSING for $term_val — causes freeze!"
+        _info "Fix: pkg install ncurses (or set TERM=xterm-256color)"
+    fi
+
+    # Freeze test
+    local freeze_test
+    freeze_test=$(echo "$output" | sed -n '/=== MICRO_FREEZE_TEST ===/,/=== KILLED_MICRO_PROCS ===/p' | tail -n +2 | head -1)
+    if [[ "$freeze_test" == "FREEZE_TEST_PASS" ]]; then
+        _pass "Micro starts without freeze"
+    elif [[ "$freeze_test" == "FREEZE_TEST_TIMEOUT_OR_ERROR" ]]; then
+        _fail "Micro FREEZES on startup!"
+        _info "Try: TERM=xterm-256color micro"
+        _info "Try: micro -options false file.txt"
+    fi
+
+    # Kill orphan processes
+    local killed
+    killed=$(echo "$output" | sed -n '/=== KILLED_MICRO_PROCS ===//p' | tail -n +2 | head -1)
+    if [[ "$killed" == "KILLED_ORPHAN_MICRO" ]]; then
+        _fix "Killed orphaned micro processes"
+    fi
 
 # ============================================================
 # MODULE: ZSH — Zsh shell diagnostics
@@ -565,14 +656,33 @@ fix_micro() {
             fi
         fi
 
-        # Fix 2: Create config dir if missing
+        # Fix 2: Fix TERM variable (main cause of freeze)
+        if [[ "$TERM" != "xterm-256color" && "$TERM" != "xterm-color" ]]; then
+            export TERM=xterm-256color
+            echo "Fixed: TERM=xterm-256color (was: $TERM)"
+            FIXED=1
+        fi
+
+        # Fix 3: Install ncurses for terminfo
+        if ! infocmp xterm-256color >/dev/null 2>&1; then
+            echo "Installing ncurses (for terminfo)..."
+            if command -v pkg &>/dev/null; then
+                pkg install -y ncurses
+                FIXED=1
+            fi
+        fi
+
+        # Fix 4: Kill any orphaned micro processes
+        pkill -9 micro 2>/dev/null && echo "Killed orphaned micro processes"
+
+        # Fix 5: Create config dir if missing
         if [[ ! -d ~/.config/micro ]]; then
             mkdir -p ~/.config/micro
             echo "Created ~/.config/micro/"
             FIXED=1
         fi
 
-        # Fix 3: Remove corrupted settings
+        # Fix 6: Remove corrupted settings
         if [[ -f ~/.config/micro/settings.json ]]; then
             if ! python3 -c "import json; json.load(open(\"$HOME/.config/micro/settings.json\"))" 2>/dev/null; then
                 rm ~/.config/micro/settings.json
@@ -581,11 +691,45 @@ fix_micro() {
             fi
         fi
 
-        # Fix 4: Clear broken plugin cache
+        # Fix 7: Clear broken plugin cache
         if [[ -d ~/.config/micro/lists ]]; then
             rm -rf ~/.config/micro/lists/
             echo "Cleared micro lists cache"
             FIXED=1
+        fi
+
+        # Fix 8: Create wrapper script for safe micro launch
+        if [[ ! -f ~/bin/micro-safe ]]; then
+            mkdir -p ~/bin
+            cat > ~/bin/micro-safe << '''WRAPPER'''
+#!/bin/bash
+# micro-safe: Launch micro with correct TERM for Termux/MUMU
+# Fixes: freeze, black screen, unresponsive
+export TERM=xterm-256color
+export COLORTERM=truecolor
+export MICRO_LOG=/tmp/micro.log
+# Disable alternate screen to prevent black screen hang
+printf '\e[?1049l' 2>/dev/null
+exec micro "$@"
+WRAPPER
+            chmod +x ~/bin/micro-safe
+            echo "Created ~/bin/micro-safe (safe launcher)"
+            FIXED=1
+        fi
+
+        # Fix 9: Reset micro config completely (nuclear option)
+        if [[ -d ~/.config/micro ]]; then
+            # Backup and reset
+            mv ~/.config/micro ~/.config/micro.bak.$(date +%s) 2>/dev/null
+            mkdir -p ~/.config/micro
+            echo "Reset micro config (backup saved)"
+            FIXED=1
+        fi
+
+        # Fix 10: Install alternative editors as fallback
+        if ! command -v nano &>/dev/null; then
+            echo "Installing nano as fallback..."
+            pkg install -y nano 2>/dev/null && FIXED=1
         fi
 
         if [[ $FIXED -eq 1 ]]; then

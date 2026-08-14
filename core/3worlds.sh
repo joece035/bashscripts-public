@@ -118,6 +118,40 @@ mumu-debug() {
     fi
 }
 
+# micro-fix — Quick fix for micro freeze on Termux/MUMU
+# Usage:  micro-fix [file]
+#   Sets TERM=xterm-256color and launches micro safely
+#   Use --nano to force nano as fallback
+micro-fix() {
+    local use_nano=0 file=""
+    for arg in "$@"; do
+        case "$arg" in
+            --nano) use_nano=1 ;;
+            *) file="$arg" ;;
+        esac
+    done
+
+    # Kill any orphaned micro processes first
+    pkill -9 micro 2>/dev/null
+
+    # Set correct TERM for Termux/MUMU environments
+    export TERM=xterm-256color
+    export COLORTERM=truecolor
+
+    if (( use_nano )); then
+        # Force nano as fallback
+        nano "${file:-}"
+    else
+        # Exit alternate screen buffer first (prevents black screen hang)
+        printf '\e[?1049l' 2>/dev/null
+        if [[ -n "$file" ]]; then
+            micro "$file"
+        else
+            micro
+        fi
+    fi
+}
+
 # twpws — SSH into Windows PowerShell (default shell)
 twpws() { ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "$@"; }
 # Legacy alias
