@@ -23,7 +23,7 @@ mkdir_() {
 }
 
 # -- ฟังก์ชั่นหา Display Width ที่แท้จริง (รวม Emoji และตัด ANSI Code ออก)
-get_visible_width() {
+get_w() {
     local text="$1"
     # ตัด ANSI escape code ออกก่อนนับ
     local plain_text=$(echo -e "$text" | sed 'r'%"$(printf '\033')"\%\%b%g | sed 's/\x1b\[[0-9;]*m//g')
@@ -60,3 +60,41 @@ e() {
 }
 
 
+git_() {
+  local repo=${SSOT:-"$HOME/bashscripts"}
+  cd $repo &&
+  if [[ -n "$1" ]]; then
+     case "${1:-}" in
+        s|status) git status ;;
+        c|commit) git commit -m "$2" ;;
+        a|add)    git add -A ;;
+        all)      git add -A && \
+                  git commit -m "${2}" && \
+                  git push && \
+                  cn 10 bi "DONE push" ;;
+        *)        git "$@" ;;
+     esac               
+  fi
+}
+
+clone() {
+
+    local repo="$SSOT"
+    if [[ -d "${repo}" ]]; then
+         rm -rf "${repo}" && cn 10 b " done deleted ~/bashscripts "
+         cd $HOME
+         git "clone" "git@github.com:joece035/bashscripts.git" &&
+         echo "Done"
+    else
+         echo " $repo not found "
+         cd $HOME
+         git "clone" "git@github.com:joece035/bashscripts.git" &&
+         echo "Done cloning repo.."
+    fi
+
+    case "$JOE_ENV" in
+        TERMUX|MUMU) exec zsh ;;
+        WSL|GIT-BASH) exec bash ;;
+        *) return 0
+    esac      
+}
