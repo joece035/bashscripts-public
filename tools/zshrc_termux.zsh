@@ -61,15 +61,15 @@ if [[ -z "${_OMZ_SOURCED:-}" ]]; then
 fi
 
 # -- ZSH/Bash compat layer (BEFORE joe.sh) ---------------------
-SSOT_PATH="${SSOT:-$HOME/bashscripts}"
-[[ -f "$SSOT_PATH/core/.zsh-bash-compat.sh" ]] && source "$SSOT_PATH/core/.zsh-bash-compat.sh"
+export SSOT="${SSOT:-$HOME/bashscripts}"
+[[ -f "$SSOT/core/.zsh-bash-compat.sh" ]] && source "$SSOT/core/.zsh-bash-compat.sh"
 
 # -- JOE SSOT single entry point --------------------------------
 # joe.sh: JOE_ENV detection -> 00-env.sh -> 01-colors.sh -> functions
 # JOE_ROOT must be set BEFORE sourcing joe.sh because BASH_SOURCE[0]
 # is empty in zsh (no bash compat), so joe.sh can't self-detect.
-export JOE_ROOT="$SSOT_PATH"
-[[ -f "$SSOT_PATH/joe.sh" ]] && source "$SSOT_PATH/joe.sh"
+export JOE_ROOT="$SSOT"
+[[ -f "$SSOT/joe.sh" ]] && source "$SSOT/joe.sh"
 
 # -- Powerlevel10k config --------------------------------------
 [[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"

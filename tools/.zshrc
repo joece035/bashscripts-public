@@ -1,104 +1,110 @@
-# If you come from bash you might have to change your $PATH.
-# export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
+# ================================================================
+# ~/.zshrc - JOE SSOT ZSH Config (Termux)
+# MASTER: WSL | SSOT: ~/bashscripts/tools/zshrc_termux.zsh
+# Deployed by: Fresh_termux_fullsetup_SSOT.sh (links to ~/.zshrc)
+# Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
+# ================================================================
 
-# Path to your Oh My Zsh installation.
+# -- Shell Options (Prevent glob errors & duplicate fpath) ------
+setopt NO_NOMATCH 2>/dev/null || true
+setopt NULL_GLOB 2>/dev/null || true
+typeset -U fpath path PATH 2>/dev/null || true
+
+# -- Path Setup ------------------------------------------------
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$HOME/.local/bin:$PATH"
+if [[ -d "/data/data/com.termux/files/usr/bin" ]]; then
+    export PATH="/data/data/com.termux/files/usr/bin:$PATH"
+fi
+
+# -- Ensure ALL Zsh system function directories are in fpath ----
+_tz_dir="/data/data/com.termux/files/usr/share/zsh"
+if [[ -d "$_tz_dir" ]]; then
+    for _d in "$_tz_dir"/site-functions(N) \
+              "$_tz_dir"/*(N) \
+              "$_tz_dir"/*/functions(N) \
+              "$_tz_dir"/*/functions/*(N) \
+              "$_tz_dir"/*/functions/*/*(N) \
+              "$_tz_dir"/*/functions/*/*/*(N); do
+        [[ -d "$_d" ]] && fpath+=("$_d")
+    done
+fi
+unset _tz_dir _d
+
+# -- Oh My Zsh Flags -------------------------------------------
+export DISABLE_LS_COLORS="true"
+export ZSH_DISABLE_COMPFIX="true"
+
+# -- Clear old shell function conflicts for OMZ spectrum -------
+unfunction color 2>/dev/null || true
+unset color 2>/dev/null || true
+
+# -- Powerlevel10k instant prompt (quiet output warning) -------
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+    source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+# -- Oh My Zsh (Source ONCE per session to prevent compinit corruption on reload) --
 export ZSH="$HOME/.oh-my-zsh"
+ZSH_THEME="powerlevel10k/powerlevel10k"
 
-# Set name of the theme to load --- if set to "random", it will
-# load a random theme each time Oh My Zsh is loaded, in which case,
-# to know which specific one was loaded, run: echo $RANDOM_THEME
-# See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="robbyrussell"
+plugins=(
+    git
+    autoupdate
+    zsh-autosuggestions
+    zsh-syntax-highlighting
+    zsh-history-substring-search
+)
 
-# Set list of themes to pick from when loading at random
-# Setting this variable when ZSH_THEME=random will cause zsh to load
-# a theme from this variable instead of looking in $ZSH/themes/
-# If set to an empty array, this variable will have no effect.
-# ZSH_THEME_RANDOM_CANDIDATES=( "robbyrussell" "agnoster" )
+if [[ -z "${_OMZ_SOURCED:-}" ]]; then
+    export _OMZ_SOURCED=1
+    [[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
+fi
 
-# Uncomment the following line to use case-sensitive completion.
-# CASE_SENSITIVE="true"
+# -- ZSH/Bash compat layer (BEFORE joe.sh) ---------------------
+[[ -f "$HOME/.env" ]] && source "$HOME/.env"
+SSOT="${SSOT:-$HOME/bashscripts}"
+[[ -f "$SSOT/.zsh-bash-compat.sh" ]] && source "$SSOT/.zsh-bash-compat.sh"
 
-# Uncomment the following line to use hyphen-insensitive completion.
-# Case-sensitive completion must be off. _ and - will be interchangeable.
-# HYPHEN_INSENSITIVE="true"
+# -- JOE SSOT single entry point --------------------------------
+# joe.sh: JOE_ENV detection -> 00-env.sh -> 01-colors.sh -> functions
+[[ -f "$SSOT/joe.sh" ]] && source "$SSOT/joe.sh"
 
-# Uncomment one of the following lines to change the auto-update behavior
-# zstyle ':omz:update' mode disabled  # disable automatic updates
-# zstyle ':omz:update' mode auto      # update automatically without asking
-# zstyle ':omz:update' mode reminder  # just remind me to update when it's time
+# -- Powerlevel10k config --------------------------------------
+[[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
+# .p10k.zsh (p10k configure) declares POWERLEVEL9K_INSTANT_PROMPT=verbose,
+# which would OVERRIDE the quiet above and re-enable the console-output
+# warning at finalize. Re-assert quiet AFTER sourcing it.
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 
-# Uncomment the following line to change how often to auto-update (in days).
-# zstyle ':omz:update' frequency 13
+# -- Safe UP/DOWN keybindings ----------------------------------
+if ! autoload +X -U up-line-or-beginning-search 2>/dev/null; then
+    up-line-or-beginning-search() { zle up-line-or-history; }
+    zle -N up-line-or-beginning-search 2>/dev/null
+fi
+if ! autoload +X -U down-line-or-beginning-search 2>/dev/null; then
+    down-line-or-beginning-search() { zle down-line-or-history; }
+    zle -N down-line-or-beginning-search 2>/dev/null
+fi
 
-# Uncomment the following line if pasting URLs and other text is messed up.
-# DISABLE_MAGIC_FUNCTIONS="true"
+if zle -la 2>/dev/null | grep -q history-substring-search; then
+    bindkey '^[[A' history-substring-search-up   2>/dev/null
+    bindkey '^[[B' history-substring-search-down 2>/dev/null
+    bindkey "$terminfo[kcuu1]" history-substring-search-up   2>/dev/null
+    bindkey "$terminfo[kcud1]" history-substring-search-down 2>/dev/null
+else
+    bindkey '^[[A' up-line-or-history   2>/dev/null
+    bindkey '^[[B' down-line-or-history 2>/dev/null
+fi
 
-# Uncomment the following line to disable colors in ls.
-# DISABLE_LS_COLORS="true"
+GITSTATUS_LOG_LEVEL=DEBUG
 
-# Uncomment the following line to disable auto-setting terminal title.
-# DISABLE_AUTO_TITLE="true"
+# -- Powerlevel10k finalize ------------------------------------
+(( ! ${+functions[p10k]} )) || p10k finalize
 
-# Uncomment the following line to enable command auto-correction.
-# ENABLE_CORRECTION="true"
-
-# Uncomment the following line to display red dots whilst waiting for completion.
-# You can also set it to another string to have that shown instead of the default red dots.
-# e.g. COMPLETION_WAITING_DOTS="%F{yellow}waiting...%f"
-# Caution: this setting can cause issues with multiline prompts in zsh < 5.7.1 (see #5765)
-# COMPLETION_WAITING_DOTS="true"
-
-# Uncomment the following line if you want to disable marking untracked files
-# under VCS as dirty. This makes repository status check for large repositories
-# much, much faster.
-# DISABLE_UNTRACKED_FILES_DIRTY="true"
-
-# Uncomment the following line if you want to change the command execution time
-# stamp shown in the history command output.
-# You can set one of the optional three formats:
-# "mm/dd/yyyy"|"dd.mm.yyyy"|"yyyy-mm-dd"
-# or set a custom format using the strftime function format specifications,
-# see 'man strftime' for details.
-# HIST_STAMPS="mm/dd/yyyy"
-
-# Would you like to use another custom folder than $ZSH/custom?
-# ZSH_CUSTOM=/path/to/new-custom-folder
-
-# Which plugins would you like to load?
-# Standard plugins can be found in $ZSH/plugins/
-# Custom plugins may be added to $ZSH_CUSTOM/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
-# Add wisely, as too many plugins slow down shell startup.
-plugins=(git)
-
-source $ZSH/oh-my-zsh.sh
-
-# User configuration
-
-# export MANPATH="/usr/local/man:$MANPATH"
-
-# You may need to manually set your language environment
-# export LANG=en_US.UTF-8
-
-# Preferred editor for local and remote sessions
-# if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
-# else
-#   export EDITOR='nvim'
-# fi
-
-# Compilation flags
-# export ARCHFLAGS="-arch $(uname -m)"
-
-# Set personal aliases, overriding those provided by Oh My Zsh libs,
-# plugins, and themes. Aliases can be placed here, though Oh My Zsh
-# users are encouraged to define aliases within a top-level file in
-# the $ZSH_CUSTOM folder, with .zsh extension. Examples:
-# - $ZSH_CUSTOM/aliases.zsh
-# - $ZSH_CUSTOM/macos.zsh
-# For a full list of active aliases, run `alias`.
-#
-# Example aliases
-# alias zshconfig="mate ~/.zshrc"
-# alias ohmyzsh="mate ~/.oh-my-zsh"
+# -- pnpm (global bin dir; removed by an accidental WIP edit 2026-08-08) --
+export PNPM_HOME="/data/data/com.termux/files/home/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
