@@ -58,8 +58,7 @@ PY
 e() {
     get_visible_width2 "$@"
 }
-
-
+#-- git tools
 git_() {
   local repo=${SSOT:-"$HOME/bashscripts"}
   cd $repo &&
@@ -76,7 +75,16 @@ git_() {
      esac               
   fi
 }
-
+#-- alias for git_
+#unalias g
+g(){
+    if (( $#<=1 )); then
+         git_ all "${1:-$(date)}"
+         echo $#
+    else
+         git_ "$@"
+    fi     
+}
 clone() {
 
     local repo="$SSOT"
@@ -99,3 +107,4 @@ clone() {
         *) return 0
     esac      
 }
+
