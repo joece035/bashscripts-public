@@ -351,32 +351,38 @@ esac
 zsh_setup(){
     local device=${1:-$MY_DEVICE} #-- TERMUX || MUMU
     local zsh_path="${SSOT:-$HOME/bashscripts}"/tools/.zshrc
-        case "${MY_DEVICE}" in
+        case "$device" in
             TERMUX|termux)
                     if  [[ -f "$HOME/.zshrc" ]]; then
                         mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" && 
                         cn 10 bi "done backup .zshrc" &&
                         #rm -f "$HOME/.zshrc" && cn 10 bi "deleted .zshrc" &&
                         ln -s "${zsh_path}" "$HOME/.zshrc" &&
-                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"
+                        [[ -f "$HOME/.zshrc" ]]&&
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"  
                     else
                         ln -s ""${zsh_path}"" "$HOME/.zshrc" &&
-                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"     
+                        [[ -f "$HOME/.zshrc" ]]&&
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"  
                     fi     
                     ;;
-            MUM|mum)
+            MUMU|mumu)
                     if  [[ -f "$HOME/.zshrc" ]]; then
                         mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" && 
                         cn 10 bi "done backup .zshrc" &&
                         #rm -f "$HOME/.zshrc" && cn 10 bi "deleted .zshrc" &&
                         ln -s "${zsh_path}" "$HOME/.zshrc" &&
-                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"
+                        [[ -f "$HOME/.zshrc" ]]&&
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"  
                     else
                         ln -s ""${zsh_path}"" "$HOME/.zshrc" &&
-                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"     
+                        [[ -f "$HOME/.zshrc" ]]&&
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"     
                     fi     
                     ;;
-            *)      return 0 
+            *)      
+                    cn y b "้run zsh_setup <TERMUX or MUMU>"
+                    return 0 
                     ;;
         esac                    
 
