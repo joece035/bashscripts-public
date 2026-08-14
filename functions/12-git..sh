@@ -3,9 +3,6 @@
 # Source via joe.sh. Self-contained: safe to source multiple times.
 # Author: Alpha for พี่โจ
 
-# Avoid double-load
-[[ -n "${_ALPHA_GIT_LOADED:-}" ]] && return 0
-_ALPHA_GIT_LOADED=1
 
 # ---- zsh: unalias names that collide with oh-my-zsh git plugin ----
 # omz git plugin (loaded first in zshrc) defines ga/gaa/gcmsg/gco/gd/glog/gp/
@@ -13,7 +10,7 @@ _ALPHA_GIT_LOADED=1
 # becomes `git diff() { ... }` -> "parse error near `()'" / "defining
 # function based on alias". Unalias before defining our functions.
 # No-op in bash or when the alias doesn't exist.
-unalias ga gaa gclean gcmsg gco gd glog gp 2>/dev/null || true
+unalias git_ clone ga gaa gclean gcmsg gco gd glog gp 2>/dev/null || true
 
 # ---- ANSI colors (no hardcode — matches 01-colors.sh style) ----
 G_CYAN=$'\e[38;5;87m'
@@ -313,43 +310,3 @@ workflow (most common):
 EOF
 }
 
-
-git_() {
-  local repo=${SSOT:-"$HOME/bashscripts"}
-  cd $repo &&
-  if [[ -n "$1" ]]; then
-     case "${1:-}" in
-        s|status) git status ;;
-        c|commit) git commit -m "$2" ;;
-        a|add)    git add -A ;;
-        all)      git add -A && \
-                  git commit -m "${2}" && \
-                  git push && \
-                  cn 10 bi "DONE push" ;;
-        *)        git "$@" ;;
-     esac               
-  fi
-}
-
-clone_ssot() {
-
-    local repo="$SSOT"
-
-    if [[ -d "${repo}" ]]; then
-         rm -rf "${repo}" && cn 10 b " done deleted ~/bashscripts "
-         cd $HOME
-         git "clone" "git@github.com:joece035/bashscripts.git" &&
-         echo "Done"
-    else
-         echo " $repo not found "
-         cd $HOME
-         git "clone" "git@github.com:joece035/bashscripts.git" &&
-         echo "Done cloning repo.."
-    fi
-
-    case "$JOE_ENV" in
-        TERMUX|MUMU) exec zsh ;;
-        WSL|GIT-BASH) exec bash ;;
-        *) return 0
-    esac      
-}
