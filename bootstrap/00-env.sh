@@ -347,53 +347,40 @@ case "$JOE_ENV" in
         export VISUAL="nano"
         ;;
 esac
+#-- Zshshell-setup
+zsh_setup(){
+    local device=${1:-$MY_DEVICE} #-- TERMUX || MUMU
+    local zsh_path="${SSOT:-$HOME/bashscripts}"/tools/.zshrc
+        case "${MY_DEVICE}" in
+            TERMUX|termux)
+                    if  [[ -f "$HOME/.zshrc" ]]; then
+                        mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" && 
+                        cn 10 bi "done backup .zshrc" &&
+                        #rm -f "$HOME/.zshrc" && cn 10 bi "deleted .zshrc" &&
+                        ln -s "${zsh_path}" "$HOME/.zshrc" &&
+                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"
+                    else
+                        ln -s ""${zsh_path}"" "$HOME/.zshrc" &&
+                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"     
+                    fi     
+                    ;;
+            MUM|mum)
+                    if  [[ -f "$HOME/.zshrc" ]]; then
+                        mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" && 
+                        cn 10 bi "done backup .zshrc" &&
+                        #rm -f "$HOME/.zshrc" && cn 10 bi "deleted .zshrc" &&
+                        ln -s "${zsh_path}" "$HOME/.zshrc" &&
+                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"
+                    else
+                        ln -s ""${zsh_path}"" "$HOME/.zshrc" &&
+                        cn 10 bi "Done Symlink "${zsh_path}" > ~/.zshrc"     
+                    fi     
+                    ;;
+            *)      return 0 
+                    ;;
+        esac                    
 
-ternux_fresh() {
-    pkg update -y && pkg upgrade -y
 
-    pkg install -y \
-  bash \
-  zsh \
-  coreutils \
-  util-linux \
-  procps \
-  findutils \
-  grep \
-  sed \
-  gawk \
-  diffutils \
-  less \
-  file \
-  which \
-  tree \
-  ncurses-utils \
-  readline \
-  bc \
-  openssl \
-  curl \
-  wget \
-  rsync \
-  openssh \
-  git \
-  tar \
-  gzip \
-  bzip2 \
-  xz \
-  zip \
-  unzip \
-  p7zip \
-  nano \
-  vim \
-  micro \
-  jq \
-  yq \
-  python \
-  nodejs \
-  ripgrep \
-  fd \
-  bat \
-  eza \
-  tmux
 }
 
 
