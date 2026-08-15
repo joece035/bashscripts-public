@@ -197,5 +197,13 @@ del(){
 
 }
 e(){
-    printf '%s\n' "$@"
+    local m=${1:-}
+    shift
+    case $m in
+        -n) 
+            printf '%s\n' "$@" ;;
+        *)
+            printf '%s ' "$@" ;;
+    esac        
+
 }
