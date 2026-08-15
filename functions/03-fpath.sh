@@ -217,3 +217,35 @@ ensure() {
     cn 196 bi "❌ '$pkg' installed, but '$cmd' is still unavailable" >&2
     return 1
 }
+# --------------------------------------------------------------------------
+# path resolve
+# --------------------------------------------------------------------------
+
+path_self_resovle() {
+  # ---------------------------------------------------------------------------
+  # หา path ของ scripts ที่จะ source 
+  # --------------------------------------------------------------------------  
+    local _script_dir=${1:-}
+    export _D  # -- หา path ของ folder scripts
+    local _self="" # -- หา path ของตัว script เอง
+  # --- หา path ของตัวเอง ---
+    if [[ -n "${BASH_VERSION:-}" && -n "${BASH_SOURCE[0]:-}" ]]; then
+        _self="${BASH_SOURCE[0]}"
+    elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
+        _self="${funcsourcetrace[1]%%:*}"
+    fi
+  # --- หา path ของตัวเอง --- ( folder scripts ที่กำลัง call ใช้อยู่ )
+    if [[ -n "$_self" ]]; then
+        _D="$(cd "$(dirname "$_self")" && pwd)/$_script_dir"
+    else
+        _D="${SSOT:-$HOME/bashscripts}/$_script_dir"
+    fi
+  # --- หา path ของ bashscripts/ root (one level up from functions/) ---
+    _BLOCK_ROOT="$(cd "${_D}/../../.." && pwd)"   # bashscripts/ root (block → joe-block → functions → bashscripts)
+    export _BLOCK_ROOT
+    [[ -f "${_D}/utils.sh"    ]] && source "${_D}/utils.sh"
+    [[ -f "${_D}/layout.sh"   ]] && source "${_D}/layout.sh"
+    [[ -f "${_D}/theme.sh"    ]] && source "${_D}/theme.sh"
+    [[ -f "${_D}/renderer.sh" ]] && source "${_D}/renderer.sh"
+    [[ -f "${_D}/status.sh"   ]] && source "${_D}/status.sh"
+}
