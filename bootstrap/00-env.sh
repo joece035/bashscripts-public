@@ -22,23 +22,33 @@
 # ============================================================
 
 case "$JOE_ENV" in
-    TERMUX|MUMU)
+    TERMUX)
          export HERMES_DIR="/data/data/com.termux/files/home/.hermes"
          export PYTHON_VENV="$HOME/.dash_venv/bin/activate"
-         export SDCARD_PATH="/storage/emulated/0/"     
+         export SDCARD_PATH="/storage/emulated/0/"
+         export NODE_HOST="termux"     
+         ;;
+    MUMU)
+         export HERMES_DIR="/data/data/com.termux/files/home/.hermes"
+         export PYTHON_VENV="$HOME/.dash_venv/bin/activate"
+         export SDCARD_PATH="/storage/emulated/0/"
+         export NODE_HOST="mumu"     
          ;;
     WSL)
          export HERMES_DIR="$HOME/.hermes"
          export PYTHON_VENV="$HOME/.venv/bin/activate"
+         export NODE_HOST="wsl"
          
          ;;
     GIT-BASH)
          export HERMES_DIR="/mnt/c/Users/User/AppData/Local/hermes"
          export PYTHON_VENV="$hwsl/.venv/bin/activate"
+         export NODE_HOST="window"
          
          ;;
     *)
          export PYTHON_VENV="$htm/.dash_venv/bin/activate"
+         export NODE_HOST="linux"
          ;;
 esac         
          
