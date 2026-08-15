@@ -586,8 +586,8 @@ wa() {
         "${1%.*}_wa.mp4"
 }
 
-get_process() {
-    local mode="$1"
+getp() {
+    local mode="${1:-n}"
     local target="$2"
 
     case "$mode" in

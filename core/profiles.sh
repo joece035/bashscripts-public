@@ -64,7 +64,7 @@ ai_profile() {
     printf "%s %s  " "$(c 46 b 'ok provider:')" "$current_provider"
     printf "%s %s  " "$(c 87 b 'profile:')" "$profile"
     printf "%s %s (len=%d)\n" "$(c 226 b 'key:')" "$key_prefix" "$key_len"
-    printf "%s%s%s\n" "$(c 244 d '  -> type ')" "$(c w b 'stc')" "$(c 244 d ' for full stats')"
+    printf "%s%s%s\n" "$(c 244 d '  -> type ')" "$(c w b 'cstats')" "$(c 244 d ' for full stats')"
 }
 pf() {
     ai_profile "$@"
@@ -125,7 +125,7 @@ current_stats() {
     )
     dashboard_array "${ROWS[@]}"
 }
-alias stc='current_stats'
+alias cstats='current_stats'
 
 clear_cache(){
     # Clean system cache
