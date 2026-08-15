@@ -75,16 +75,16 @@ git_() {
      esac               
   fi
 }
-#-- alias for git_
-#unalias g
-g(){
-    if (( $#<=1 )); then
-         git_ all "${1:-$(date)}"
-         echo $#
+#--- git_ alias
+g() {
+    if (( $# <= 1 )); then
+        git_ all "${1:-$(date)}"
     else
-         git_ "$@"
-    fi     
+        git_ "$@"
+    fi
 }
+
+
 clone() {
 
     local repo="$SSOT"
@@ -105,6 +105,99 @@ clone() {
         TERMUX|MUMU) exec zsh ;;
         WSL|GIT-BASH) exec bash ;;
         *) return 0
-    esac      
+    esac
 }
 
+
+idf_del(){
+
+    local idf_dir=${1:-$SSOT}
+    # ค้นหาไฟล์แล้วเก็บเข้าตัวแปร
+    local idf_files
+    idf_files=$(find "$idf_dir" -type f -iname "*Zone.Identifier*" -print0)
+    
+    # 1. เช็คว่าถ้าไม่พบไฟล์ ให้แจ้งเตือนแล้วจบการทำงานทันที
+    if [[ -z "$idf_files" ]]; then
+        c 198 bi "not found any Zone.Identifier files in "; c gr b " >> "; cn 10 b "$idf_dir" 
+        return 1
+    fi
+    
+    # 2. นับจำนวนไฟล์จากตัวแปรที่มีอยู่แล้ว (ใช้วิธีนับจำนวนบรรทัด)
+    local files_count
+    files_count=$(wc -l <<< "$idf_files")
+    
+    c gr "" "found "; c 10 b "$files_count ";cn gr "" "files"
+    echo ""
+    cn 45 b "$idf_files" &&
+
+    cn 227 bu "DELETE all ? (y/n)"
+    read -r choice
+    
+    case "$choice" in
+        y|Y|yes|YES)
+   
+            while IFS= read -r file; do
+                 rm -f "$file"
+            done <<< "$idf_files"
+
+            c gr "" "all  "; c 45 bi "$files_count"; cn gr "" "  Zone.Identifier files are removed"
+            ;;
+        *)
+            return 0
+            ;;
+    esac            
+
+    
+}
+conf_def(){
+    
+    local conf_dir=${1:-$SSOT}
+    
+    # ค้นหาไฟล์แล้วเก็บเข้าตัวแปร
+    local conf_files
+    conf_files=$(find "$conf_dir" -type f -iname "*conflict*" -print0)
+    
+    # 1. เช็คว่าถ้าไม่พบไฟล์ ให้แจ้งเตือนแล้วจบการทำงานทันที
+    if [[ -z "$conf_files" ]]; then
+        c 198 bi "not found any conflict files in "; c gr b ">>"; cn 10 b " $conf_dir" 
+        return 1
+    fi
+    
+    # 2. นับจำนวนไฟล์จากตัวแปรที่มีอยู่แล้ว (ใช้วิธีนับจำนวนบรรทัด)
+    local files_count
+    files_count=$(wc -l <<< "$conf_files")
+    
+    c gr "" "found "; c 10 b "$files_count ";cn gr "" "files"
+    echo ""
+    cn 45 b "$conf_files" &&
+
+    cn 227 bu "DELETE all ? (y/n)"
+    read -r choice
+    
+    case "$choice" in
+        y|Y|yes|YES)
+   
+            while IFS= read -r file; do
+                 rm -f "$file"
+            done <<< "$conf_files"
+
+            c gr "" "all  "; c 45 bi "$files_count"; cn gr "" "  conflict files are removed"
+            ;;
+        *)
+            return 0
+            ;;
+    esac            
+
+    
+}
+
+del(){
+    local t=${1:-i}
+    shift
+    case "${t}" in
+        c|conf|conflict) conf_def "$@" ;;
+        i|idf|indentify) idf_del "$@" ;;
+        *) c 196 b "RUN";c 45 b "trash_del < c or i >" ;;
+    esac
+
+}

@@ -183,6 +183,8 @@ fi
 {
   #syncthing_auto
   rc_delete
+  #del i $SSOT
+  #del c $SSOT
 } >&2
 
 # Disable nounset after everything is loaded — ble.sh restores set -u

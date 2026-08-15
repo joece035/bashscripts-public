@@ -9,7 +9,7 @@
 # ============================================================
 
 # -- helper: print blank line (renamed from _ to avoid oh-my-zsh alias conflict)
-_newline(){ echo -e ""; }
+_nl(){ echo -e ""; }
 
 
 # ============================================================
@@ -1034,25 +1034,6 @@ cmd_ens() {
 }
 #-------------------------
 
-conf_del(){
-    local conf_dir=${1:-$SSOT}
-    local conf_files=$(find "$conf_dir" -type f -iname "*conflict*")
-    local files_count=$(find "$conf_dir" -type f -iname "*conflict*" | wc -l)
-    local files_name
-   
-    if [[ -z $conf_files ]] && [[ -z $files_name ]]; then
-        cn 198 bi "not found any conflict files"
-        return 1
-    fi
-    
-    for files_name in $conf_files; do
-        rm -f $files_name
-        c 10 bi "all $fiiles_name were deleted suscessfully"
-    done
-
-    c 10 bi "all"; c 45 bi "$files_count"; cn 10 bi "conflict files are removed"
-   
 
 
-}
 
