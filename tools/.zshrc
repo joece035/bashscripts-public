@@ -5,6 +5,10 @@
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
 
+# -- Terminal type (SSH sessions inherit no TERM -- micro/TUI needs this)
+export TERM="${TERM:-xterm-256color}"
+export COLORTERM="truecolor"
+
 # -- Shell Options (Prevent glob errors & duplicate fpath) ------
 setopt NO_NOMATCH 2>/dev/null || true
 setopt NULL_GLOB 2>/dev/null || true
@@ -102,9 +106,52 @@ GITSTATUS_LOG_LEVEL=DEBUG
 # -- Powerlevel10k finalize ------------------------------------
 (( ! ${+functions[p10k]} )) || p10k finalize
 
+# -- Micro editor wrapper (fix TUI/black screen freeze) ----------
+# Root cause (2026-08-15):
+#   1. TERM unset in SSH session -> micro tcell/TUI cannot init
+#   2. /dev/tty missing in non-interactive SSH -> Screen init fails -> hang
+# Fix: Set TERM + check for TTY before launching
+micro() {
+    # Fix 1: Ensure TERM is always set
+    if [[ -z "$TERM" || "$TERM" == "dumb" ]]; then
+        export TERM="xterm-256color"
+        export COLORTERM="truecolor"
+    fi
+
+    # Fix 2: Check for TTY -- micro uses tcell which needs /dev/tty
+    if ! [ -t 0 ] || ! [ -t 1 ]; then
+        if [[ -c /dev/tty ]]; then
+            # Redirect to /dev/tty directly (fallback for some SSH configs)
+            TERM="${TERM:-xterm-256color}" command micro "$@" </dev/tty >/dev/tty
+            return $?
+        else
+            printf '\033[31mERROR: micro requires an interactive TTY\033[0m\n'
+            printf 'Fix: Open Termux on MuMu directly, or use: ssh -t\n'
+            return 1
+        fi
+    fi
+
+    # Normal path: reset terminal state to prevent p10k escape sequence bleed
+    command printf '\033[?1049l' 2>/dev/null  # exit alternate screen
+    command printf '\033[0m' 2>/dev/null       # reset all colors
+    command printf '\033[?25h' 2>/dev/null     # show cursor
+    command printf '\033[2J\033[H' 2>/dev/null # clear screen
+    TERM="${TERM:-xterm-256color}" command micro "$@"
+    local ret=$?
+    command printf '\033[?1049l' 2>/dev/null
+    command printf '\033[0m' 2>/dev/null
+    return $ret
+}
+
 # -- pnpm (global bin dir; removed by an accidental WIP edit 2026-08-08) --
 export PNPM_HOME="/data/data/com.termux/files/home/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-esac
+esac 
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
+#                 Disable gitstatus                  #
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
+export POWERLEVEL9K_DISABLE_GITSTATUS=true
+export GITSTATUS_ENABLE=0
+ 

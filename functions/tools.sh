@@ -21,7 +21,6 @@ mkdir_() {
         echo "✅ ไฟล์ถูกสร้างเรียบร้อย: $target"
     fi
 }
-
 # -- ฟังก์ชั่นหา Display Width ที่แท้จริง (รวม Emoji และตัด ANSI Code ออก)
 get_w() {
     local text="$1"
@@ -41,21 +40,21 @@ get_visible_width2() {
     local text="$1"
 
     python3 - "$text" <<'PY' 2>/dev/null
-import sys
-import re
-from wcwidth import wcswidth
+    import sys
+    import re
+    from wcwidth import wcswidth
 
-text = sys.argv[1]
+    text = sys.argv[1]
 
-# Remove ANSI CSI escape sequences
-text = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', text)
+    # Remove ANSI CSI escape sequences
+    text = re.sub(r'\x1b\[[0-?]*[ -/]*[@-~]', '', text)
 
-width = wcswidth(text)
+    width = wcswidth(text)
 
-print(max(width, 0))
+    print(max(width, 0))
 PY
 }
-e() {
+we() {
     get_visible_width2 "$@"
 }
 #-- git tools
@@ -84,8 +83,6 @@ g() {
         git_ "$@"
     fi
 }
-
-
 clone() {
 
     local repo="$SSOT"
@@ -108,8 +105,6 @@ clone() {
         *) return 0
     esac
 }
-
-
 idf_del(){
 
     local idf_dir=${1:-$SSOT}
@@ -191,7 +186,6 @@ conf_def(){
 
     
 }
-
 del(){
     local t=${1:-i}
     shift
@@ -201,4 +195,7 @@ del(){
         *) c 196 b "RUN";c 45 b "trash_del < c or i >" ;;
     esac
 
+}
+e(){
+    printf '%s\n' "$@"
 }
