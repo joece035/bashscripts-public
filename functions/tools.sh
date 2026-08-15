@@ -69,6 +69,7 @@ git_() {
         a|add)    git add -A ;;
         all)      git add -A && \
                   git commit -m "${2}" && \
+                  (git pull --rebase || { cn 9 b "PULL FAILED — resolve conflicts"; return 1; }) && \
                   git push && \
                   cn 10 bi "DONE push" ;;
         *)        git "$@" ;;
