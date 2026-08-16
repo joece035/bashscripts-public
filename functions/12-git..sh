@@ -5,12 +5,12 @@
 
 
 # ---- zsh: unalias names that collide with oh-my-zsh git plugin ----
-# omz git plugin (loaded first in zshrc) defines ga/gaa/gcmsg/gco/gd/glog/gp/
+# omz git plugin (loaded first in zshrc) defines g/ga/gaa/gcmsg/gco/gd/glog/gp/
 # gclean as aliases. zsh expands aliases at parse time, so `gd() { ... }`
 # becomes `git diff() { ... }` -> "parse error near `()'" / "defining
 # function based on alias". Unalias before defining our functions.
 # No-op in bash or when the alias doesn't exist.
-unalias git_ clone ga gaa gclean gcmsg gco gd glog gp 2>/dev/null || true
+unalias git_ clone g ga gaa gclean gcmsg gco gd glog gp 2>/dev/null || true
 
 # ---- ANSI colors (no hardcode — matches 01-colors.sh style) ----
 G_CYAN=$'\e[38;5;87m'
