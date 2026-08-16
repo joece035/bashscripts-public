@@ -192,15 +192,7 @@ git_() {
      esac
   fi
 }
-#--- git_ alias
 
-g() {
-    if (( $# <= 1 )); then
-        git_ all "${1:-$(date)}"
-    else
-        git_ "$@"
-    fi
-}
 clone() {
 
     local repo="$SSOT"

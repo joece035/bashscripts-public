@@ -10,7 +10,7 @@
 # becomes `git diff() { ... }` -> "parse error near `()'" / "defining
 # function based on alias". Unalias before defining our functions.
 # No-op in bash or when the alias doesn't exist.
-unalias git_ clone g ga gaa gclean gcmsg gco gd glog gp 2>/dev/null || true
+unalias git_ clone ga gaa gclean gcmsg gco gd glog gp 2>/dev/null || true
 
 # ---- ANSI colors (no hardcode — matches 01-colors.sh style) ----
 G_CYAN=$'\e[38;5;87m'
@@ -310,3 +310,12 @@ workflow (most common):
 EOF
 }
 
+#--- git_ alias
+unbinding -a g
+g() {
+    if (( $# <= 1 )); then
+        git_ all "${1:-$(date)}"
+    else
+        git_ "$@"
+    fi
+}
