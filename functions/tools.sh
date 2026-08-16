@@ -217,11 +217,7 @@ clone() {
          echo "Done cloning BASHSCRIPTS"
     fi
 
-    case "$JOE_ENV" in
-        TERMUX|MUMU) exec zsh ;;
-        WSL|GIT-BASH) exec bash ;;
-        *) return 0
-    esac
+   pp
 }
 idf_del(){
 
