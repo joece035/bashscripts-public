@@ -202,7 +202,7 @@ e(){
     case $m in
         -n) 
             printf '%s\n' "$@" ;;
-        *)
+        *|' ')
             printf '%s ' "$@" ;;
     esac        
 

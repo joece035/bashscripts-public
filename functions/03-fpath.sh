@@ -2,33 +2,34 @@
 # ============================================================
 #----------PHAT FOR FUNCTION----------#
   export FUNC_DIR="$SSOT/functions"
+  export sdcard="/data/data/com.termux/files/home/storage/shared"
  #--------- FUNCTION FORM ------------#
 
-#-------------------------------------#   
- 
-#-------PHAT FOR DASHBOARD ENGINE-----#  
+#-------------------------------------#
+
+#-------PHAT FOR DASHBOARD ENGINE-----#
 ep() {
   printf '%s\n' "$ENGINES_DIR/${1:-""}"
  }
-#--------------------------------------#   
+#--------------------------------------#
 
-#-------PHAT For HOME -----------------#  
+#-------PHAT For HOME -----------------#
 hop() {
   printf '%s\n' "$home/${1:-""}"
 }
-#--------------------------------------#   
+#--------------------------------------#
 
-#-------PHAT For HOME -----------------#  
+#-------PHAT For HOME -----------------#
 sd() {
-  printf '%s\n' "$SDCARD_PATH/${1:-""}"
+  printf '%s\n' "$sdcard/${1:-""}"
 }
-#--------------------------------------#   
+#--------------------------------------#
 
-#-------PHAT For FUNCTION/LEARN ------#  
+#-------PHAT For FUNCTION/LEARN ------#
 # fn <file>           → $FUNC_DIR/<file>  (functions/)
 # fn j <file>         → $SSOT/joe.learn/<file>
 
-#--------------------------------------#   
+#--------------------------------------#
 cdc() {
 
   [[ -d "$1" ]] && cd "$1" && cn 10 b "$(pwd)" || cn 196 b " no such file or directory "
@@ -46,56 +47,51 @@ fn() {
       fi
       ;;
     jb) source "$jb" ;;
-    *) 
+    *)
       if (( $# == 0 )); then
         printf '%s' "$SSOT/functions"
       else
         printf '%s\n' "$SSOT/functions/$@"
       fi
     ;;
-  esac  
+  esac
 }
 #----symbolic link----#
 slink_() {
     # สลับไฟล์จริง(src)กับไฟล์ที่สร้างลิงก์ไปหา(tar) แล้วค่อยสร้างลิงก์ใหม่
-    # กรณีไฟล์จริงอยู่บน termux ต้องการ link ไป sd card 
+    # กรณีไฟล์จริงอยู่บน termux ต้องการ link ไป sd card
     local src="${1:?SELECT SOURCE}" #-- file จริงๆ
     local tar="${2:?SELECT TARGET}" #-- link ที่จะทำ
     cp -r "${src}" "${tar}" &&   #-- คัดลอกเนื้อหาไปใส่ไฟล์ปลายทางก่อน
     mv "${src}" "${src}.bk" &&  #-- backup file จริง
     ln -s "${tar}" "${src}" &&     #-- สร้าง symbolic link
-    echo "done symbolic link $tar --> $src" 
+    echo "done symbolic link $tar --> $src"
     rm -rf "${src}.bk"            #-- ลบไฟล์สำรอง
     # -- ไฟล์จริงจะย้ายไปอยู่ใน sd card และสร้าง link มาแทนที่ตัวเอง
 }
 
-ssh_kgen_(){
+
+ssh_kgen(){
   #-- สร้าง public/private key หากยังไม่มี
   local machine="${1:?SELECT machine}"
   local keyfile="$HOME/.ssh/id_ed25519_${machine}"
-  
+
+
   if [[ -f "$keyfile" ]]; then
-    cn y bi "SSH key already exists at $keyfile"
+    echo "SSH key already exists at $keyfile"
   else
     ssh-keygen -t ed25519 -C "${machine}" -f "${keyfile}"
   fi
+  export pub_key=$(cat "${keyfile}.pub")
+  cb_copy ${pub_key}
+  echo ${pub_key}
 
-  export pub_key
-  pub_key=$(cat "${keyfile}.pub")
-  cn 10 bi "${pub_key}"
-  cb_copy "${pub_key}"
 }
 
-ssh_kadd_(){
+ssh_kadd(){
   #-- เพิ่ม Public Key ลงใน authorized_keys ของเครื่องปลายทาง (ป้องกันการเพิ่มซ้ำ)
-  local pub_key_input="${1:-$(cb_read)}"
+  local pub_key="${1:-$(cb_read)}"
   local auth_file="$HOME/.ssh/authorized_keys"
-  local pub_key="${pub_key_input:-${pub_key}}"
-
-  if [[ -z "$pub_key" ]]; then
-    cn r bi "Error: Public key is empty or clipboard has no valid input!"
-    return 1
-  fi
 
   [[ -d "$HOME/.ssh" ]] || mkdir -p "$HOME/.ssh"
   chmod 700 "$HOME/.ssh"
@@ -103,10 +99,10 @@ ssh_kadd_(){
   chmod 600 "$auth_file"
 
   if grep -qF "$pub_key" "$auth_file"; then
-    cn y bi "Key already exists in $auth_file"
+    echo "Key already exists in $auth_file"
   else
     echo "${pub_key}" >> "$auth_file"
-    cn 10 bi "done adding ssh key"
+    echo "done adding ssh key"
   fi
 }
 
@@ -216,36 +212,4 @@ ensure() {
 
     cn 196 bi "❌ '$pkg' installed, but '$cmd' is still unavailable" >&2
     return 1
-}
-# --------------------------------------------------------------------------
-# path resolve
-# --------------------------------------------------------------------------
-
-path_self_resovle() {
-  # ---------------------------------------------------------------------------
-  # หา path ของ scripts ที่จะ source 
-  # --------------------------------------------------------------------------  
-    local _script_dir=${1:-}
-    export _D  # -- หา path ของ folder scripts
-    local _self="" # -- หา path ของตัว script เอง
-  # --- หา path ของตัวเอง ---
-    if [[ -n "${BASH_VERSION:-}" && -n "${BASH_SOURCE[0]:-}" ]]; then
-        _self="${BASH_SOURCE[0]}"
-    elif [[ -n "${ZSH_VERSION:-}" && -n "${funcsourcetrace[1]:-}" ]]; then
-        _self="${funcsourcetrace[1]%%:*}"
-    fi
-  # --- หา path ของตัวเอง --- ( folder scripts ที่กำลัง call ใช้อยู่ )
-    if [[ -n "$_self" ]]; then
-        _D="$(cd "$(dirname "$_self")" && pwd)/$_script_dir"
-    else
-        _D="${SSOT:-$HOME/bashscripts}/$_script_dir"
-    fi
-  # --- หา path ของ bashscripts/ root (one level up from functions/) ---
-    _BLOCK_ROOT="$(cd "${_D}/../../.." && pwd)"   # bashscripts/ root (block → joe-block → functions → bashscripts)
-    export _BLOCK_ROOT
-    [[ -f "${_D}/utils.sh"    ]] && source "${_D}/utils.sh"
-    [[ -f "${_D}/layout.sh"   ]] && source "${_D}/layout.sh"
-    [[ -f "${_D}/theme.sh"    ]] && source "${_D}/theme.sh"
-    [[ -f "${_D}/renderer.sh" ]] && source "${_D}/renderer.sh"
-    [[ -f "${_D}/status.sh"   ]] && source "${_D}/status.sh"
 }
