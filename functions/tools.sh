@@ -55,7 +55,7 @@ unbinding(){
                 unalias "$target" 2>/dev/null && removed=1
                 c 45 b "done unalias"; cn 10 b "  $target"
             else
-                c 198 b "⚠ '$target' has no alias"; return 1
+                cn 190 b "⚠ '$target' has no alias"; return 1
             fi
             ;;
         f)
@@ -63,7 +63,7 @@ unbinding(){
                 unset -f "$target" 2>/dev/null && removed=1
                 c 45 b "done unfunction"; cn 10 b "  $target"
             else
-                c 198 b "⚠ '$target' has no function"; return 1
+                cn 190 b "⚠ '$target' has no function"; return 1
             fi
             ;;
         af)
