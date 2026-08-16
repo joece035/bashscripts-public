@@ -6,6 +6,34 @@
 # -- NOTE: treegu() + alias t ถูกย้ายไปเป็น canonical ที่
 #    tools/merge.sh แล้ว (เดิมซ้ำกันทั้ง 2 ไฟล์)
 # -- ฟังก์ชันทั่วไปใหม่ ๆ ใส่ตรงนี้ได้
+#--check alias
+
+alias_check(){
+    local zsh_shell bash_shell target="${1:-}"
+
+    [ -z "$target" ] && return 0
+
+    case "$JOE_ENV" in
+        TERMUX|MUMU)
+
+            zsh_shell=$(whence -w "$target" 2>/dev/null | cut -d" " -f2)
+            if [ "$zsh_shel" = "alias" ]; then
+                 unalias "${target}" 2>/dev/null &&
+                 cn 45 b "done unalias $target"
+            fi
+
+            ;;
+        WSL|GIT_BASH)
+
+            bash_shell=$(type -t "$target" 2>/dev/null)
+            if [ "$bash_shell" = "alias" ]; then
+                 unalias "${target}" 2>/dev/null &&
+                 cn 198 b "done unalias $target"
+            fi
+
+            ;;
+    esac
+}
 
 mkdir_() {
     local is_dir=0
@@ -26,7 +54,7 @@ get_w() {
     local text="$1"
     # ตัด ANSI escape code ออกก่อนนับ
     local plain_text=$(echo -e "$text" | sed 'r'%"$(printf '\033')"\%\%b%g | sed 's/\x1b\[[0-9;]*m//g')
-    
+
     # ใช้ python3 นับความกว้างหน้าจอจริง
     python3 -c "import unicodeattr, sys; import unicodedata; print(sum(2 if unicodedata.east_asian_width(c) in 'WF' else 1 for c in '''$plain_text'''))" 2>/dev/null || echo "${#plain_text}"
 }
@@ -72,10 +100,11 @@ git_() {
                   git push && \
                   cn 10 bi "DONE push" ;;
         *)        git "$@" ;;
-     esac               
+     esac
   fi
 }
 #--- git_ alias
+
 g() {
     if (( $# <= 1 )); then
         git_ all "${1:-$(date)}"
@@ -111,27 +140,27 @@ idf_del(){
     # ค้นหาไฟล์แล้วเก็บเข้าตัวแปร
     local idf_files
     idf_files=$(find "$idf_dir" -type f -iname "*Zone.Identifier*" -print0)
-    
+
     # 1. เช็คว่าถ้าไม่พบไฟล์ ให้แจ้งเตือนแล้วจบการทำงานทันที
     if [[ -z "$idf_files" ]]; then
-        c 198 bi "not found any Zone.Identifier files in "; c gr b " >> "; cn 10 b "$idf_dir" 
+        c 198 bi "not found any Zone.Identifier files in "; c gr b " >> "; cn 10 b "$idf_dir"
         return 1
     fi
-    
+
     # 2. นับจำนวนไฟล์จากตัวแปรที่มีอยู่แล้ว (ใช้วิธีนับจำนวนบรรทัด)
     local files_count
     files_count=$(wc -l <<< "$idf_files")
-    
+
     c gr "" "found "; c 10 b "$files_count ";cn gr "" "files"
     echo ""
     cn 45 b "$idf_files" &&
 
     cn 227 bu "DELETE all ? (y/n)"
     read -r choice
-    
+
     case "$choice" in
         y|Y|yes|YES)
-   
+
             while IFS= read -r file; do
                  rm -f "$file"
             done <<< "$idf_files"
@@ -141,38 +170,38 @@ idf_del(){
         *)
             return 0
             ;;
-    esac            
+    esac
 
-    
+
 }
 conf_def(){
-    
+
     local conf_dir=${1:-$SSOT}
-    
+
     # ค้นหาไฟล์แล้วเก็บเข้าตัวแปร
     local conf_files
     conf_files=$(find "$conf_dir" -type f -iname "*conflict*" -print0)
-    
+
     # 1. เช็คว่าถ้าไม่พบไฟล์ ให้แจ้งเตือนแล้วจบการทำงานทันที
     if [[ -z "$conf_files" ]]; then
-        c 198 bi "not found any conflict files in "; c gr b ">>"; cn 10 b " $conf_dir" 
+        c 198 bi "not found any conflict files in "; c gr b ">>"; cn 10 b " $conf_dir"
         return 1
     fi
-    
+
     # 2. นับจำนวนไฟล์จากตัวแปรที่มีอยู่แล้ว (ใช้วิธีนับจำนวนบรรทัด)
     local files_count
     files_count=$(wc -l <<< "$conf_files")
-    
+
     c gr "" "found "; c 10 b "$files_count ";cn gr "" "files"
     echo ""
     cn 45 b "$conf_files" &&
 
     cn 227 bu "DELETE all ? (y/n)"
     read -r choice
-    
+
     case "$choice" in
         y|Y|yes|YES)
-   
+
             while IFS= read -r file; do
                  rm -f "$file"
             done <<< "$conf_files"
@@ -182,9 +211,9 @@ conf_def(){
         *)
             return 0
             ;;
-    esac            
+    esac
 
-    
+
 }
 del(){
     local t=${1:-i}
@@ -200,11 +229,11 @@ e(){
     local m=${1:-}
     shift
     case $m in
-        -n) 
+        -n)
             printf '%s\n' "$@" ;;
         *|' ')
             printf '%s ' "$@" ;;
-    esac        
+    esac
 
 }
 
@@ -225,7 +254,7 @@ e(){
     local title=" $HEAD_NAME " # ใส่ช่องไฟซ้าย-ขวาให้ข้อความหัวเรื่อง
     local char_count
     char_count=$(printf "%s" "$title" | wc -m)
-    
+
     # ดักกรณีถ้าข้อความยาวเกินความกว้างกล่องที่ตั้งไว้ ($width) ให้ขยายกล่องอัตโนมัติเพื่อไม่ให้เส้นพัง
     if [ "$char_count" -gt "$width" ]; then
         width=$((char_count + 4)) # ขยายขนาดกล่องให้กว้างกว่าข้อความ
@@ -239,18 +268,18 @@ e(){
     left_space=$(printf "%${pad}s" "")
     local right_space
     right_space=$(printf "%${rem}s" "")
-    
-    # ความยาวของเส้นใต้ จะเท่ากับจำนวนตัวหนาทั้งหมดรวมกัน (pad + ข้อความ + rem) 
+
+    # ความยาวของเส้นใต้ จะเท่ากับจำนวนตัวหนาทั้งหมดรวมกัน (pad + ข้อความ + rem)
     # ซึ่งก็คือค่า $width พอดีเป๊ะ!
     local main_line
     main_line=$(printf "%${width}s" | sed 's/ /▬/g')
 
-    # ประกอบร่าง Header & Footer Block 
+    # ประกอบร่าง Header & Footer Block
     # (ครอบด้วย # และปิดด้วย # ให้เหมือนกันทั้งบนและล่าง)
     local head_line_top="# ${main_line} #"
     local head_line_mid="# ${left_space}${title}${right_space} #"
     local head_line_bot="# ${main_line} #"
-    
+
     {
         echo " "
         echo "$head_line_top"
@@ -259,13 +288,112 @@ e(){
         printf '%s\n' "$TEXT"
         echo " "
     } >> "${FILE_PATH}"
-    
-   
 
-  c lg b "✅ Text Box Written "${TEXT}"  to: "${FILE_PATH}"" 
+
+
+  c lg b "✅ Text Box Written "${TEXT}"  to: "${FILE_PATH}""
 }
 
 alias atype='auto_write_file'
+
+find_ali() {
+    local target="$1"
+
+    # 1. ตรวจสอบก่อนว่ามีการส่งชื่อ alias มาหรือไม่
+    if [ -z "$target" ]; then
+        echo "❌ กรุณาระบุชื่อ alias ที่ต้องการเช็ค (เช่น: find_alias ll)"
+        return 1
+    fi
+
+    # 2. ปรับการทำงานของ Shell ชั่วคราวกรณีใช้งานบน Bash ให้รู้จัก alias ใน script/function
+    if [ -n "$BASH_VERSION" ]; then
+        shopt -s expand_aliases 2>/dev/null
+    fi
+
+    # 3. เช็คว่าเป็น Alias หรือไม่ (ใช้ type -t ซึ่งรองรับทั้ง Bash และ Zsh)
+    if [ "$(type -t "$target" 2>/dev/null)" = "alias" ]; then
+        echo "✅ '$target' เป็น Alias"
+
+        # แสดงคำสั่งเต็มของ Alias นั้น
+        echo "📌 นิยาม: $(type "$target" 2>/dev/null)"
+        echo "----------------------------------------"
+        echo "🔍 กำลังค้นหาไฟล์ที่ตั้งค่า..."
+
+             # 4. ค้นหาบรรทัด 'alias target=' ในไฟล์คอนฟิกหลัก และโฟลเดอร์ bashscripts
+        local match_found=0
+
+        # รายชื่อไฟล์หลักที่ต้องการเช็ค
+        local search_files=(
+            "$HOME/.bashrc"
+            "$HOME/.zshrc"
+            "$HOME/.bash_aliases"
+            "$HOME/.zprofile"
+            "$HOME/.bash_profile"
+            "$HOME/.profile"
+        )
+
+        # 4.1 ค้นหาในไฟล์หลักรายไฟล์
+        for file in "${search_files[@]}"; do
+            if [ -f "$file" ]; then
+                local result
+                result=$(grep -HnE "^\s*alias\s+${target}=" "$file" 2>/dev/null)
+                if [ -n "$result" ]; then
+                    echo "📁 พบในไฟล์: $result"
+                    match_found=1
+                fi
+            fi
+        done
+
+        # 4.2 ค้นหาทั้งโฟลเดอร์ $HOME/bashscripts (ถ้าโฟลเดอร์นี้มีอยู่จริง)
+        if [ -d "$HOME/bashscripts" ]; then
+            local folder_result
+            # -r = ค้นหาในโฟลเดอร์ย่อยด้วย, -n = แสดงเลขบรรทัด, -H = แสดงชื่อไฟล์
+            folder_result=$(grep -rHnE "^\s*alias\s+${target}=" "$HOME/bashscripts" 2>/dev/null)
+            if [ -n "$folder_result" ]; then
+                echo "📁 พบในโฟลเดอร์ bashscripts:\n$folder_result"
+                match_found=1
+            fi
+        fi
+
+
+        # ดึงรายชื่อไฟล์ใน ~/.config ที่ลงท้ายด้วย .sh, .zsh, .bash (ถ้ามี)
+        local extra_files
+        extra_files=$(find "$HOME/.config" -maxdepth 3 -type f \( -name "*.sh" -o -name "*.zsh" -o -name "*.bash" \) 2>/dev/null)
+
+        # รวมไฟล์ทั้งหมดแล้วค้นหาด้วย grep
+        local match_found=0
+        for file in "${search_files[@]}"; do
+            if [ -f "$file" ]; then
+                # ค้นหาการตั้งค่า alias แบบตรงตัว เช่น alias ll= หรือ alias ll =
+                local result
+                result=$(grep -HnE "^\s*alias\s+${target}=" "$file" 2>/dev/null)
+                if [ -n "$result" ]; then
+                    echo "📁 พบในไฟล์: $result"
+                    match_found=1
+                fi
+            fi
+        done
+
+        # ค้นหาในโฟลเดอร์ ~/.config เพิ่มเติมหากยังไม่เจอในไฟล์หลัก
+        if [ $match_found -eq 0 ] && [ -n "$extra_files" ]; then
+            while IFS= read -r file; do
+                local result
+                result=$(grep -HnE "^\s*alias\s+${target}=" "$file" 2>/dev/null)
+                if [ -n "$result" ]; then
+                    echo "📁 พบในไฟล์: $result"
+                    match_found=1
+                fi
+            done <<< "$extra_files"
+        fi
+
+        if [ $match_found -eq 0 ]; then
+            echo "⚠️ ไม่พบตำแหน่งในไฟล์ Config หลัก (อาจถูกโหลดมาจาก Plugin หรือ Session ชั่วคราว)"
+        fi
+    else
+        echo "❌ '$target' ไม่ใช่ Alias"
+    fi
+}
+
 
 
 
