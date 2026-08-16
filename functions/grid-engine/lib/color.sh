@@ -6,7 +6,7 @@
 # ============================================================
 
 # -- Resolve SSOT root
-_GRID_SSOT="${SCRIPTS_PATH:-$HOME/bashscripts}"
+_GRID_SSOT="${SSOT:-$HOME/bashscripts}"
 
 # -- Source 01-colors.sh if not already loaded
 if [[ -z "${RESET:-}" ]]; then

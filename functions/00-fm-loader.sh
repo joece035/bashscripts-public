@@ -36,38 +36,6 @@ scripts_sync() {
 }
 alias jsc='scripts_sync'
 
-
-# ----- Step 1: Set environment variables based on JOE_ENV -----#
-
-tskg() {
-    case "$JOE_ENV" in
-        TERMUX|WSL)
-            source "$HOME/task_generator/shell_integration.sh" 2>/dev/null
-            ;;
-        *)
-            source "$hwsl/task_generator/shell_integration.sh" 2>/dev/null || \
-            source "$HOME/task_generator/shell_integration.sh" 2>/dev/null
-            ;;
-    esac
-}
-
-
-dbsync() {
-    if [[ -f "$DASHBOARD_DIR/sync-termux.sh" ]]; then
-        source "$DASHBOARD_DIR/sync-termux.sh"
-        if command -v synctm >/dev/null 2>&1; then
-            synctm push
-        else
-            cn y b "synctm not found — run sync-termux.sh functions manually"
-        fi
-    else
-        cn r b "sync-termux.sh not found in DASHBOARD_DIR"
-    fi
-    cn lg b "syncing dashboard with termux..."
-}
-alias dbpush='dbsync'
-
-
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #            SOURCE LEARNING SCRIPTS FILE            #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ ##

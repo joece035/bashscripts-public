@@ -880,19 +880,6 @@ agent_md() {
 }
 
 
-hm() {
-    [[ -z "$1" ]] && { echo "Usage: hm <mode> [args...]"; return 1; }
-    [[ -f $SSOT/tools/hermes.sh ]] && source $SSOT/tools/hermes.sh
-    
-   local mode=${1:-}
-   shift
-   case "${mode}" in
-       p|-p|--p|"")
-            hermes_profile "$@" ;;
-       *)
-            hermes "$@" ;;
-   esac
-}
 
 # -- delete all .rc_* files in $HOME
 rc_delete() {

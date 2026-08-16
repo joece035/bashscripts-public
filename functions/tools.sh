@@ -207,3 +207,65 @@ e(){
     esac        
 
 }
+
+ auto_write_file() {
+    local HEAD_NAME=${1:-"FUNCTION"}
+    local FILE_PATH=${2:-"$(fn 08-nexus.sh)"}
+    local width=50
+    local TEXT=${3:-"TYPE SOMETHING"}
+
+    # ถ้าไม่มี $3 ให้อ่านจาก stdin (รองรับ heredoc สำหรับข้อความหลายบรรทัด/มีตัวแปร)
+    if [[ -z "${3:-}" ]] && [[ ! -t 0 ]]; then
+        TEXT=$(cat)
+    fi
+
+    # คลี่ Path ในกรณีที่มีตัวแปรเช่น $HOME หรือ ~
+    FILE_PATH=$(eval echo "${FILE_PATH:-$PWD/output.txt}")
+
+    local title=" $HEAD_NAME " # ใส่ช่องไฟซ้าย-ขวาให้ข้อความหัวเรื่อง
+    local char_count
+    char_count=$(printf "%s" "$title" | wc -m)
+    
+    # ดักกรณีถ้าข้อความยาวเกินความกว้างกล่องที่ตั้งไว้ ($width) ให้ขยายกล่องอัตโนมัติเพื่อไม่ให้เส้นพัง
+    if [ "$char_count" -gt "$width" ]; then
+        width=$((char_count + 4)) # ขยายขนาดกล่องให้กว้างกว่าข้อความ
+    fi
+
+    # คำนวณขอบซ้าย-ขวา เพื่อปูทางให้ความกว้างรวมออกมาคงที่เท่ากับ $width เป๊ะๆ
+    local pad=$(( (width - char_count) / 2 ))
+    local rem=$(( width - char_count - pad ))
+
+    local left_space
+    left_space=$(printf "%${pad}s" "")
+    local right_space
+    right_space=$(printf "%${rem}s" "")
+    
+    # ความยาวของเส้นใต้ จะเท่ากับจำนวนตัวหนาทั้งหมดรวมกัน (pad + ข้อความ + rem) 
+    # ซึ่งก็คือค่า $width พอดีเป๊ะ!
+    local main_line
+    main_line=$(printf "%${width}s" | sed 's/ /▬/g')
+
+    # ประกอบร่าง Header & Footer Block 
+    # (ครอบด้วย # และปิดด้วย # ให้เหมือนกันทั้งบนและล่าง)
+    local head_line_top="# ${main_line} #"
+    local head_line_mid="# ${left_space}${title}${right_space} #"
+    local head_line_bot="# ${main_line} #"
+    
+    {
+        echo " "
+        echo "$head_line_top"
+        echo "$head_line_mid"
+        echo "$head_line_bot"
+        printf '%s\n' "$TEXT"
+        echo " "
+    } >> "${FILE_PATH}"
+    
+   
+
+  c lg b "✅ Text Box Written "${TEXT}"  to: "${FILE_PATH}"" 
+}
+
+alias atype='auto_write_file'
+
+
+
