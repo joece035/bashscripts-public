@@ -91,8 +91,8 @@ unbinding(){
             ;;
     esac
 }
-unbinding_all ()
-{
+unbinding_all (){
+
     local target="${1:-}";
     [ -z "$target" ] && return 0;
     local binding_type;
