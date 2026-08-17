@@ -313,7 +313,16 @@ e(){
     esac
 
 }
-
+#-- auto generate block code with text via CLI
+#-- usage auto_write_file 'alias' "$SSOT/core/aliases.sh" <<'EOF'
+#alias ssot='cd $SSOT'
+#EOF
+#outpt in $2
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
+#                       alias                        #
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
+#alias ssot='cd $SSOT'
+#
  auto_write_file() {
     local HEAD_NAME=${1:-"FUNCTION"}
     local FILE_PATH=${2:-"$(fn 08-nexus.sh)"}
@@ -368,7 +377,7 @@ e(){
 
 
 
-  c lg b "✅ Text Box Written "${TEXT}"  to: "${FILE_PATH}""
+  c lg b "✅ Text Box Write '${TEXT}'  to : ${FILE_PATH}"
 }
 
 alias atype='auto_write_file'

@@ -311,7 +311,11 @@ EOF
 }
 
 #--- git_ alias
-unbinding -a g
+case "$JOE_ENV" in
+    TERMUX|MUMU) unbinding -a g ;;
+    *) return 1 ;;
+esac
+
 g() {
     if (( $# <= 1 )); then
         git_ all "${1:-$(date)}"

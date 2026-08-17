@@ -46,11 +46,11 @@ alias re="clear && reload"
 alias ktmux="tmux kill-server"
 
 fll() {
-  
+
 	   fm
 		fm ls "$@"
 	}
-  
+
 
 
 # Syncthing (WSL)
@@ -116,3 +116,9 @@ alias pipedash='cd ~/pipeline-dashboard && ~/dashboard/.venv/bin/python3 app.py'
 alias pipedash-stop='pkill -f "pipeline-dashboard/app.py" && echo "Dashboard stopped"'
 
 alias merge='source $JOE_ROOT/tools/merge.sh && merge_functions'
+
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
+#                       alias                        #
+# ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
+alias ssot='cd $SSOT && cdc .'
+

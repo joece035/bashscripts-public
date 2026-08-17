@@ -16,6 +16,14 @@ tools: Read, Grep, Glob, Bash
 
 **Path System:** All files use `JOE_ROOT`-based paths (`$JOE_CORE`, `$JOE_FUNCTIONS`, `$JOE_PLUGINS`, `$JOE_TOOLS`). Legacy aliases `SSOT` and `SCRIPTS_PATH` are kept for backward compat only.
 
+## 📚 Related Instruction Files
+
+| File | Scope | When to Load |
+|------|-------|--------------|
+| `.github/instructions/joe-block.instructions.md` | Block Engine (UI rendering) | When working with `functions/joe-block/` |
+| `.github/skills/syncctl/SKILL.md` | Syncthing cluster management | When using `syncctl` commands |
+| `.github/prompts/handover-report.prompt.md` | Handover report generation | When generating handover reports |
+
 ## 2. Architecture Overview (JOE_ENV + SSOT)
 
 This repo uses a **JOE_ENV directory structure** with strict SSOT rules. Each file is the **canonical source** for its domain. When creating or modifying scripts, you **MUST** reference existing variables/functions via `JOE_*` paths — never redefine or hardcode them.
@@ -168,6 +176,19 @@ is `01-colors.sh`. Everything else MUST go through `c()` / `cn()` /
 Enforcement: `tools/safe-edit.sh` + `tools/ssot-audit.sh` will FAIL any
 file with inline ANSI outside `01-colors.sh`.
 
+### ✅ Color System V3/V4 Quick Reference
+
+| Function | Description | Example |
+|----------|-------------|---------|
+| `c <color> [style] <text>` | Print colored text (no newline) | `c 46 b "ON "` |
+| `cn <color> [style] <text>` | Print colored text + newline | `cn 208 "WARN"` |
+| `color <name\|num> [style] <text>` | Legacy helper (has newline) | `color r b "error"` |
+| `ctab <label> <value>` | Print labeled table row | `ctab "Status" "OK"` |
+| `hline <char> <width>` | Print horizontal line | `hline "-" 50` |
+| `rc [style] <text>` | Random palette color | `rc b "info"` |
+| `_c <num>` | Raw 256-color escape (for chaining) | `echo -e "$(_c 208)text$(_r)"` |
+| `_b` / `_d` / `_i` / `_u` | Bold / dim / italic / underline escapes | `echo -e "$(_b)bold$(_r)"` |
+
 ### ❌ Never hardcode paths or IPs
 ```bash
 # WRONG — these already exist in 00-env.sh
@@ -284,6 +305,63 @@ Before creating or modifying any script, you MUST:
 4. **Check 02-aliases.sh** — Is the alias already defined there?
 5. **Check functions/*.sh** — Does the function already exist?
 6. **Use existing vars** — If it exists, USE it. If it doesn't, ADD it to the correct SSOT file first.
+
+## 4.1 🔒 Pre-Commit Hook (SSOT/V4 Enforcement)
+
+The repo has a pre-commit hook (`.github/hooks/pre-commit.json`) that runs `tools/agent-pre-commit.sh` on every `.sh` file edit. It enforces:
+
+1. **Syntax Check:** `bash -n <file>` — catches parse errors before they reach the shell.
+2. **SSOT/V4 Check:** `tools/safe-edit.sh <file>` — blocks inline ANSI escapes outside `01-colors.sh`, hardcoded IPs/keys, and V2 variable references.
+
+**If the hook fails:** Fix the error before proceeding. The hook will block the edit.
+
+**Manual verification:**
+```bash
+bash -n <file>                    # Syntax check
+bash tools/safe-edit.sh <file>    # SSOT/V4 check
+bash tools/ssot-audit.sh          # Full repo audit
+```
+
+## 4.2 🧪 Testing
+
+Run the test suite to verify changes:
+```bash
+bash tests/test_joe_env.sh        # 55 tests covering structure, paths, cross-deps
+```
+
+## 4.3 ⚠️ Common Pitfalls & Gotchas
+
+### 1. **Syncthing Caveat**
+`~/bashscripts` is synced via Syncthing across devices. After editing files:
+- Verify: `bash -n <file>` (syntax check)
+- Check test suite passes: `bash tests/test_joe_env.sh`
+- Be aware that edits may be overwritten if another device syncs simultaneously
+
+### 2. **Cross-Shell Compatibility**
+- `entry.sh` (Block Engine) is designed for both **bash** and **zsh**
+- Avoid bash-specific features like `[[ ... ]]` or `${var//pattern/replace}` in public APIs
+- Use the provided fallbacks in `entry.sh` for cross-shell support
+
+### 3. **Source Order Matters**
+- `bootstrap/00-env.sh` is sourced BEFORE any `functions/*.sh`
+- `core/01-colors.sh` is sourced BEFORE any function module that prints colorized output
+- Functions in `functions/*.sh` may source each other freely (alphabetical loop order)
+
+### 4. **Pre-Commit Hook Enforcement**
+The pre-commit hook (`tools/agent-pre-commit.sh`) will block edits that:
+- Have syntax errors (`bash -n <file>` fails)
+- Contain inline ANSI escapes outside `01-colors.sh`
+- Contain hardcoded IPs/keys or V2 variable references
+
+### 5. **SSOT Violations**
+- Never redefine existing functions (e.g., `kp()` already exists in `functions/02-systems.sh`)
+- Never create new env vars that overlap existing ones (e.g., `$oppc` already exists in `00-env.sh`)
+- Never hardcode environment detection (joe.sh already handles this)
+
+### 6. **Lessons/Exercise Files**
+- `lessons/exercise/*.sh` are test cases (test_case_w, exercise_dashboard, etc.)
+- They are NOT production functions and have side effects when sourced
+- Source them manually only when running tests, not at startup
 
 ## 5. 🗂️ Adding New Content — Where Does It Go?
 
@@ -481,6 +559,220 @@ syncctl transfer windows --reason "hotfix"  # Actual handover
 syncctl doctor          # Full audit
 syncctl recover         # If handover was interrupted
 ```
+
+## 9.1 🎨 Block Engine — Terminal UI Framework
+
+> **Block Engine** renders styled status dashboards in the terminal.
+> For detailed instructions, see `.github/instructions/joe-block.instructions.md`.
+
+### Architecture (Rows → Layout → Theme → Renderer)
+```
+entry.sh (m/dashboard_array)
+    ↓
+status.sh (data providers: status_new, op_profile)
+    ↓
+layout.sh (calculates dimensions: _LAYOUT[])
+    ↓
+theme.sh (loads style from block_style.sh: _THEME[])
+    ↓
+renderer.sh (draws borders, rows, separators)
+```
+
+### Quick Reference
+```bash
+m a                    # Dashboard with style "a"
+m b                    # Dashboard with style "b"
+m_random               # Random style
+m_animate              # Animated style rotation
+dashboard_array "${ROWS[@]}"  # Render from array
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `functions/joe-block/entry.sh` | Public API (m, dashboard, dashboard_array) |
+| `functions/joe-block/block/status.sh` | Data providers (status_new, op_profile) |
+| `functions/joe-block/block/layout.sh` | Dimension calculations |
+| `functions/joe-block/block/theme.sh` | Style loading and color compilation |
+| `functions/joe-block/block/renderer.sh` | ASCII rendering |
+| `functions/joe-block/styles/block_style.sh` | Style definitions (a/b/c/default/random) |
+
+### SSOT Compliance
+- Never hardcode colors — use helpers from `01-colors.sh`
+- Use `set_ <var> <value>` in `styles/block_style.sh` to populate `_THEME` and `_LAYOUT`
+- Cross-shell support: avoid bash-specific features in public API
+- Idempotent sourcing: modules in `block/` are sourced automatically by `entry.sh`
+
+## 9.2 🤖 Hermes AI Integration
+
+> **Hermes** provides AI-powered assistance within the terminal.
+> Located at `plugins/hermes/hermes.sh`.
+
+### Quick Reference
+```bash
+hermes                  # Launch Hermes AI assistant
+hermes_load             # Source Hermes (from 00-fm-loader.sh)
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `plugins/hermes/hermes.sh` | Main Hermes AI integration |
+| `functions/00.1-function-tools.sh` | Shared helpers (sources hermes.sh) |
+
+### SSOT Compliance
+- Hermes config is in `00-env.sh` (`$HERMES_DIR`, `$hmp`)
+- Source via `plugins/hermes/hermes.sh` or `tools/hermes.sh`
+- Do not redefine Hermes functions in other files
+
+## 9.3 📁 File Manager (fm/xfm)
+
+> **File Manager** provides ls/cp/mv/tree/ssh/push/pull operations.
+> Located at `functions/11-bash-manager.sh`.
+
+### Quick Reference
+```bash
+fm                      # Launch file manager
+fm ls [path]            # List directory
+fm cp <src> <dst>       # Copy file
+fm mv <src> <dst>       # Move file
+fm tree [path]          # Show directory tree
+xfm                     # Cross-machine file manager
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `functions/11-bash-manager.sh` | Main file manager (fm/xfm) |
+| `functions/00-fm-loader.sh` | File manager bootstrapper |
+
+### SSOT Compliance
+- Uses `$JOE_CORE/01-colors.sh` for color output
+- Uses `$JOE_ROOT/bootstrap/00-env.sh` for environment variables
+- Do not redefine `fm` or `xfm` functions in other files
+
+## 9.4 🌐 SSH & Transfer (3worlds.sh)
+
+> **3worlds.sh** provides SSH tunneling and file transfer between devices.
+> Located at `core/3worlds.sh`.
+
+### Quick Reference
+```bash
+tm <cmd>                # SSH to Termux
+tw <cmd>                # SSH to Windows
+wsl <cmd>               # SSH to WSL (from Windows)
+push <src> <dst>        # Push file to remote
+pull <src> <dst>        # Pull file from remote
+cpw2t <src> <dst>       # Copy WSL → Termux
+cpt2w <src> <dst>       # Copy Termux → WSL
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `core/3worlds.sh` | SSH/transfer functions (tm/tw/wsl/push/pull) |
+
+### SSOT Compliance
+- Network config is in `00-env.sh` (`$WINDOWS_IP`, `$TERMUX_IP`, etc.)
+- SSH keys are in `00-env.sh` (`$ST_KEY_*`)
+- Do not redefine `tm`, `tw`, `wsl`, `push`, `pull` functions in other files
+
+## 9.5 🎨 Color System (V3/V4)
+
+> **Color System** provides terminal color helpers.
+> Located at `core/01-colors.sh`.
+
+### Quick Reference
+```bash
+c 202 b "hello"         # Print colored text (no newline)
+cn 208 "WARN"           # Print colored text + newline
+color r b "error"       # Legacy helper (has newline)
+ctab "label" "value"    # Print labeled table row
+hline "-" 50            # Print horizontal line
+rc b "info"             # Random palette color
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `core/01-colors.sh` | Color engine V3/V4 (c/cn/color/ctab/hline/rc) |
+
+### SSOT Compliance
+- **ONLY** `01-colors.sh` is allowed to contain raw `\e[` or `\033[`
+- All other files MUST use helpers: `c`, `cn`, `color`, `ctab`, `hline`, `rc`
+- Enforcement: `tools/safe-edit.sh` + `tools/ssot-audit.sh` will FAIL any file with inline ANSI outside `01-colors.sh`
+- See Color System V3/V4 Quick Reference in Section 2
+
+## 9.6 🔍 Environment Detection (joe.sh)
+
+> **joe.sh** detects the current environment and sets `JOE_ENV`.
+> Located at `joe.sh`.
+
+### Quick Reference
+```bash
+# joe.sh detects JOE_ENV automatically:
+# TERMUX | MUMU | WSL | GIT-BASH
+
+# Check current environment
+echo $JOE_ENV
+
+# Environment-specific logic
+if [[ "$JOE_ENV" == "TERMUX" ]]; then
+    # Termux-specific logic
+elif [[ "$JOE_ENV" == "WSL" ]]; then
+    # WSL-specific logic
+fi
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `joe.sh` | Main entry point, environment detection |
+
+### SSOT Compliance
+- `JOE_ENV` is set by `joe.sh` Step 0 — do not override it
+- Environment detection is centralized in `joe.sh` — do not duplicate in other files
+- Use `$JOE_ENV` for environment branching, not hardcoded checks
+
+## 9.7 🚀 Boot Sequence (joe.sh)
+
+> **joe.sh** is the ONLY entry point for loading the bashscripts ecosystem.
+> Located at `joe.sh`.
+
+### Quick Reference
+```bash
+# Load order (set by joe.sh):
+source ~/.bashrc or ~/.zshrc
+  └─ source joe.sh                    [BOOSTER — only entry point]
+       ├─ Step 0: detect JOE_ENV      (TERMUX | MUMU | WSL | GIT-BASH)
+       ├─ Step 1: set SSOT, SCRIPTS_PATH, hpc/htm/hwsl, DASHBOARD_DIR
+       ├─ Step 1.5: CRLF self-heal    (auto-fix Windows line endings)
+       ├─ Step 2: set JOE_ROOT/JOE_CORE/JOE_PLUGINS/JOE_TOOLS
+       │
+       ├─ source bootstrap/00-env.sh  ← env vars, paths, keys
+       ├─ source core/01-colors.sh    ← c()/cn()/color(), ctab, hline, rc()
+       ├─ auto-start sshd & ssh-agent
+       ├─ source core/3worlds.sh      ← tm/tw/wsl/push/pull
+       ├─ source core/02-aliases.sh   ← cls, h, reload, etc.
+       ├─ source core/profiles.sh     ← ai_profile() + alias pf
+       ├─ source core/theme.sh        ← prompt & PROMPT_COMMAND
+       │
+       ├─ source functions/*.sh       ← glob: all function modules
+       │   └─ source plugins/block_engine/entry.sh  ← m/dashboard
+       ├─ source plugins/syncctl/syncctl  ← syncthing controller
+       │
+       └─ startup tasks               ← syncthing_auto, rc_del
+```
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `joe.sh` | Main entry point, boot orchestrator |
+
+### SSOT Compliance
+- `joe.sh` is the ONLY source orchestrator — do not add `source` calls in `~/.bashrc` other than `joe.sh`
+- Do NOT add `source` calls inside `00-env.sh` for files that depend on it
+- Source order matters — follow the boot sequence exactly
 
 ## 10. �📋 Quick Reference for AI Agents
 

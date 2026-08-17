@@ -48,7 +48,7 @@ case "$JOE_ENV" in
         ;;
     WSL)
         export SSOT="$HOME/bashscripts"
-	    export hpc="/mnt/c/Users/User" 
+	    export hpc="/mnt/c/Users/User"
         export hwsl="${hwsl:-$HOME}"
         export DASHBOARD_DIR="$HOME/dashboard"
         export PYTHON_VENV="${PYTHON_VENV:-$HOME/.venv/bin/activate}"
@@ -64,7 +64,7 @@ case "$JOE_ENV" in
         export hwsl="${hwsl:-//wsl.localhost/Ubuntu/home/usercivenz}"
         export DASHBOARD_DIR="$hwsl/dashboard"
         export OBSIDIAN_VAULT="$hpc/DESKTOP/obsidian/alphadev_vaults"
-        export home="$hwsl" 
+        export home="$hwsl"
         export nexus_vault="$hpc/DESKTOP/nexus_vault"
         export MAIN_SYNC_DIR="$HOME/DESKTOP/main_sync"
         export SSH_PORT=2222
@@ -144,7 +144,7 @@ fi
 [ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
 
 #-----Aliases
-[ -f "$SSOT/core/02-aliases.sh" ] && source "$SSOT/core/02-aliases.sh"
+[ -f "$SSOT/core/aliases.sh" ] && source "$SSOT/core/aliases.sh"
 
 #-----Profiiles switching
 [ -f "$SSOT/core/profiles.sh" ] && source "$SSOT/core/profiles.sh"
@@ -181,7 +181,7 @@ fi
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 {
-   pf mom 
+   pf mom
   #syncthing_auto
   rc_delete
   #del i $SSOT
