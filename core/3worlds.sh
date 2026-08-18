@@ -46,12 +46,23 @@ export _MY_WORLD="$(_detect_world)"
 
 unalias tac tm tw twpws wsl cpw2t cpt2w push 2>/dev/null
 
-# _ssh_node <user> <host> <port> [cmd...]
-#   → SSH into any node. Extra args forwarded to ssh.
+# _ssh_node <user> <host> <port> [extra_ssh_opts...] -- [cmd...]
+#   → SSH into any node. Args before `--` go to ssh; after go to remote cmd.
+#   Example:  _ssh_node "$USER" "$HOST" 22 -i ~/.ssh/id_ed25519 -- ls -la
+#   (ถ้าไม่มี `--` ทุก arg ถือเป็น remote cmd — backward compat)
 _ssh_node() {
-  local port="$1" user="$2" host="$3" 
+  local user="$1" host="$2" port="$3"
   shift 3
-  ssh -p "$port" "${user}@${host}" "$@"
+  local ssh_opts=()
+  # ถ้ามี `--` ใน args → แยก ssh_opts กับ remote cmd
+  if [[ "$*" == *"--"* ]]; then
+    while [[ $# -gt 0 && "$1" != "--" ]]; do
+      ssh_opts+=("$1")
+      shift
+    done
+    [[ "${1:-}" == "--" ]] && shift
+  fi
+  ssh "${ssh_opts[@]}" -p "$port" "${user}@${host}" "$@"
 }
 
 
@@ -62,41 +73,51 @@ _ssh_node() {
 # Signatures are frozen. Internal implementation uses Transport Layer.
 
 # TM — SSH into Termux (Android)
+#   tm  <cmd...>           — uses key id_ed25519_termux if exists, else default
+tm() {
+  local key=""
+  [[ -f "${HOME}/.ssh/id_ed25519_termux" ]] && key="-i ${HOME}/.ssh/id_ed25519_termux"
+  _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" \
+    -o ConnectTimeout=5 -o BatchMode=yes $key -- "$@"
+}
+# tm_ — same as tm but always uses id_ed25519 (default key)
 tm_() {
-  local key="${HOME}/.ssh/id_ed25519_termux"
-  [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
-  ssh -i "$key" -p "${NODE_TERMUX_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
-      "${NODE_TERMUX_USER}@${NODE_TERMUX_HOST}" "$@"
+  _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" \
+    -i "${HOME}/.ssh/id_ed25519" -o ConnectTimeout=5 -o BatchMode=yes -- "$@"
 }
-# tm — SSH into Termux (Android)
-tm()  { _ssh_node "${NODE_TERMUX_PORT}" "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "$@"; }
 
-# MUMU — SSH into Termux on MUMUPlayer (uses dedicated key id_ed25519_MUMU)
+# MUMU — SSH into Termux on MUMUPlayer (uses dedicated key id_ed25519_mumu)
+mumu() {
+  local key=""
+  [[ -f "${HOME}/.ssh/id_ed25519_mumu" ]] && key="-i ${HOME}/.ssh/id_ed25519_mumu"
+  _ssh_node "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "${NODE_MUMU_PORT}" \
+    -o ConnectTimeout=5 -o BatchMode=yes $key -- "$@"
+}
 mumu_() {
-  local key="${HOME}/.ssh/id_ed25519_mumu"
-  [[ -f "$key" ]] || key="${HOME}/.ssh/id_ed25519"
-
-  ssh -i "$key" -p "${NODE_MUMU_PORT}" -o ConnectTimeout=5 -o BatchMode=yes \
-      "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" "$@"
+  _ssh_node "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "${NODE_MUMU_PORT}" \
+    -i "${HOME}/.ssh/id_ed25519_mumu" -o ConnectTimeout=5 -o BatchMode=yes -- "$@"
 }
-mumu()  { _ssh_node "${NODE_MUMU_PORT}" "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "$@"; }
 
 # tw — SSH into Windows แล้วเปิด pwsh (interactive)
 # Windows OpenSSH default shell = PowerShell → เรียกผ่าน PS call operator (&)
 tw() {
-   ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& \"${WIN_GIT_BASH}\" --% --login -i" "$@"
- }
-#ssh_win = SSH into wondows แล้วเปิด Git Bash (interactive)
+  ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& \"${WIN_GIT_BASH}\" --login -i"
+}
+# ssh_win — SSH into windows แล้วเปิด Git Bash (interactive)
 ssh_win() {
-  ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& '${WIN_GIT_BASH}' --login -i" "$@"
+  ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& '${WIN_GIT_BASH}' --login -i"
 }
 
 # wsl — SSH into WSL from another machine
-ssh_wsl() { ssh -i ~/.ssh/id_ed25519_wsl -p "${NODE_WSL_PORT}" "${NODE_WSL_USER}@${NODE_WSL_HOST}" "$@"; }
+wsl() {
+  _ssh_node "${NODE_WSL_USER}" "${NODE_WSL_HOST}" "${NODE_WSL_PORT}" \
+    -i "${HOME}/.ssh/id_ed25519_wsl" -- "$@"
+}
+# ssh_wsl — alias (backward compat)
+ssh_wsl() { wsl "$@"; }
 
-# tac — SSH into ACode server (ACODE_USER/ACODE_IP ยังไม่มีใน Node Registry)
-# TODO: ย้าย ACODE_* เข้า NODE registry ใน 00-env.sh เมื่อได้ค่าจริง
-tac() { ssh -p "${ACODE_PORT:-8158}" "${ACODE_USER:-root}@${ACODE_IP:-localhost}" "$@"; }
+# tac — REMOVED (uses non-existent ACODE_* vars). If needed, use:
+#   _ssh_node "$ACODE_USER" "$ACODE_HOST" "$ACODE_PORT" -- "$@"
 
 # mumu-debug — Run MUMU environment debugger remotely
 # Usage:  mumu-debug [all|env|ssh|micro|zsh|joe|sync]
@@ -113,8 +134,10 @@ mumu-debug() {
     else
         local ssh_opts=(-p "${NODE_MUMU_PORT}" -o ConnectTimeout=8 -o BatchMode=yes)
         [[ -f "${HOME}/.ssh/id_ed25519_mumu" ]] && ssh_opts+=(-i "${HOME}/.ssh/id_ed25519_mumu")
-        # Copy script to remote and execute
-        cat "$script" | ssh "${ssh_opts[@]}" "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" "bash -s -- $*" 2>/dev/null
+        # Copy script to remote + execute via stdin (escape-safe)
+        # ส่ง args เป็น positional args (ไม่ใช้ $*) กัน injection
+        cat "$script" | ssh "${ssh_opts[@]}" "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" \
+            "bash -s -- $(printf '%q ' "$@")" 2>/dev/null
     fi
 }
 
@@ -153,7 +176,9 @@ micro-fix() {
 }
 
 # twpws — SSH into Windows PowerShell (default shell)
-twpws() { ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "$@"; }
+twpws() {
+  _ssh_node "${NODE_WIN_USER}" "${NODE_WIN_HOST}" "${NODE_WIN_PORT:-22}" -- "$@"
+}
 # Legacy alias
 alias Tw='twpws'
 
@@ -184,7 +209,8 @@ _rsync_from() {
 
 unalias managetm 2>/dev/null
 
-_T_CACHE_DIR="/tmp/.termux_completion_cache"
+# Tab-completion cache dir — platform-aware (WSL/Termux/MUMU = /tmp, Git-Bash = %TEMP%)
+_T_CACHE_DIR="${TMPDIR:-${TEMP:-/tmp}}/.termux_completion_cache"
 _T_CACHE_TTL=30
 
 _t_usage() {
@@ -331,12 +357,24 @@ alias w2m="cpw2m"
 alias m2w="cpm2w"
 
 # push — Push local file to Termux without overwriting newer remote
+#   push <local_file> [remote_dest]    — safe rsync (--update)
+#   push --delete <local> [remote]     — exact-delete rsync (mirror)
 push() {
-  local src="$1"
-  local dst="${2:-.}"
-  [[ -z "$src" ]] && echo "Usage: push <local_file> [remote_dest]" && return 1
-  echo "📤 Pushing to Termux: $src → $dst"
-  _rsync_to "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" "$src" "$dst"
+  local mode="update" src="" dst=""
+  for arg in "$@"; do
+    case "$arg" in
+      --delete) mode="delete" ;;
+      -h|--help) printf '%s\n' "Usage: push [--delete] <local_file> [remote_dest]"; return 0 ;;
+      *) [[ -z "$src" ]] && src="$arg" || dst="$arg" ;;
+    esac
+  done
+  [[ -z "$src" ]] && { printf '%s\n' "Usage: push [--delete] <local_file> [remote_dest]"; return 1; }
+  dst="${dst:-.}"
+  printf '%s %s %s → %s\n' "$(c 226 b '📤 Pushing to Termux:')" "$src" "$(c 226 b '')" "$dst"
+  case "$mode" in
+    delete) _rsync_to_delete "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" "$src" "$dst" ;;
+    *)      _rsync_to       "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" "$src" "$dst" ;;
+  esac
 }
 
 # update — Pull file from Termux without overwriting newer local
@@ -362,8 +400,8 @@ whichworld() {
   cn 226 b "🌏 Current world: ${_MY_WORLD}  (JOE_ENV: $JOE_ENV)"
   cn lb    "  WSL:        ${NODE_WSL_USER}@${NODE_WSL_HOST}"
   cn lg    "  Termux:     ${NODE_TERMUX_USER}@${NODE_TERMUX_HOST}"
-  cn lm    "  Windows:    ${NODE_WIN_HOST}"
-  cn m     "  MUMUPlayer: ${NODE_MUMU_USER}@${NODE_MUMU_HOST} (key: id_ed25519_MUMU)"
+  cn lm    "  Windows:    ${NODE_WIN_USER}@${NODE_WIN_HOST}"
+  cn m     "  MUMUPlayer: ${NODE_MUMU_USER}@${NODE_MUMU_HOST} (key: id_ed25519_mumu)"
 }
 
 # ============================================================
@@ -400,7 +438,11 @@ _st_fetch() {
 }
 
 # _st_autostart <display_name> <st_url> <api_key> <st_port>
-#   → Check Syncthing; if offline, auto-start it detached.
+#   → Check Syncthing; if offline, auto-start it.
+#   GIT-BASH: Windows Scheduled Task "Syncthing" (boot-trigger, SYSTEM account)
+#             is the canonical start path. nohup/disown from MSYS bash dies when
+#             shell exits (process group cleanup). Detect task first; only fall
+#             back to in-shell start if task is missing — and tell user to install it.
 _st_autostart() {
   local name="$1" url="${2%/}" key="$3" port="$4"
   local http_code ts_val
@@ -427,12 +469,38 @@ _st_autostart() {
     (( _pad < 0 )) && _pad=0
     printf -v _full "%s%*s" "$_line" $_pad ""
     c 208 b "${_full}"
+    return
+  fi
+
+  # ── OFFLINE branch ──
+  color y b " 🔄 ${name} : OFFLINE 🔴"
+
+  # Platform-specific recovery strategy
+  if [[ "$JOE_ENV" == "GIT-BASH" ]]; then
+    # Is there a Windows Scheduled Task installed?
+    local _task_state
+    _task_state=$(schtasks /query /tn "Syncthing" 2>/dev/null | grep -c "Ready\|Running" || true)
+
+    if [[ "${_task_state:-0}" -gt 0 ]]; then
+      # Task exists but syncthing not responding (maybe mid-startup, or GUI bound to 127.0.0.1)
+      cn lm bu "TASK EXISTS — STARTING…"
+      schtasks /run /tn "Syncthing" >/dev/null 2>&1
+      cn lg b "SYNCTHING (task) STARTED 🟢"
+    else
+      # No task — install helper lives in bashscripts/tools/
+      cn lr b " 🔌 NO TASK 'Syncthing' FOUND"
+      cn lm bu "RUN ONCE:"
+      c 220 b "     bash ~/bashscripts/tools/install-syncthing-service.sh"
+      cn lg bi "FALLBACK (nohup — known to die on bash exit):"
+      nohup syncthing serve --gui-address="0.0.0.0:${port}" >/dev/null 2>&1 &
+      disown 2>/dev/null
+      cn y b " ⚠️  may die when this shell closes"
+    fi
   else
-    color y b " 🔄 ${name} : OFFLINE 🔴"
+    # WSL / Termux / MuMu: tailscale + nohup + disown works fine
     [[ "$ts_val" == "OFFLINE" ]] && cn lr b " 🔌🚫 CHECK TAILSCALE FIRST"
     cn lm bu "THEN RESTART SYNCTHING WILL BE !"
     cn lg bi "STARTING AUTOMATICALLY 🔄"
-    # Start detached — closing shell will NOT kill Syncthing
     nohup syncthing serve --gui-address="0.0.0.0:${port}" >/dev/null 2>&1 &
     disown 2>/dev/null
     cn lg b "SYNCTHING STARTED 🟢"
@@ -481,7 +549,7 @@ syncthing_status_() {
   local open5;  open5=$(printf  " %s%s:"       "${spl5}" "${sl5}")
   local close5; close5=$(printf " %s%s%s%2s\n" "${spr5}" "${sr5}" "${em5}" "")
   local ct5; ct5="$(cn gr b " ${open5}$(cn w b "${close5}")")"
-  echo -e "${ct5}"
+  printf '%s\n' "${ct5}"   # ใช้ printf แทน echo -e (กัน double-escape)
 }
 
 # check_syncthing — full mesh status panel (all 3 nodes)
@@ -560,19 +628,23 @@ _st_api() {
 }
 
 # ค้นหา folder ID จาก label/path (หลีกเลี่ยง hardcode folder id)
+# ป้องกัน injection: ส่ง $want ผ่าน stdin (ไม่ใช่ string interpolation)
 _st_folder_id() {
   local want="${1:-bashscripts}"
   _st_api
   [[ -z "$_ST_API_URL" ]] && { echo ""; return 1; }
   curl -s -H "X-API-Key: $_ST_API_KEY" "$_ST_API_URL/rest/config/folders" 2>/dev/null \
-    | python3 -c "
-import json,sys
+    | want="$want" python3 -c "
+import json,sys,os
 try:
     fs = json.load(sys.stdin)
 except Exception:
     sys.exit(1)
+want = os.environ.get('want','').lower()
 for f in fs:
-    if f.get('label','').lower() == '$want' or f.get('path','').endswith('$want'):
+    label = (f.get('label') or '').lower()
+    path  = (f.get('path')  or '').lower()
+    if label == want or path.endswith(want):
         print(f['id'])
         break
 "

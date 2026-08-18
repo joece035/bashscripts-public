@@ -68,8 +68,8 @@ export alpha=${ALPHA_DIR}
 export storage="/storage/emulated/0/" # sdcrd
 export ais_fiber="880-563-6522"
 export ais_phone="0814764210"
-export video_p="/mnt/c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
-export bk_path="/mnt/h/boom"
+export boom="/mnt/c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
+export bk_boom="/mnt/h/boom"
 # ============================================================
 # Dynamic env switching
 # ============================================================
