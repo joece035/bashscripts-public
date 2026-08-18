@@ -70,41 +70,7 @@ slink_() {
     # -- ไฟล์จริงจะย้ายไปอยู่ใน sd card และสร้าง link มาแทนที่ตัวเอง
 }
 
-
-ssh_kgen(){
-  #-- สร้าง public/private key หากยังไม่มี
-  local machine="${1:?SELECT machine}"
-  local keyfile="$HOME/.ssh/id_ed25519_${machine}"
-
-
-  if [[ -f "$keyfile" ]]; then
-    echo "SSH key already exists at $keyfile"
-  else
-    ssh-keygen -t ed25519 -C "${machine}" -f "${keyfile}"
-  fi
-  export pub_key=$(cat "${keyfile}.pub")
-  cb_copy ${pub_key}
-  echo ${pub_key}
-
-}
-
-ssh_kadd(){
-  #-- เพิ่ม Public Key ลงใน authorized_keys ของเครื่องปลายทาง (ป้องกันการเพิ่มซ้ำ)
-  local pub_key="${1:-$(cb_read)}"
-  local auth_file="$HOME/.ssh/authorized_keys"
-
-  [[ -d "$HOME/.ssh" ]] || mkdir -p "$HOME/.ssh"
-  chmod 700 "$HOME/.ssh"
-  touch "$auth_file"
-  chmod 600 "$auth_file"
-
-  if grep -qF "$pub_key" "$auth_file"; then
-    echo "Key already exists in $auth_file"
-  else
-    echo "${pub_key}" >> "$auth_file"
-    echo "done adding ssh key"
-  fi
-}
+ssh -i ~/.ssh/id_ed25519_termux usercivenz@wsl
 
 # ==============================================================================
 # Universal Helper: ensure <command> [package]

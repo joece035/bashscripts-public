@@ -18,6 +18,9 @@
 set -euo pipefail
 
 # SSOT paths — sync with 00-env.sh so we don't hardcode
+# SYNCTHING_BIN_WIN  = Windows path (used in task XML — SYSTEM context can't parse MSYS paths)
+# SYNCTHING_BIN      = MSYS / Git-Bash path (used for bash existence check)
+SYNCTHING_BIN_WIN='C:\Users\User\AppData\Local\Microsoft\WinGet\Links\syncthing.exe'
 SYNCTHING_BIN="/c/Users/User/AppData/Local/Microsoft/WinGet/Links/syncthing.exe"
 TASK_NAME="Syncthing"
 GUI_PORT="${NODE_WIN_ST_PORT:-8384}"
@@ -74,7 +77,7 @@ read -r -d '' TASK_XML <<EOF || true
   </Settings>
   <Actions Context="Author">
     <Exec>
-      <Command>"${SYNCTHING_BIN}"</Command>
+      <Command>${SYNCTHING_BIN_WIN}</Command>
       <Arguments>serve --gui-address=0.0.0.0:${GUI_PORT}</Arguments>
     </Exec>
   </Actions>

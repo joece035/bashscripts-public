@@ -89,7 +89,7 @@ esac
 export SSH_MUMU_PORT=8020
 export SSH_TERMUX_PORT=8022
 export SSH_WSL_PORT=22
-export SSH_WIN_PORT=2222
+export SSH_WIN_PORT=22
 
 if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
     _crlf_files="$(grep -rlU $'\r' "$SSOT" --include="*.sh" 2>/dev/null)"
@@ -142,9 +142,11 @@ elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     fi
 fi
 
+#-----SSH configurations 
+[ -f "$SSOT/core/ssh-config.sh" ] && source "$SSOT/core/ssh-config.sh"
 
 #-----SSH and 3-Worlds (tm, tw, push, pull, world)
-[ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
+#[ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
 
 #-----Aliases
 [ -f "$SSOT/core/aliases.sh" ] && source "$SSOT/core/aliases.sh"

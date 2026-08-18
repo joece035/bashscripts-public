@@ -350,8 +350,12 @@ g() {
         fi
         git_ push
         return $?
+    elif (( $# == 1 )); then
+        git_ all "$1"
+    else
+    # มี args → ส่งต่อไป git_ (ซึ่งรู้จัก s/c/a/all/push/pull ฯลฯ)
+         git_ "$@"       
     fi
 
-    # มี args → ส่งต่อไป git_ (ซึ่งรู้จัก s/c/a/all/push/pull ฯลฯ)
-    git_ "$@"
+ 
 }

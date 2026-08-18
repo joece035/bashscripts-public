@@ -138,22 +138,7 @@ raw="${raw//\'/}"   # ลบ single quote ออกด้วยเ
   cb_copy "$converted"
 }
 
-cb_read() {
-  if   command -v powershell.exe &>/dev/null; then
-    powershell.exe -NoProfile -Command "Get-Clipboard" 2>/dev/null | tr -d '\r'
-  elif command -v xclip &>/dev/null; then xclip -selection clipboard -o 2>/dev/null
-  elif command -v xsel  &>/dev/null; then xsel --clipboard --output 2>/dev/null
-  fi
-}
 
-cb_copy() {
-  if   command -v powershell.exe &>/dev/null; then
-    echo -n "$1" | powershell.exe -NoProfile -Command \
-      "[Console]::In.ReadToEnd() | Set-Clipboard" 2>/dev/null
-  elif command -v xclip &>/dev/null; then echo -n "$1" | xclip -selection clipboard
-  elif command -v xsel  &>/dev/null; then echo -n "$1" | xsel --clipboard --input
-  fi
-}
 
 imma_jump_to_the_fucking_god_damn_windows_path_from_wsl_by_typing_only_fuckin_j() {
    cdc "$(p)"

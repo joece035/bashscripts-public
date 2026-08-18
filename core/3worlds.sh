@@ -76,7 +76,7 @@ _ssh_node() {
 #   tm  <cmd...>           — uses key id_ed25519_termux if exists, else default
 tm() {
   local key=""
-  [[ -f "${HOME}/.ssh/id_ed25519_termux" ]] && key="-i ${HOME}/.ssh/id_ed25519_termux"
+  [[ -f "${HOME}/.ssh/id_ed25519_tm" ]] && key="-i ${HOME}/.ssh/id_ed25519_tm"
   _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" \
     -o ConnectTimeout=5 -o BatchMode=yes $key -- "$@"
 }
