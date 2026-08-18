@@ -51,8 +51,7 @@ bashscripts/
 ├── modules/                  ← Optional helpers
 ├── tools/                    ← Standalone executables
 ├── profiles/                 ← Shell profile templates
-├── lessons/                  ← Learning materials
-└── tests/                    ← Test suite
+└── lessons/                  ← Learning materials
 ```
 
 ### Path Variable System
@@ -130,7 +129,6 @@ bashscripts/
 | `plugins/syncctl/syncctl` | Syncthing | `cmd_*()` dispatch, sourced by joe.sh — uses `$JOE_ROOT/bootstrap/00-env.sh`, `$JOE_CORE/01-colors.sh` |
 | `tools/safe-edit.sh` | Pre-commit Guard | V4-aware: blocks inline ANSI, V2 vars, hardcoded IPs/keys — uses `$JOE_CORE/01-colors.sh`, `$JOE_ROOT/bootstrap/00-env.sh` |
 | `tools/ssot-audit.sh` | SSOT Auditor | Detects drift, ANSI, syntax — uses `$ROOT/core/01-colors.sh`, `$ROOT/bootstrap/00-env.sh` |
-| `tests/test_joe_env.sh` | Test Suite | 55 tests covering structure, paths, cross-deps, bash+zsh compat |
 
 > **⚠️ SYNCTHING CAVEAT:** `~/bashscripts` is synced via Syncthing across devices.
 > After editing files, verify: `bash -n <file>` and check test suite passes.
@@ -325,16 +323,13 @@ bash tools/ssot-audit.sh          # Full repo audit
 ## 4.2 🧪 Testing
 
 Run the test suite to verify changes:
-```bash
-bash tests/test_joe_env.sh        # 55 tests covering structure, paths, cross-deps
-```
+*(test suite removed 2026-08-18 — manual smoke test via `bash -n <file>` instead)*
 
 ## 4.3 ⚠️ Common Pitfalls & Gotchas
 
 ### 1. **Syncthing Caveat**
 `~/bashscripts` is synced via Syncthing across devices. After editing files:
 - Verify: `bash -n <file>` (syntax check)
-- Check test suite passes: `bash tests/test_joe_env.sh`
 - Be aware that edits may be overwritten if another device syncs simultaneously
 
 ### 2. **Cross-Shell Compatibility**
@@ -358,10 +353,8 @@ The pre-commit hook (`tools/agent-pre-commit.sh`) will block edits that:
 - Never create new env vars that overlap existing ones (e.g., `$oppc` already exists in `00-env.sh`)
 - Never hardcode environment detection (joe.sh already handles this)
 
-### 6. **Lessons/Exercise Files**
-- `lessons/exercise/*.sh` are test cases (test_case_w, exercise_dashboard, etc.)
-- They are NOT production functions and have side effects when sourced
-- Source them manually only when running tests, not at startup
+### 6. **Lessons** *(removed 2026-08-18)*
+~~`lessons/exercise/*.sh` were test cases...~~ — removed in cleanup. Only `lessons/bash-fundamentals.md` remains for knowledge reference.
 
 ## 5. 🗂️ Adding New Content — Where Does It Go?
 

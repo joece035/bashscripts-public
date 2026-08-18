@@ -103,12 +103,8 @@ bashscripts/
 │   ├── termux/.zshrc
 │   └── git-bash/.bash_profile
 │
-├── lessons/                  ← Learning materials & exercises
-│   ├── bash-fundamentals.md
-│   └── exercise/
-│
-├── tests/
-│   └── test_joe_env.sh       ← Test suite (bash + zsh)
+├── lessons/                  ← Learning materials (knowledge only)
+│   └── bash-fundamentals.md
 │
 ├── AGENT.md                  ← AI agent instructions
 ├── DEPENDENCY_MAP.md         ← Dependency analysis
@@ -298,19 +294,8 @@ Reference it instead: `source "$JOE_CORE/01-colors.sh"` then call `cn`.
 ## Testing
 
 ```bash
-# Run full test suite (55 tests)
-bash tests/test_joe_env.sh     # bash
-zsh  tests/test_joe_env.sh     # zsh compatibility
-
-# Tests cover:
-# - Directory structure (all dirs exist)
-# - Core files (all SSOT files exist)
-# - Plugin files (block_engine, syncctl, hermes)
-# - Old path removal (no legacy files in root)
-# - Source path consistency (all files use JOE_* paths)
-# - No hardcoded /home/usercivenz
-# - Cross-dependency resolution
-# - Bash & zsh compatibility
+# Test suite removed 2026-08-18 (use bash -n <file> for syntax check instead)
+```
 ```
 
 ---

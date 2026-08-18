@@ -59,10 +59,9 @@ joe.sh (entry point)
   - `joe-block/entry.sh`
   - `joe-block/styles/block_style.sh`
   - `tools/hermes.sh`, `tools/merge.sh`, `tools/wtf.sh`, `tools/ai_block.sh`
-  - `lessons/exercise/01-exercise_joe.sh`
 
 ### `00.1-function-tools.sh` (Shared Tools)
-- **Sourced by:** `joe.sh`, `joe-block/block/theme.sh`, `lessons/exercise/01-exercise_joe.sh`
+- **Sourced by:** `joe.sh`, `joe-block/block/theme.sh`
 - **Depends on:** `tools/hermes.sh`, `syncctl/syncctl`
 
 ### `11-bash-manager.sh` (File Manager CLI)
@@ -133,13 +132,8 @@ joe.sh (entry point)
 ### `lessons/custom_style.sh`
 - **Sourced by:** `joe-block/block/theme.sh`
 
-### `lessons/exercise/01-exercise_joe.sh`
-- **Sourced by:** `00-fm-loader.sh`
-- **Depends on:**
-  - `01-colors.sh` (via `_BS_ROOT`)
-  - `00.1-function-tools.sh`
-  - `02-exercise_block_style.sh`
-  - `03-exercise_status.sh`
+### `lessons/bash-fundamentals.md`
+- Knowledge reference (read-only, not sourced)
 
 ---
 
@@ -164,7 +158,6 @@ joe.sh (entry point)
 │          Fresh_termux_fullsetup_SSOT.sh (setup script)                      │
 │                                                                             │
 │  joe.sh (CLI entry point)                                                   │
-│  ble-test.sh                                                                │
 └────────────┬────────────────────────────┬───────────────────────┬────────────┘
              │                            │                       │
              ▼                            ▼                       ▼
@@ -175,8 +168,7 @@ joe.sh (entry point)
 │ joe-block/             │  │ lessons/                │  │ tools/syncctl/     │
 │   entry.sh             │  │   bash-fundamentals.md  │  │   syncctl (exe)    │
 │   block/               │  │   custom_style.sh*      │  │   lib/*.sh         │
-│     utils.sh           │  │   exercise/             │  │   tests/           │
-│     layout.sh          │  │     *.sh                │  │                    │
+│     utils.sh           │  │                         │  │   tests/           │
 │     theme.sh*          │  │                         │  │ Self-contained     │
 │     renderer.sh        │  │ DEPENDS ON:             │  │ No external deps   │
 │     status.sh          │  │   core (colors, tools)  │  │                    │
@@ -201,7 +193,6 @@ joe.sh (entry point)
 | `joe-block/block/theme.sh` | `01-colors.sh` | Engine → Core |
 | `joe-block/block/theme.sh` | `00.1-function-tools.sh` | Engine → Core |
 | `joe-block/block/theme.sh` | `lessons/custom_style.sh` | Engine → Lessons |
-| `00-fm-loader.sh` | `lessons/exercise/01-exercise_joe.sh` | Core → Lessons |
 | `02-aliases.sh` | `tools/merge.sh` | Core → Tools |
 
 ---

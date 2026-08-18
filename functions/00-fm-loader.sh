@@ -59,8 +59,8 @@ fi
 #fi
 
  nload() {
-    source /home/usercivenz/bashscripts/lessons/exercise/01-exercise_joe.sh
- }
+    : # formerly sourced lessons/exercise/01-exercise_joe.sh — removed 2026-08-18 (dead test code)
+}
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #            alias source example_joe.sh             #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
@@ -71,9 +71,6 @@ hermes_load() {
 }
 
 
-   # NOTE: lessons/exercise/*.sh are test cases (test_case_w, exercise_dashboard, etc.)
-   # — NOT production functions. They have side effects when sourced (call dashboard renderers)
-   # and pollute the shell at startup. Source them manually only when running tests:
-   #   source $SSOT/lessons/exercise/test_case_w.sh
+   
 
 

@@ -17,7 +17,6 @@ bashscripts/                          # SSOT — Syncthing-backed dotfile repo
 │
 │  ── Shell Entry Points ──
 ├── joe.sh                            # Joe CLI (block rendering demo)
-├── ble-test.sh                       # Bleach shell test
 │
 │  ── Functions Library ──
 ├── functions/
