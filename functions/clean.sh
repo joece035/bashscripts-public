@@ -321,10 +321,37 @@ wa() {
 }
 
 
+# g — quick git shortcut (พี่โจใช้บ่อย)
+#   g                  → if dirty: commit+(optional msg)+pull --rebase+push, else just pull --rebase+push
+#   g "<msg>"          → commit -m "<msg>" + pull --rebase + push
+#   g s | status       → git status
+#   g c "<msg>" | commit "<msg>"  → commit only
+#   g a | add          → git add -A
+#   g p | push         → git push
+#   g pl | pull        → git pull --rebase
+#   g pln | pulln      → git pull --no-rebase
+#   g d | diff         → git diff --stat
+#   g l | log          → git log --oneline -10
+#   g <other>          → pass through to git
+#
+# Safety: ถ้า no-arg + dirty working tree → ถามก่อน commit
 g() {
-    if (( $# <= 1 )); then
-        git_ all "${1:-$(date)}"
-    else
-        git_ "$@"
+    local repo="${SSOT:-$HOME/bashscripts}"
+    [[ -d "$repo" ]] || { cn 196 b "✗ repo not found: $repo"; return 1; }
+    cd "$repo" || return 1
+
+    # ถ้าไม่มี args → commit+push (ถ้ามี change) หรือ push only
+    if (( $# == 0 )); then
+        if ! git diff --quiet HEAD 2>/dev/null || [[ -n "$(git ls-files --others --exclude-standard 2>/dev/null)" ]]; then
+            c 11 b "? Working tree dirty — commit with $(c 220 b 'date')? [y/N] "
+            local ans; read -r ans
+            [[ "$ans" =~ ^[Yy]$ ]] || { cn 220 b "→ cancelled"; return 0; }
+            git add -A && git commit -m "$(date '+%Y-%m-%d %H:%M:%S')"
+        fi
+        git_ push
+        return $?
     fi
+
+    # มี args → ส่งต่อไป git_ (ซึ่งรู้จัก s/c/a/all/push/pull ฯลฯ)
+    git_ "$@"
 }
