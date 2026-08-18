@@ -1,6 +1,6 @@
 #!/bin/bash
 # ============================================================
-# 10-function-tools.sh.sh 
+# 10-function-tools.sh.sh
 # ============================================================
 
 # ============================================================
@@ -551,40 +551,20 @@ replace_w() {
     local old_name=${1:-}
     local new_name=${2:-}
     local target=${3:-$PWD}
-    
+
     if [[ -z "$old_name" || -z "$new_name" ]]; then
         echo "Usage: change_word <old_name> <new_name> [target_folder]"
         return 1
     fi
-    
+
     echo "Replacing '$old_name' with '$new_name' in $target..."
-    
+
     # ครอบเครื่องหมายคำพูดซ้อนสไตล์นี้ปลอดภัยที่สุดครับ
     find "$target" -type f -exec sed -i "s/""$old_name""/""$new_name""/g" {} +
 
     echo "✨ All done!"
 }
 
-mv_pattern() {
-    local src="${1:?กรุณาระบุ pattern}"
-    local dest="${2:?กรุณาระบุ destination}"
-    mkdir -p "$dest"
-    mv $src "$dest/"
-    echo "✅ ย้ายเสร็จ: $(ls "$dest" | wc -l) ไฟล์"
-}
-
-
-
-wa() {
-    ffmpeg -hide_banner -stats \
-        -i "$1" \
-        -vf scale=-2:480 \
-        -c:v libx264 \
-        -preset veryfast \
-        -crf 28 \
-        -c:a aac -b:a 96k \
-        "${1%.*}_wa.mp4"
-}
 
 getp() {
     local mode="${1:-n}"
@@ -620,261 +600,10 @@ getp() {
     esac
 }
 
-back_up() {
-   local target=${1:$PWD}
-
-   if [[ -e "${target}" ]]; then
-        cp -r "${target}" "${target}bk" &&
-        cn 10 b "BACK UP ${target} สำเร็จ ไฟล์อยู่ที่ "${target}bk"🦀"
-   else
-        cn r b "ไม่พบ "${target}"👺"
-        return 1
-   fi
-
-}
-
-
-# ============================================================
-# bkp — Backup files / folders into $BACKUP_DIR (timestamped)
-# ============================================================
-# Usage:
-#   bkp <file-or-folder> [more ...]
-#   bkp ~/projects/important.txt
-#   bkp /etc/nginx /var/log/app
-# Features:
-#   - Creates $BACKUP_DIR/<basename>_YYYYMMDD_HHMMSS/ (folder)
-#                $BACKUP_DIR/<basename>_YYYYMMDD_HHMMSS.ext (single file)
-#   - Multiple targets → each gets its own timestamp slot
-#   - No overwrite: timestamp prevents collision
-#   - $BACKUP_DIR comes from 00-env.sh (override with: export BACKUP_DIR=...)
-# ============================================================
-bkp() {
-    : "${BACKUP_DIR:=$HOME/backups}"
-    mkdir -p "$BACKUP_DIR" || { echo "❌ bkp: cannot create $BACKUP_DIR" >&2; return 1; }
-
-    if [[ $# -eq 0 ]]; then
-        echo "Usage: bkp <file-or-folder> [more ...]" >&2
-        echo "       (uses \$BACKUP_DIR = $BACKUP_DIR)" >&2
-        return 1
-    fi
-
-    local ts
-    ts="$(date +%Y%m%d_%H%M%S)"
-
-    local target
-    for target in "$@"; do
-        if [[ ! -e "$target" ]]; then
-            echo "❌ bkp: not found → $target" >&2
-            continue
-        fi
-
-        local base
-        base="$(basename -- "$target")"
-
-        if [[ -d "$target" ]]; then
-            local dest="$BACKUP_DIR/${base}_${ts}"
-            if cp -r "$target" "$dest"; then
-                echo "✅ folder  $target  →  $dest"
-            else
-                echo "❌ bkp: failed → $target" >&2
-            fi
-        else
-            # File: keep original name + append _ts (restore = strip _ts)
-            # Same shape as bkpl produces for .tar.gz, and bkpi uses for snapshots
-            local dest="$BACKUP_DIR/${base}_${ts}"
-            if cp -p "$target" "$dest"; then
-                echo "✅ file    $target  →  $dest"
-            else
-                echo "❌ bkp: failed → $target" >&2
-            fi
-        fi
-    done
-}
-
-
-# ============================================================
-# bkpi — Incremental backup (rsync-style, hardlink-friendly)
-# ============================================================
-# Usage:
-#   bkpi <source-folder>
-# Behavior:
-#   Creates $BACKUP_DIR/<basename>/<timestamp>/ with the contents.
-#   - If `rsync` is available → uses --link-dest for space-efficient snapshots
-#   - Otherwise → falls back to cp -r
-# ============================================================
-bkpi() {
-    : "${BACKUP_DIR:=$HOME/backups}"
-
-    if [[ $# -eq 0 ]]; then
-        echo "Usage: bkpi <source-folder> [more ...]" >&2
-        return 1
-    fi
-
-    local src
-    for src in "$@"; do
-        if [[ ! -d "$src" ]]; then
-            echo "❌ bkpi: not a folder → $src" >&2
-            continue
-        fi
-
-        local base ts target
-        base="$(basename -- "$src")"
-        ts="$(date +%Y%m%d_%H%M%S)"
-        target="$BACKUP_DIR/${base}/${ts}"
-
-        if command -v rsync >/dev/null 2>&1; then
-            local latest=""
-            [[ -d "$BACKUP_DIR/$base" ]] && latest="$(ls -1 "$BACKUP_DIR/$base" 2>/dev/null | sort | tail -1)"
-            local link_dest=""
-            [[ -n "$latest" ]] && link_dest="--link-dest=$BACKUP_DIR/$base/$latest"
-
-            # rsync needs parent dir to exist
-            mkdir -p "$target"
-            if rsync -a --delete $link_dest "$src/" "$target/"; then
-                echo "✅ incremental  $src  →  $target  (base: $latest)"
-            else
-                echo "❌ bkpi: rsync failed → $src" >&2
-            fi
-        else
-            mkdir -p "$target"
-            if cp -r "$src/." "$target/" 2>/dev/null || cp -r "$src/." "$target/"; then
-                echo "✅ snapshot  $src  →  $target  (no rsync, full copy)"
-            else
-                echo "❌ bkpi: cp failed → $src" >&2
-            fi
-        fi
-    done
-}
-
-
-# ============================================================
-# bkpl — Backup + tar.gz compress
-# ============================================================
-# Usage:
-#   bkpl <file-or-folder> [more ...]
-# Output: $BACKUP_DIR/<basename>_YYYYMMDD_HHMMSS.tar.gz
-# ============================================================
-bkpl() {
-    : "${BACKUP_DIR:=$HOME/backups}"
-    mkdir -p "$BACKUP_DIR" || { echo "❌ bkpl: cannot create $BACKUP_DIR" >&2; return 1; }
-
-    if [[ $# -eq 0 ]]; then
-        echo "Usage: bkpl <file-or-folder> [more ...]" >&2
-        return 1
-    fi
-
-    if ! command -v tar >/dev/null 2>&1; then
-        echo "❌ bkpl: tar not found" >&2
-        return 1
-    fi
-
-    local ts
-    ts="$(date +%Y%m%d_%H%M%S)"
-
-    local target
-    for target in "$@"; do
-        if [[ ! -e "$target" ]]; then
-            echo "❌ bkpl: not found → $target" >&2
-            continue
-        fi
-
-        local base parent
-        base="$(basename -- "$target")"
-        parent="$(dirname -- "$target")"
-        local archive="$BACKUP_DIR/${base}_${ts}.tar.gz"
-
-        if tar -czf "$archive" -C "$parent" "$base" 2>/dev/null; then
-            local size
-            size="$(du -h "$archive" | cut -f1)"
-            echo "✅ compressed  $target  →  $archive  ($size)"
-        else
-            echo "❌ bkpl: tar failed → $target" >&2
-        fi
-    done
-}
-
-
-# ============================================================
-# bkls — List backups in $BACKUP_DIR (with size + age)
-# ============================================================
-# Usage:
-#   bkls            → all
-#   bkls <pattern>  → filter (e.g. bkls "nginx_*")
-# ============================================================
-bkls() {
-    : "${BACKUP_DIR:=$HOME/backups}"
-
-    if [[ ! -d "$BACKUP_DIR" ]]; then
-        echo "❌ bkls: \$BACKUP_DIR not found → $BACKUP_DIR" >&2
-        return 1
-    fi
-
-    local pat="${1:-*}"
-    echo "📦 Backups in: $BACKUP_DIR  (filter: $pat)"
-    echo "------------------------------------------------------------"
-
-    local found=0
-    # Top-level only (avoid recursing into every backup)
-    while IFS= read -r -d '' entry; do
-        local size age
-        size="$(du -sh -- "$entry" 2>/dev/null | cut -f1)"
-        age="$(( ( $(date +%s) - $(stat -c %Y -- "$entry" 2>/dev/null || stat -f %m -- "$entry") ) / 60 ))"
-        if [[ $age -lt 60 ]]; then
-            age="${age}m ago"
-        elif [[ $age -lt 1440 ]]; then
-            age="$((age / 60))h ago"
-        else
-            age="$((age / 1440))d ago"
-        fi
-        # Show relative path under BACKUP_DIR
-        local rel="${entry#$BACKUP_DIR/}"
-        # For incremental-style (bkpi) paths, show the timestamp too
-        printf "  %-12s  %-8s  %s\n" "$age" "$size" "$rel"
-        found=1
-    done < <(find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 \( -name "$pat" -o -path "*/$pat" \) -print0 2>/dev/null)
-
-    [[ $found -eq 0 ]] && echo "  (no matches)"
-}
-
-
-# ============================================================
-# bkrm — Remove old backups (keep N most recent per basename)
-# ============================================================
-# Usage:
-#   bkrm <basename-pattern> [keep-count]
-#   bkrm nginx_* 5     → keep newest 5
-#   bkrm "*" 3         → keep newest 3 of every basename
-# ============================================================
-bkrm() {
-    : "${BACKUP_DIR:=$HOME/backups}"
-
-    local keep="${2:-5}"
-    local pat="${1:-*}"
-
-    if [[ ! -d "$BACKUP_DIR" ]]; then
-        echo "❌ bkrm: \$BACKUP_DIR not found → $BACKUP_DIR" >&2
-        return 1
-    fi
-
-    local removed=0
-    # Match both files (bkp/bkpl) and directories (bkpi snapshots)
-    while IFS= read -r old; do
-        rm -rf -- "$old" && {
-            echo "🗑️  removed: ${old#$BACKUP_DIR/}"
-            ((removed++))
-        }
-    done < <(find "$BACKUP_DIR" -mindepth 1 -maxdepth 2 \( -name "$pat" -o -path "*/$pat" \) 2>/dev/null \
-             | sort -r \
-             | awk -v k="$keep" 'NR>k')
-
-    echo "✅ bkrm: removed $removed item(s), kept newest $keep matching '$pat'"
-}
-
-
 agent_md() {
 
     local target=${1:-$PWD}
-    
+
     cp "$HOME/AGENT.md" "$target" && cn 10 b "copied AGENT.md to $target done"
 
 }
@@ -898,7 +627,7 @@ rc_delete() {
   fi
 }
 
- 
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #                 SYNCCTL-short_cut                  #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
@@ -910,7 +639,7 @@ stc(){
             -s|--status|s)    syncctl status $() ;;
             -h|--help|h)      syncctl help ;;
             -t|--tranfer|t)
-                              local device=${2:-wsl} 
+                              local device=${2:-wsl}
                               syncctl transfer "${device}" --reason "edited by this device" ;;
             -w|--who|w)       cn 198 bi "$(syncctl who | cut -d" " -f2)" ;;
             *)                syncctl "$@" ;;
@@ -1006,20 +735,7 @@ ensure() {
     fi
 }
 
-cmd_ens() {
-    
-    local cmd="${1:?SELECT COMMAND}"
-    command -v $cmd >/dev/null 2>&1
-    
-    if [[ $? == 0 ]]; then
-        cn 10 bi "✅ '$cmd' is ready"
-        return 0
-    else
-        cn 198 bi "❌ '$cmd' not found"
-        return 1
-    fi
-}
-#-------------------------
+
 
 
 

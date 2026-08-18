@@ -5,7 +5,7 @@
 # This is the SINGLE SOURCE OF TRUTH for all environment
 # variables. Set by boot.sh Stage 2, after JOE_ENV detected.
 #
-# NOTE: Core paths (SCRIPTS_PATH, JOE_ENV, hpc, htm, hwsl, 
+# NOTE: Core paths (SCRIPTS_PATH, JOE_ENV, hpc, htm, hwsl,
 # NODE_BIN, dbp, OPENCLAW_BIN) are set by boot.sh Stage 0.
 # This file ONLY sets derived/secondary variables.
 #
@@ -26,36 +26,36 @@ case "$JOE_ENV" in
          export HERMES_DIR="/data/data/com.termux/files/home/.hermes"
          export PYTHON_VENV="$HOME/.dash_venv/bin/activate"
          export SDCARD_PATH="/storage/emulated/0/"
-         export NODE_HOST="termux"     
+         export NODE_HOST="termux"
          ;;
     MUMU)
          export HERMES_DIR="/data/data/com.termux/files/home/.hermes"
          export PYTHON_VENV="$HOME/.dash_venv/bin/activate"
          export SDCARD_PATH="/storage/emulated/0/"
-         export NODE_HOST="mumu"     
+         export NODE_HOST="mumu"
          ;;
     WSL)
          export HERMES_DIR="$HOME/.hermes"
          export PYTHON_VENV="$HOME/.venv/bin/activate"
          export NODE_HOST="wsl"
-         
+
          ;;
     GIT-BASH)
          export HERMES_DIR="/mnt/c/Users/User/AppData/Local/hermes"
          export PYTHON_VENV="$hwsl/.venv/bin/activate"
          export NODE_HOST="window"
-         
+
          ;;
     *)
          export PYTHON_VENV="$htm/.dash_venv/bin/activate"
          export NODE_HOST="linux"
          ;;
-esac         
-         
+esac
+
 # ============================================================
 # 2. GLOBAL VARIABLE
-# ============================================================  
-export profile=mom 
+# ============================================================
+export profile=mom
 export oppc="$hpc/openclaw"
 export dpc="$hpc/Desktop"
 export dtpc="$hpc/Desktop"          # compat alias ของ dpc
@@ -67,12 +67,14 @@ export ALPHA_DIR="$msync/alpha-workspace"
 export alpha=${ALPHA_DIR}
 export storage="/storage/emulated/0/" # sdcrd
 export ais_fiber="880-563-6522"
-export ais_phone="0814764210"   
-# ============================================================  
+export ais_phone="0814764210"
+export video_p="/mnt/c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
+export bk_path="/mnt/h/boom"
+# ============================================================
 # Dynamic env switching
 # ============================================================
 ai_bin() {
-    local ai_providers=() 
+    local ai_providers=()
 
     ai_providers=( "openclaw" "hermes" )
 
@@ -80,7 +82,7 @@ ai_bin() {
         if command -v "$ai" &>/dev/null; then
              case "$ai" in
                 "openclaw")
-                    export OPENCLAW_BIN="$(which openclaw)"	
+                    export OPENCLAW_BIN="$(which openclaw)"
                     ;;
                 "hermes")
                     export HERMES_BIN="$(which hermes)"
@@ -266,7 +268,7 @@ export BTC_BITKUB=bc1qxy3jf7sf6gymdd2ucf6lrzl2jyc9p8322dldta
 export HOME_ADDRESS='295/3, หมู่ที่​ 2, หมู่บ้าน​ ห้วยหล่อ, ซ.3/1, อำเภอเมืองลำปาง, ต.ชมพู​, จังหวัดลำปาง, 52100'
 
 
-# ============================================================ 
+# ============================================================
 #--FB PAGE
 # ============================================================
 
@@ -364,37 +366,37 @@ zsh_setup(){
         case "$device" in
             TERMUX|termux)
                     if  [[ -f "$HOME/.zshrc" ]]; then
-                        mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" && 
+                        mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" &&
                         cn 10 bi "done backup .zshrc" &&
                         #rm -f "$HOME/.zshrc" && cn 10 bi "deleted .zshrc" &&
                         ln -s "${zsh_path}" "$HOME/.zshrc" &&
                         [[ -f "$HOME/.zshrc" ]]&&
-                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"  
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"
                     else
                         ln -s ""${zsh_path}"" "$HOME/.zshrc" &&
                         [[ -f "$HOME/.zshrc" ]]&&
-                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"  
-                    fi     
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"
+                    fi
                     ;;
             MUMU|mumu)
                     if  [[ -f "$HOME/.zshrc" ]]; then
-                        mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" && 
+                        mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" &&
                         cn 10 bi "done backup .zshrc" &&
                         #rm -f "$HOME/.zshrc" && cn 10 bi "deleted .zshrc" &&
                         ln -s "${zsh_path}" "$HOME/.zshrc" &&
                         [[ -f "$HOME/.zshrc" ]]&&
-                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"  
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"
                     else
                         ln -s ""${zsh_path}"" "$HOME/.zshrc" &&
                         [[ -f "$HOME/.zshrc" ]]&&
-                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"     
-                    fi     
+                        c 10 bi "Done Symlink "${zsh_path}"";c 45 b "-->>";cn 198 b " ~/.zshrc"
+                    fi
                     ;;
-            *)      
+            *)
                     cn y b "้run zsh_setup <TERMUX or MUMU>"
-                    return 0 
+                    return 0
                     ;;
-        esac                    
+        esac
 
 
 }

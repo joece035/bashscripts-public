@@ -13,7 +13,8 @@
 #        fm learn on                  (เปิด Learn Mode — ดูคำสั่งจริง)
 #        fm learn off                 (ปิด Learn Mode)
 # =============================================================================
-
+#bash-manager.sh switch checking
+BASH_MANAGER=yes
 # ─────────────────────────────────────────────────────────────────
 # SINGLE SOURCE OF TRUTH — Guard
 # ─────────────────────────────────────────────────────────────────
@@ -117,6 +118,59 @@ _human_size() {
   elif (( bytes >= 1048576    )); then printf "%.1f MB" "$(echo "scale=1; $bytes/1048576"    | bc)"
   elif (( bytes >= 1024       )); then printf "%.1f KB" "$(echo "scale=1; $bytes/1024"       | bc)"
   else printf "%d B" "$bytes"; fi
+}
+
+# _fm_list_dir <target> <show_hidden:yes|no>
+# Internal helper — does the actual listing (used by fm_ls and fm_lsa)
+#   show_hidden=yes → ls -1ap   (รวม dotfiles .bashrc .env .git)
+#   show_hidden=no  → ls -1p    (default — ไม่รวม dotfiles)
+_fm_list_dir() {
+  local target="$1"
+  local show_hidden="${2:-no}"
+  local ls_opts=(-1p)
+  [[ "$show_hidden" == "yes" ]] && ls_opts=(-1ap)
+
+  echo ""
+  cn 87 "  📂  $(realpath "$target")"
+  _sep
+  ctab "bu:6 bu:10 bu:8 bu:20 0:0" "PERM" "SIZE" "TYPE" "MODIFIED" "NAME"
+  _sep
+
+  local count=0
+  while IFS= read -r item; do
+    [[ -z "$item" ]] && continue
+    local name perm size type mdate icon color
+    name=$(basename "$item")
+    perm=$(stat -c "%A" "$item" 2>/dev/null || stat -f "%Sp" "$item" 2>/dev/null || echo "?")
+    mdate=$(stat -c "%y" "$item" 2>/dev/null | cut -c1-16 || stat -f "%Sm" -t "%Y-%m-%d %H:%M" "$item" 2>/dev/null || echo "?")
+    size="—"
+
+    local link_target=""
+    local color_code=""
+    if   [[ -L "$item" ]]; then
+      icon="🔗"; type="symlink"; color_code=51
+      link_target=$(readlink "$item" 2>/dev/null)
+    elif [[ -d "$item" ]]; then icon="📁"; type="dir";     color_code=75
+    elif [[ -x "$item" ]]; then icon="⚙️ "; type="exec";    color_code=46
+    else                        icon="📄"; type="file";    color_code=255; fi
+
+    if [[ -f "$item" ]]; then
+      local raw_size
+      raw_size=$(stat -c "%s" "$item" 2>/dev/null || stat -f "%z" "$item" 2>/dev/null || echo 0)
+      size=$(_human_size "$raw_size")
+    fi
+
+    if [[ -n "$link_target" ]]; then
+      ctab "2:6 244:10 2:8 2:20 x:0" "$perm" "$size" "$type" "$mdate" "$(c $color_code b "${icon} ${name}") → $(c 46 b "${link_target}")"
+    else
+      ctab "2:6 244:10 2:8 2:20 x:0" "$perm" "$size" "$type" "$mdate" "$(c $color_code b "${icon} ${name}")"
+    fi
+    (( count++ ))
+  done < <(ls "${ls_opts[@]}" "$target" 2>/dev/null | sed "s|^|$target/|" | sort -t/ -k2)
+
+  _sep
+  printf '%s\n' "$(c 244 d '  Total: ') $(c w b "${count} items")"
+  echo ""
 }
 
 # ═════════════════════════════════════════════════════════════════
@@ -237,7 +291,7 @@ fm_help() {
     ctab "46:22 244:28 0:0" "fm datedir" "fm datedir <src> <dst>"   "จัดเรียงไฟล์ตามวันที่แก้ไข"
     hline 66
   fi
-  
+
   if [[ "$cat" == "all" || "$cat" == "sync" ]]; then
     echo ""
     cn 87 "  🌍  SYNC & REMOTE (3-WORLDS)"
@@ -282,57 +336,22 @@ fm_ls() {
     "stat -c \"%y\"  |อ่านวันที่ modified ล่าสุด" \
     "file -b        |ตรวจ file type จาก magic bytes (ไม่ใช่แค่นามสกุล)"
 
-  echo ""
-  cn 87 "  📂  $(realpath "$target")"
-  _sep
-  ctab "bu:6 bu:10 bu:8 bu:20 0:0" "PERM" "SIZE" "TYPE" "MODIFIED" "NAME"
-  _sep
-
-  local count=0
-  while IFS= read -r item; do
-    [[ -z "$item" ]] && continue
-    local name perm size type mdate icon color
-    name=$(basename "$item")
-    perm=$(stat -c "%A" "$item" 2>/dev/null || stat -f "%Sp" "$item" 2>/dev/null || echo "?")
-    mdate=$(stat -c "%y" "$item" 2>/dev/null | cut -c1-16 || stat -f "%Sm" -t "%Y-%m-%d %H:%M" "$item" 2>/dev/null || echo "?")
-    size="—"
-
-    local link_target=""
-    local color_code=""
-    if   [[ -L "$item" ]]; then
-      icon="🔗"; type="symlink"; color_code=51
-      link_target=$(readlink "$item" 2>/dev/null)
-    elif [[ -d "$item" ]]; then icon="📁"; type="dir";     color_code=75
-    elif [[ -x "$item" ]]; then icon="⚙️ "; type="exec";    color_code=46
-    else                        icon="📄"; type="file";    color_code=255; fi
-
-    if [[ -f "$item" ]]; then
-      local raw_size
-      raw_size=$(stat -c "%s" "$item" 2>/dev/null || stat -f "%z" "$item" 2>/dev/null || echo 0)
-      size=$(_human_size "$raw_size")
-    fi
-
-    if [[ -n "$link_target" ]]; then
-      ctab "2:6 244:10 2:8 2:20 x:0" "$perm" "$size" "$type" "$mdate" "$(c $color_code b "${icon} ${name}") → $(c 46 b "${link_target}")"
-    else
-      ctab "2:6 244:10 2:8 2:20 x:0" "$perm" "$size" "$type" "$mdate" "$(c $color_code b "${icon} ${name}")"
-    fi
-    (( count++ ))
-  done < <(ls -1p "$target" 2>/dev/null | sed "s|^|$target/|" | sort -t/ -k2)
-
-  _sep
-  printf '%s\n' "$(c 244 d '  Total: ') $(c w b "${count} items")"
-  echo ""
+  _fm_list_dir "$target" "no"
 }
 
 fm_lsa() {
   local target="${1:-.}"
+  [[ ! -e "$target" ]] && { _err "ไม่พบ: $target"; return 1; }
+
   _learn_box "fm lsa — แสดงไฟล์ทั้งหมดรวมไฟล์ซ่อน" \
-    "ls -1ap \"$target\"" \
-    "-1  |แสดงทีละบรรทัด" \
-    "-a  |all — แสดงไฟล์ซ่อน (dotfiles) เช่น .bashrc .env .git" \
-    "-p  |ใส่ / ต่อท้ายโฟลเดอร์"
-  fm_ls "$target"
+    "ls -1ap \"$target\" 2>/dev/null | sed 's|^|$target/|' | sort -t/ -k2 | while read item; do stat... done" \
+    "ls -1ap        |แสดงทีละบรรทัด รวม dotfiles (.bashrc .env .git)" \
+    "-a             |all — แสดงไฟล์ซ่อน" \
+    "-p             |ใส่ / ต่อท้ายโฟลเดอร์" \
+    "stat -c \"%A\"  |อ่าน permission string" \
+    "(ต่างจาก ls)   |fm lsa ใช้ -a ส่วน fm ls ไม่ใช้"
+
+  _fm_list_dir "$target" "yes"
 }
 
 fm_tree() {
@@ -1068,7 +1087,7 @@ fm_world() {
     "JOE_ENV       |ตัวแปร SSOT จาก joe.sh → 00-env.sh (TERMUX/WSL/GIT-BASH/MUMU)" \
     "ping          |ทดสอบว่าเครื่องอื่นออนไลน์อยู่หรือไม่ (Latency)" \
     "env vars      |ใช้ค่า IP/USER จาก 00-env.sh (SSOT)"
-  
+
   local world
   case "$JOE_ENV" in
     TERMUX)   world="termux" ;;
@@ -1095,7 +1114,7 @@ fm_ssh() {
     "ssh           |Secure Shell — เข้ารหัสข้อมูลทั้งหมดที่ส่งผ่าน network" \
     "-p <port>     |ระบุ port (Termux ใช้ 8022, Default คือ 22)" \
     "(shortcut)    |fm ssh tm = เข้ามือถือ, fm ssh tw = เข้า Windows"
-  
+
   case "$target" in
     tm)  ssh -p "${NODE_TERMUX_PORT:-8022}" "${NODE_TERMUX_USER:-}@${NODE_TERMUX_HOST:-termux}" "$@" ;;
     tw)  ssh "${NODE_WIN_USER:-User}@${NODE_WIN_HOST:-window}" "$@" ;;
@@ -1108,7 +1127,7 @@ fm_push() {
   local src="${1:?Usage: fm push <local_path> [remote_dest]}"
   local dst="${2:-.}"
   local r_user r_ip r_port r_name
-  
+
   case "$JOE_ENV" in
     TERMUX|MUMU)
       r_user="${NODE_WSL_USER:-usercivenz}"; r_ip="${NODE_WSL_HOST:-wsl}"; r_port="${NODE_WSL_PORT:-22}"; r_name="WSL"
@@ -1122,7 +1141,7 @@ fm_push() {
     "rsync -az --info=progress2 -e 'ssh -p $r_port' \"$src\" \"user@ip:$dst\"" \
     "-a/z/update   |Archive, Compress, และ Update ไฟล์ใหม่กว่า" \
     "-e 'ssh -p'   |ระบุ port ของเครื่องปลายทาง ($r_port)"
-  
+
   _step "Pushing: $src → $r_name:$dst"
   rsync -az --update --info=progress2 -e "ssh -p $r_port" "$src" "${r_user}@${r_ip}:$dst" && _ok "Push สำเร็จ"
 }
@@ -1131,7 +1150,7 @@ fm_pull() {
   local src="${1:?Usage: fm pull <remote_path> [local_dest]}"
   local dst="${2:-.}"
   local r_user r_ip r_port r_name
-  
+
   case "$JOE_ENV" in
     TERMUX|MUMU)
       r_user="${NODE_WSL_USER:-usercivenz}"; r_ip="${NODE_WSL_HOST:-wsl}"; r_port="${NODE_WSL_PORT:-22}"; r_name="WSL"
@@ -1144,7 +1163,7 @@ fm_pull() {
   _learn_box "fm pull — ดึงไฟล์จาก $r_name" \
     "rsync -az --info=progress2 -e 'ssh -p $r_port' \"user@ip:$src\" \"$dst\"" \
     "Pull          |ดึง code ที่แก้ใน $r_name กลับมาที่เครื่องปัจจุบัน"
-  
+
   _step "Pulling: $r_name:$src → $dst"
   rsync -az --update --info=progress2 -e "ssh -p $r_port" "${r_user}@${r_ip}:$src" "$dst" && _ok "Pull สำเร็จ"
 }
@@ -1152,7 +1171,7 @@ fm_pull() {
 fm_rls() {
   local path="${1:-~}"
   local r_user r_ip r_port r_name
-  
+
   case "$JOE_ENV" in
     TERMUX|MUMU)
       r_user="${NODE_WSL_USER:-usercivenz}"; r_ip="${NODE_WSL_HOST:-wsl}"; r_port="${NODE_WSL_PORT:-22}"; r_name="WSL"
@@ -1165,7 +1184,7 @@ fm_rls() {
   _learn_box "fm rls — ดูไฟล์ใน $r_name" \
     "ssh -p $r_port user@ip 'ls -lah $path'" \
     "ssh <cmd>     |รันคำสั่งบนเครื่องปลายทาง ($r_name)"
-  
+
   _info "$r_name Files in $path :"
   echo ""
   ssh -p $r_port "${r_user}@${r_ip}" "ls -lah '$path'"
@@ -1175,7 +1194,7 @@ fm_rls() {
 fm_rrun() {
   [[ $# -eq 0 ]] && { _err "Usage: fm rrun <command>"; return 1; }
   local r_user r_ip r_port r_name
-  
+
   case "$JOE_ENV" in
     TERMUX|MUMU)
       r_user="${NODE_WSL_USER:-usercivenz}"; r_ip="${NODE_WSL_HOST:-wsl}"; r_port="${NODE_WSL_PORT:-22}"; r_name="WSL"
@@ -1188,7 +1207,7 @@ fm_rrun() {
   _learn_box "fm rrun — รันคำสั่งบน $r_name" \
     "ssh -p $r_port user@ip \"$*\"" \
     "\"\$*\"          |ส่งคำสั่งทั้งหมดไปรันที่ $r_name"
-  
+
   _step "Remote Run on $r_name: $*"
   ssh -p $r_port "${r_user}@${r_ip}" "$@"
 }

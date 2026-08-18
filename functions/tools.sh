@@ -479,6 +479,26 @@ find_ali() {
         echo "❌ '$target' ไม่ใช่ Alias"
     fi
 }
+#-- งาน compress video
+
+mv_() {
+    local src="${1:?กรุณาระบุ pattern}"
+    local dest="${2:?กรุณาระบุ destination}"
+    mkdir -p "$dest"
+    mv $src "$dest/"
+    echo "✅ ย้ายเสร็จ: $(ls "$dest" | wc -l) ไฟล์"
+}
+
+wa() {
+    ffmpeg -hide_banner -stats \
+        -i "$1" \
+        -vf scale=-2:480 \
+        -c:v libx264 \
+        -preset veryfast \
+        -crf 28 \
+        -c:a aac -b:a 96k \
+        "${1%.*}_wa.mp4"
+}
 
 
 

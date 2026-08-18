@@ -45,9 +45,7 @@ alias re="clear && reload"
 
 alias ktmux="tmux kill-server"
 
-fll() {
-
-	   fm
+ll() {
 		fm ls "$@"
 	}
 
@@ -67,55 +65,6 @@ alias s-log="tail -20 \"$HOME/.local/state/syncthing/syncthing.log\" 2>/dev/null
 
 alias fbrun="full_pipe"
 alias rbdb='rbfe && opdb'
-
-# ============================================================
-# PROJECT & SERVICE NAVIGATION
-# ============================================================
-
-alias enp="cd $ENGINES_DIR"
-alias enpipe="enp && $DASHBOARD_PYTHON pipeline_engine.py"
-alias cmdc="cd $dbp/api/engines/cmd-convertor && $DASHBOARD_PYTHON cli_converter.py"
-
-# OpenClaw
-alias opjs='d="$(dirname "${OPENCLAW_INDEX_JS:-}")"; [ -n "$d" ] && cd "$d" || echo "OPENCLAW_INDEX_JS not set"'
-alias opupdate="pnpm i -g openclaw@latest"
-
-# ============================================================
-# DEVELOPMENT & TOOLS
-# ============================================================
-
-alias gdb="proot-distro login debian"
-
-# File Manager (loaded via joe.sh → functions/11-bash-manager.sh)
-alias fmr="fm help"
-alias fmoff="fm learn off"
-
-# User-friendly git (non-IT safe): saves + uploads with plain questions.
-# Portable: uses $SSOT when the SSOT config loaded it, else falls back to $HOME/bashscripts.
-alias giteasy='bash "${SSOT:-$HOME/bashscripts}/tools/git-easy.sh"'
-
-# ============================================================
-# INFRASTRUCTURE & SYNC
-# ============================================================
-
-alias loadinfra='[ -f "$SSOT/sync-infra.sh" ] && source "$SSOT/sync-infra.sh" || echo "sync-infra.sh not found"'
-alias saveinfra='[ -f "$SSOT/sync-infra.sh" ] && source "$SSOT/sync-infra.sh" push || echo "sync-infra.sh not found"'
-
-# ============================================================
-# ALIASES COMPLETE
-# ============================================================
-#-------------------CLAUDE CODE--------------------#
-  alias opclaude='cd ~/claude-opencode-proxy && python3 proxy.py
-'
-#--------------------------------------------------#
-
-# ============================================================
-# PIPELINE DASHBOARD
-# ============================================================
-alias pipedash='cd ~/pipeline-dashboard && ~/dashboard/.venv/bin/python3 app.py'
-alias pipedash-stop='pkill -f "pipeline-dashboard/app.py" && echo "Dashboard stopped"'
-
-alias merge='source $JOE_ROOT/tools/merge.sh && merge_functions'
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #                       alias                        #

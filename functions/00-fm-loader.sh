@@ -6,8 +6,14 @@
 # ============================================================
 
 fm(){
-    [[ -f "$SSOT/core/bash-manager.sh" ]]&& source "$SSOT/core/bash-manager.sh" || c y b "not found bash-manager.sh" &&
-    fm
+    if [[ -z "$BASH_MANAGER" ]]; then
+        [[ -f "$SSOT/core/bash-manager.sh" ]]&& source "$SSOT/core/bash-manager.sh" &&
+            cn 10 b 'loading script is done ' || c y b "not found bash-manager.sh"
+    else
+        c 45 b "BASH_MANAGER is Loaded"
+    fi
+    fm learn on &&
+    fm "$@"
 }
 
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
