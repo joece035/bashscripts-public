@@ -67,10 +67,13 @@ bashscripts/                          # SSOT — Syncthing-backed dotfile repo
 │   ├── ai_block.sh                   # AI block helper
 │   ├── cli-cheatsheet.md             # CLI cheat sheet
 │   ├── color-chart.sh                # Color chart display
+│   ├── files_manage.sh               # File management helpers
 │   ├── Fresh_termux_fullsetup_SSOT.sh # Fresh Termux full setup
-│   ├── git-easy.sh                   # Git easy wrapper
 │   ├── hermes.sh                     # Hermes tool
+│   ├── install-syncthing-service.sh  # Git-Bash syncthing scheduler
 │   ├── merge.sh                      # Merge utility
+│   ├── mumu-debug.sh                 # MUMU environment debugger (SSH)
+│   ├── MUMU-DEBUG-README.md          # MUMU debug documentation
 │   ├── patch_theme.sh                # Theme patcher
 │   ├── safe-edit.sh                  # Safe file editor
 │   ├── ssot-audit.sh                 # SSOT integrity audit

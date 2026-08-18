@@ -88,8 +88,15 @@ bashscripts/
 │   ├── safe-edit.sh          ← Pre-commit guard (ANSI/drift check)
 │   ├── ssot-audit.sh         ← SSOT drift detector
 │   ├── merge.sh              ← Tree/merge tools
-│   ├── git-easy.sh           ← Git helpers
 │   ├── agent-pre-commit.sh   ← Agent pre-commit hook
+│   ├── mumu-debug.sh         ← MUMU environment debugger (SSH)
+│   ├── install-syncthing-service.sh ← Git-Bash syncthing scheduler
+│   ├── hermes.sh             ← Hermes CLI wrapper
+│   ├── patch_theme.sh        ← Theme patcher
+│   ├── color-chart.sh        ← Color palette display
+│   ├── ai_block.sh           ← AI block helper
+│   ├── files_manage.sh       ← File management helpers
+│   ├── wtf.sh                ← WTF debug tool
 │   └── Fresh_termux_fullsetup_SSOT.sh ← Full Termux setup
 │
 ├── profiles/                 ← Shell profile templates

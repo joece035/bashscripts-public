@@ -155,11 +155,12 @@ joe.sh (entry point)
 │  functions/:                                                                │
 │    00-fm-loader.sh*, 00.1-function-tools.sh*, 11-bash-manager.sh*          │
 │    02-systems.sh, 03-fpath.sh*, 04-openclaw.sh, 05-pathx.sh                │
-│    05-project.sh, 07-wtf.sh, 08-nexus.sh, 09-all_block_status.sh           │
-│    10-ai.sh, 12-git.sh, tools.sh                                            │
+│    05-project.sh, 07-wtf.sh, 08.hermes.sh, 09-all_block_status.sh           │
+│    12-git.sh, tools.sh, clean.sh, backup.sh                                 │
 │                                                                             │
-│  tools/: hermes.sh, merge.sh, wtf.sh, color-chart.sh, git-easy.sh          │
+│  tools/: hermes.sh, merge.sh, wtf.sh, color-chart.sh, mumu-debug.sh        │
 │          ssot-audit.sh, safe-edit.sh, patch_theme.sh                        │
+│          install-syncthing-service.sh, files_manage.sh                      │
 │          Fresh_termux_fullsetup_SSOT.sh (setup script)                      │
 │                                                                             │
 │  joe.sh (CLI entry point)                                                   │
