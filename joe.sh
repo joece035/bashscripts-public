@@ -18,7 +18,6 @@ pp() {
         TERMUX|MUMU) source "$HOME/.zshrc" ;;
         WSL|GIT-BASH) source "$HOME/.bashrc" ;;
     esac
-    cn 2 b "RELOADING....$(cn 10 bi "SUCCESSFULLY....!")"
     cn 198 b "$PWD  🛼 🚄"
     cn 45 b "${JOE_ENV:-unknown}"
 }
@@ -76,6 +75,7 @@ esac
         export COLOR_PATH="$SSOT"
         export msync="$MAIN_SYNC_DIR"
         export htm="/data/data/com.termux/files/home"
+        export OP_DIR="${HOME}"
 
 # ── Step 1.5: CRLF SELF-HEAL (กันไฟล์ CRLF ทำ bash พัง) ──
 # Syncthing sync ข้ามเครื่อง (WSL ↔ Termux/Acode-X ↔ Win ↔ MuMu)
@@ -157,6 +157,11 @@ fi
 # half-merged state and will produce syntax errors when sourced.
 # Top-level files only — nested modules (e.g. joe-block/block/*.sh) must
 # be sourced by their own entry point to avoid double-source + banner spam.
+#--- git_ alias
+case "$JOE_ENV" in
+    TERMUX|MUMU) unbinding -a g ;;
+esac
+
 if [ -d "$SSOT/functions" ]; then
     for func_file in "$SSOT"/functions/*.sh; do
         [ -f "$func_file" ] && source "$func_file"
@@ -181,11 +186,23 @@ fi
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 {
-   pf mom
-  #syncthing_auto
-  rc_delete
-  #del i $SSOT
-  #del c $SSOT
+   case "${JOE_ENV}" in
+
+    "GIT-BASH")
+             syncthing_auto
+             ;;
+    "WSL" ) 
+             syncthing_auto
+             ;;
+    "TERMUX" ) 
+             rc_delete
+             ;;
+    "MUMU" ) 
+             rc_delete
+             ;;
+   esac
+  pf mom
+
 } >&2
 
 # Disable nounset after everything is loaded — ble.sh restores set -u

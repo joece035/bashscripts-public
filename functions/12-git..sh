@@ -310,16 +310,4 @@ workflow (most common):
 EOF
 }
 
-#--- git_ alias
-case "$JOE_ENV" in
-    TERMUX|MUMU) unbinding -a g ;;
-    *) return 1 ;;
-esac
 
-g() {
-    if (( $# <= 1 )); then
-        git_ all "${1:-$(date)}"
-    else
-        git_ "$@"
-    fi
-}

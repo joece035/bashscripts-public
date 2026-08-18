@@ -1,5 +1,5 @@
 #!/bin/bash
-
+#-- file นี้ เป็น scripts สำหรับงาน clean
 array_excample(){
     local s="${1:-$video_p}"
     local d="${2:-$bk_path}"
@@ -169,6 +169,26 @@ move_() {
     done
 }
 
+#-- version ใช้ find -delete
+conf_del(){
+    local conf_dir=${1:-$SSOT}
+    local files_count=0
+    local conf_names=$(find "$conf_dir" -type f -iname "*conflict*" -exec basename "{}" ;)
+    # ค้นหาและนับจำนวนไฟล์ก่อน
+    files_count=$(find "$conf_dir" -type f -iname "*conflict*" | wc -l)
+    
+    # ถ้าจำนวนเป็น 0 ให้เด้งออกเลย
+    if [[ $files_count -eq 0 ]]; then
+        #cn 198 bi "not found any conflict files"
+        return 1
+    fi
+    
+    # ให้ find ลบไฟล์ทั้งหมดในคำสั่งเดียว (รองรับเว้นวรรคและชื่อแปลกๆ ได้ 100%)
+    find "$conf_dir" -type f -iname "*conflict*" -delete
+
+    #c 10 bi "all"; c 45 bi "$files_count"; cn 10 bi "conflict files are removed"
+}
+
 
 wa() {
     ffmpeg -hide_banner -stats \
@@ -181,6 +201,11 @@ wa() {
         "${1%.*}_wa.mp4"
 }
 
-"/f/Users/JoEz/Downloads/BIT"
 
-"/f/Users/JoEz/Downloads/new"
+g() {
+    if (( $# <= 1 )); then
+        git_ all "${1:-$(date)}"
+    else
+        git_ "$@"
+    fi
+}
