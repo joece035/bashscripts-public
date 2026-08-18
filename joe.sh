@@ -57,7 +57,7 @@ case "$JOE_ENV" in
         export nexus_vault="$HOME/nexus_vault"
         export MAIN_SYNC_DIR="$HOME/main_sync"
         export SSH_PORT=22
-        export WIN_PATH="/mnt/"
+        
         ;;
     GIT-BASH)
         export SSOT="$HOME/bashscripts"
@@ -69,7 +69,7 @@ case "$JOE_ENV" in
         export nexus_vault="$hpc/DESKTOP/nexus_vault"
         export MAIN_SYNC_DIR="$HOME/DESKTOP/main_sync"
         export SSH_PORT=2222
-        export WIN_PATH="/"
+        
         ;;
 esac
 
@@ -79,9 +79,7 @@ esac
         export msync="$MAIN_SYNC_DIR"
         export htm="/data/data/com.termux/files/home"
         export OP_DIR="${HOME}"
-        export boom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
-        export bk_boom="${WIN_PATH}h/boom"
-
+        
 # ── Step 1.5: CRLF SELF-HEAL (กันไฟล์ CRLF ทำ bash พัง) ──
 # Syncthing sync ข้ามเครื่อง (WSL ↔ Termux/Acode-X ↔ Win ↔ MuMu)
 # ถ้าเครื่องไหนแก้ไฟล์แล้วบันทึกเป็น CRLF (Windows/Acode-X) bash จะ

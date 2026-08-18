@@ -38,6 +38,7 @@ case "$JOE_ENV" in
          export HERMES_DIR="$HOME/.hermes"
          export PYTHON_VENV="$HOME/.venv/bin/activate"
          export NODE_HOST="wsl"
+         export WIN_PATH="/mnt/"
          
 
          ;;
@@ -45,6 +46,7 @@ case "$JOE_ENV" in
          export HERMES_DIR="/mnt/c/Users/User/AppData/Local/hermes"
          export PYTHON_VENV="$hwsl/.venv/bin/activate"
          export NODE_HOST="window"
+         export WIN_PATH='/'
 
          ;;
     *)
@@ -69,6 +71,9 @@ export alpha=${ALPHA_DIR}
 export storage="/storage/emulated/0/" # sdcrd
 export ais_fiber="880-563-6522"
 export ais_phone="0814764210"
+export boom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
+export bk_boom="${WIN_PATH}h/boom"
+
 
 # ============================================================
 # Dynamic env switching
