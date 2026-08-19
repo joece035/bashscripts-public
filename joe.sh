@@ -120,7 +120,12 @@ fi
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
 if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l &>/dev/null; then
     eval "$(ssh-agent -s)" >/dev/null 2>&1
-    ssh-add ~/.ssh/id_ed25519 2>/dev/null
+    # Guard: only add key if it exists (backup removed id_ed25519 during SSH restructure)
+    if [[ -f "$HOME/.ssh/id_ed25519" ]]; then
+        ssh-add ~/.ssh/id_ed25519 2>/dev/null
+    else
+        cn 198 b "⚠️  ~/.ssh/id_ed25519 not found — SSH key auth may not work" >&2
+    fi
 fi
 
 # Auto-start sshd guarded by JOE_ENV
@@ -143,10 +148,10 @@ elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
 fi
 
 #-----SSH configurations 
-[ -f "$SSOT/core/ssh-config.sh" ] && source "$SSOT/core/ssh-config.sh"
+#[ -f "$SSOT/core/ssh-config.sh" ] && source "$SSOT/core/ssh-config.sh"
 
 #-----SSH and 3-Worlds (tm, tw, push, pull, world)
-#[ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
+[ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
 
 #-----Aliases
 [ -f "$SSOT/core/aliases.sh" ] && source "$SSOT/core/aliases.sh"

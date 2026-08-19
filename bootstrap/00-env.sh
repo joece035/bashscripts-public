@@ -160,8 +160,9 @@ export CURRENT_OC_PROFILE="${CURRENT_OC_PROFILE:-None (Default)}"
 # ============================================================
 # -- TAILSCALING: All nodes must have Tailscale installed and running.
 export TAILSCALE_BIN="$(which tailscale)"
-export TAILSCALE_STATUS="$(tailscale status 2>/dev/null || echo "tailscale not running")"
-export TAILSCALE_IP="$(tailscale ip -4 2>/dev/null || echo "tailscale not running")"
+# timeout protection: tailscale daemon can hang → block entire shell init
+export TAILSCALE_STATUS="$(timeout 3 tailscale status 2>/dev/null || echo "tailscale not running")"
+export TAILSCALE_IP="$(timeout 3 tailscale ip -4 2>/dev/null || echo "tailscale not running")"
 export TAILSCALE_IP_TERMUX=100.110.26.16
 export TAILSCALE_IP_WINDOW=100.69.181.45
 export TAILSCALE_IP_WSL=100.80.195.120

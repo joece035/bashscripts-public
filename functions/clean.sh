@@ -100,10 +100,44 @@ rename_sp() {
 
     cn 10 b "Done!"
 }
+mv_(){
+    local s="/f/Users/JoEz/Videos/clips"
+    local d="/f/Users/JoEz/Videos/HunterxHunter"
+    local count=$(find "$s" -type f -name 'HUNTER*' -print0 | wc -l)
+    local file2=( "$s"/HUNTER* )
+    mkdir -p $d
+        for f in ${files2[@]} ; do
+        local file_name
+        file_name="$(basename "$f")"
 
+        mv "$f" "$d/$file_name" \
+            && cn 10 b "done moved $file_name" \
+            || cn r b "cant moved $file_name"
+        cn 198 b "$count files"
+   done 
+  c gr "" "ย้ายไฟล์แล้วทั้งหมด" ; c 10 b "$count" ; cn gr "" "files"
+}
 move_() {
-    local src="${1:-$video_p}"
-    local dest="${2:-$bk_path}"
+    local src="${1:-$boom}"
+    local dest="${2:-$bk_boom}"
+    local count=$(find "$src" -type f \( \
+        -iname "* *.mp4" -o \
+        -iname "* *.3gp" -o \
+        -iname "* *.flv" -o \
+        -iname "* *.avi" -o \
+        -iname "* *.mov" -o \
+        -iname "* *.mkv" -o \
+        -iname "* *.wmv" -o \
+        -iname "* *.FLV" -o \
+        -iname "* *.AVI" -o \
+        -iname "* *.MOV" -o \
+        -iname "* *.MKV" -o \
+        -iname "* *.WMV" -o \
+        -iname "* *_tmp" -o \
+        -iname "* *_TMP" -o \
+        -iname "* *_Tmp" -o \
+        -iname "*_*" \
+    \) | wc -l)
 
     # 1. แปลง Path รูปแบบ Windows (F:\...) ให้เป็น WSL (/mnt/f/...) อัตโนมัติ
     if [[ "$src" =~ ^[a-zA-Z]:\\ ]]; then
@@ -167,6 +201,7 @@ move_() {
             && cn 10 b "done moved $file_name" \
             || cn r b "cant moved $file_name"
     done
+    c gr "" "ย้ายไฟล์แล้วทั้งหมด" ; c 10 b "$count" ; cn gr "" "files"
 }
 
 #-- version: Syncthing conflict resolver — newer mtime wins (พี่โจคนเดียวที่แก้)

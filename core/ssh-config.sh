@@ -68,10 +68,10 @@ ssh_kadd(){
   fi
 }
 #-- all device publickey 
-export WSL_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPZDIAdFwo+pfYQZh1Avii7BwUgYiL6UbljtmZwG8gM3 wsl"
-export TERMUX_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDcz/bCnmHnFAMnYaW9AEqdQlQWXYjG8UaUeUQ6cMtC termux" 
-export MUMU_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG3BXYEuGAat94NgEfBo8CkcZGbkz1P5Lsnv6ANGW3oV mumu"
-export WINDOW_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHz2HO1nXny1R9+tOO92+3pRyLXmM1zz54pla0U3ENGi window"
+WSL_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPZDIAdFwo+pfYQZh1Avii7BwUgYiL6UbljtmZwG8gM3 wsl"
+TERMUX_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDcz/bCnmHnFAMnYaW9AEqdQlQWXYjG8UaUeUQ6cMtC termux" 
+MUMU_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG3BXYEuGAat94NgEfBo8CkcZGbkz1P5Lsnv6ANGW3oV mumu"
+WINDOW_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHz2HO1nXny1R9+tOO92+3pRyLXmM1zz54pla0U3ENGi window"
 
 # Helper สำหรับสั่ง Remote Command หรือ SSH เข้าเครื่องต่างๆ
 ssh_() {
@@ -87,3 +87,8 @@ ssh_() {
 
 }
 
+
+ mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYFfQQcdSRsjkZxbhTxhtqT/gbEhVlDqBfSbnREhtLI wsl-fresh-20260819' >> ~/.ssh/authorized_keys
+    chmod 600 ~/.ssh/authorized_keys
+    cat ~/.ssh/authorized_keys
