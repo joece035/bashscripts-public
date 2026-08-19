@@ -35,7 +35,7 @@ unbinding(){
             [ "$wt" = "alias" ]    && has_alias=1
             [ "$wt" = "function" ] && has_func=1
             ;;
-        WSL|GIT_BASH)
+        WSL|GIT-BASH)
             local tt
             tt=$(type -t "$target" 2>/dev/null)
             [ "$tt" = "alias" ]    && has_alias=1

@@ -191,13 +191,13 @@ fi
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 {
+    case "$JOE_ENV" in 
+        TERMUX|MUMU) rc_delete;;
+        WSL) syncthing_auto;;
+        GIT-BASH) # no sync here 
+        ;;  
+    esac
    pf mom
-   syncthing_auto    # Safe now: Windows Scheduled Task runs syncthing at boot
-                     # (independent of bash session, no fork/disown needed).
-                     # Install once:  bash ~/bashscripts/tools/install-syncthing-service.sh
-   rc_delete
-  #del i $SSOT
-  #del c $SSOT
 } >&2
 
 # Disable nounset after everything is loaded — ble.sh restores set -u

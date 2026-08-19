@@ -310,4 +310,25 @@ workflow (most common):
 EOF
 }
 
+copy(){
+  local src=${1:-$hwsl/bashscripts}
+  local tar=${2:-$hpc/bashscripts}
+
+  # validate directories exist
+  if [[ ! -d "$src" || ! -d "$tar" ]]; then
+    c 198 b "Error: Source directory '$src' or Target directory '$tar' does not exist.";
+    return 1
+  fi
+  
+  #Remove Target Directory
+  cn 45 b "Remove Target Directory."; cn 10 b "$tar";
+  rm -rf "$tar" &&
+
+  #Copy Source Directory
+  cn 45 b "Copy Source Directory."; cn 10 b "$src";
+  cp -r "$src" "$tar" &&
+  cn 45 b "Copied '$src' to '$tar'";
+  cn 206 b ""
+}
+
 
