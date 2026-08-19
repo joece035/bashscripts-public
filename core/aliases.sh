@@ -99,7 +99,7 @@ unbinding_all (){
         TERMUX | MUMU)
             binding_type=$(whence -w "$target" 2> /dev/null | cut -d" " -f2)
         ;;
-        WSL | GIT_BASH)
+        WSL | GIT-BASH)
             binding_type=$(type -t "$target" 2> /dev/null)
         ;;
         *)
@@ -124,7 +124,7 @@ unbinding_all (){
     cn 10 b "  $target"
 }
 
-[ "$JOE_ENV" == "GIT_BASH" ] && unbinding -af ll
+[[ "$JOE_ENV" == "GIT-BASH" ]] && unbinding -af ll
 
 alias cls='clear'
 alias h='help'
