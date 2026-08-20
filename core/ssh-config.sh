@@ -25,7 +25,7 @@ cb_copy() {
 }
 ssh_kgen(){
   #-- สร้าง public/private key หากยังไม่มี
-  local machine="${1:?Error: Please specify machine name (e.g. ssh_kgen my-server)}"
+  local machine="${1:-}"
   local keyfile="$HOME/.ssh/id_ed25519_${machine}"
 
   if [[ -f "$keyfile" ]]; then
@@ -67,11 +67,8 @@ ssh_kadd(){
     echo "Done: Added SSH key to $auth_file"
   fi
 }
-#-- all device publickey 
-WSL_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPZDIAdFwo+pfYQZh1Avii7BwUgYiL6UbljtmZwG8gM3 wsl"
-TERMUX_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBDcz/bCnmHnFAMnYaW9AEqdQlQWXYjG8UaUeUQ6cMtC termux" 
-MUMU_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG3BXYEuGAat94NgEfBo8CkcZGbkz1P5Lsnv6ANGW3oV mumu"
-WINDOW_PUBLIC_KEY="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHz2HO1nXny1R9+tOO92+3pRyLXmM1zz54pla0U3ENGi window"
+#-- all device environment variable from 00-env.sh
+
 
 # Helper สำหรับสั่ง Remote Command หรือ SSH เข้าเครื่องต่างๆ
 ssh_() {
@@ -86,9 +83,34 @@ ssh_() {
     esac     
 
 }
+# ตัวอย่างการใช้ rsync กับ SSH Host Alias
+#rsync -avz "file.txt" "mumu:/path/destination/"
+
+_rsync () {
+    local src=${1:-}
+    local dest=${2:-}
+    local host=${3:-$HOST_} # รับเป็นชื่อ alias เช่น mumu หรือ termux
+
+    rsync -avz "${src}" "${host}:${dest}"
+}
 
 
- mkdir -p ~/.ssh && chmod 700 ~/.ssh
-    echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBYFfQQcdSRsjkZxbhTxhtqT/gbEhVlDqBfSbnREhtLI wsl-fresh-20260819' >> ~/.ssh/authorized_keys
-    chmod 600 ~/.ssh/authorized_keys
-    cat ~/.ssh/authorized_keys
+ send(){
+     local dest_device=${1:-}
+     local src_=${2:-}
+     local dest=${3:-}
+     
+     case "$dest_device" in
+        tm|termux|TERMUX|t)
+                    
+                    USER_=termux
+                    ;;
+        mumu|mm|MUMU)
+                    HOST_=mumu
+                    USER_=${NODE_MUMU_USER}
+                   ;;
+        *)          cn 198 b "UNNKOWN DEVICE"           
+     esac               
+                    
+      _rsync "${src_}" "${dest_}" "$HOST_"            
+ }

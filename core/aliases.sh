@@ -90,41 +90,14 @@ unbinding(){
             ;;
     esac
 }
-unbinding_all (){
 
-    local target="${1:-}";
-    [ -z "$target" ] && return 0;
-    local binding_type;
-    case "$JOE_ENV" in
-        TERMUX | MUMU)
-            binding_type=$(whence -w "$target" 2> /dev/null | cut -d" " -f2)
-        ;;
-        WSL | GIT-BASH)
-            binding_type=$(type -t "$target" 2> /dev/null)
-        ;;
-        *)
-            c 198 b "unknown JOE_ENV: $JOE_ENV";
-            return 1
-        ;;
-    esac;
-    local label;
-    case "$binding_type" in
-        alias)
-            unalias "$target" 2> /dev/null && label="done unalias"
-        ;;
-        function)
-            unset -f "$target" 2> /dev/null && label="done unfunction"
-        ;;
-        *)
-            c 198 b "⚠ '$target' is not an alias/function (type: ${binding_type:-none})";
-            return 1
-        ;;
-    esac;
-    c 45 b "$label";
-    cn 10 b "  $target"
-}
 
-[[ "$JOE_ENV" == "GIT-BASH" ]] && unbinding -af ll
+  case "$JOE_ENV" in 
+        TERMUX|MUMU) unbinding -a g;;
+        WSL) ;;
+        GIT-BASH) unbinding -a ll
+        ;;  
+    esac
 
 alias cls='clear'
 alias h='help'

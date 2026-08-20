@@ -148,7 +148,7 @@ elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
 fi
 
 #-----SSH configurations 
-#[ -f "$SSOT/core/ssh-config.sh" ] && source "$SSOT/core/ssh-config.sh"
+[ -f "$SSOT/core/ssh-config.sh" ] && source "$SSOT/core/ssh-config.sh"
 
 #-----SSH and 3-Worlds (tm, tw, push, pull, world)
 [ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
