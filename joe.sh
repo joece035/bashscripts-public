@@ -190,15 +190,14 @@ fi
 # Required by Powerlevel10k instant prompt (sourced first in .zshrc):
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
-{
+
     case "$JOE_ENV" in 
-        TERMUX|MUMU) rc_delete;;
+        TERMUX|MUMU) rc_delete >&2;;
         WSL) syncthing_auto;;
-        GIT-BASH) # no sync here 
-        ;;  
+        GIT-BASH) ;;  
     esac
    pf mom
-} >&2
+
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
 # after each command, but joe.sh uses unset variables (dbp, $2, etc.)

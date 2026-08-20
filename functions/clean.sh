@@ -119,7 +119,7 @@ mv_(){
 }
 move_() {
     local src="${1:-$boom}"
-    local dest="${2:-$bk_boom}"
+    local dest="${2:-$bk_boom/$(date +%Y%m%d)}"
     local count=$(find "$src" -type f \( \
         -iname "* *.mp4" -o \
         -iname "* *.3gp" -o \
@@ -393,7 +393,8 @@ g() {
     fi
 
  
-}replace_w() {
+}
+replace_w() {
     local old_name=${1:-}
     local new_name=${2:-}
     local target=${3:-$PWD}
@@ -625,4 +626,6 @@ change_w() {
    
 
 }
+
+
 

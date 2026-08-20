@@ -681,45 +681,7 @@ sc() {
 # ตรวจสอบว่ามีคำสั่ง <cmd> ในระบบหรือไม่ หากไม่มีจะติดตั้งแพ็กเกจให้อัตโนมัติ
 # รองรับทั้ง Termux (pkg) และ WSL/Linux (apt) ตาม SSOT JOE_ENV
 # ==============================================================================
-ensure() {
-    local cmd="$1"
-    local pkg="${2:-$1}" # ถ้าไม่ระบุชื่อ pkg ให้ใช้ชื่อ cmd เป็นชื่อ pkg
-
-    # 1. เช็คว่ามี command อยู่แล้วหรือไม่
-    if command -v "$cmd" >/dev/null 2>&1; then
-        return 0
-    fi
-
-    cn 220 bi "⚠️ Command '$cmd' not found. Installing package '$pkg'..." >&2
-
-    # 2. ตรวจสอบ Package Manager ตาม JOE_ENV / OS
-    if command -v pkg >/dev/null 2>&1; then
-        # Termux / MuMu
-        pkg install -y "$pkg"
-    elif command -v apt-get >/dev/null 2>&1; then
-        # WSL / Ubuntu / Debian
-        if [[ $EUID -eq 0 ]]; then
-            apt-get update -qq && apt-get install -y "$pkg"
-        else
-            sudo apt-get update -qq && sudo apt-get install -y "$pkg"
-        fi
-    else
-        cn 196 bi "❌ Error: No supported package manager found (pkg/apt) to install '$pkg'." >&2
-        return 1
-    fi
-
-    # 3. ยืนยันการติดตั้ง
-    if command -v "$cmd" >/dev/null 2>&1; then
-        cn 10 bi "✅ Successfully installed '$pkg' ($cmd)." >&2
-        return 0
-    else
-        cn 9 bi "❌ Failed to install '$pkg'." >&2
-        return 1
-    fi
-}
-
-
-
+# ensure() ย้ายไป functions/03-fpath.sh (2026-08-20, รวม duplicate — version 03-fpath.sh มี .exe guard + JOE_APT_UPDATED)
 
 
 

@@ -508,17 +508,5 @@ mv_() {
     echo "✅ ย้ายเสร็จ: $(ls "$dest" | wc -l) ไฟล์"
 }
 
-wa() {
-    ffmpeg -hide_banner -stats \
-        -i "$1" \
-        -vf scale=-2:480 \
-        -c:v libx264 \
-        -preset veryfast \
-        -crf 28 \
-        -c:a aac -b:a 96k \
-        "${1%.*}_wa.mp4"
-}
-
-
-
+# wa() ถูกย้ายไป functions/clean.sh (2026-08-20, รวม duplicate)
 
