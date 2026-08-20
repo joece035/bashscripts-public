@@ -75,42 +75,48 @@ ssh_() {
   local tar="$1"
   shift
     case "$tar" in
-        t|tm|termux|TERMUX)     ssh termux "$@" ;;
-        w|tw|window|win|WINDOW) ssh window "$@" ;;
-        mm|mumu|MUMU)           ssh mumu "$@" ;;
-        wsl|WSL|WSL2)           ssh wsl "$@" ;;
+        t|tm|termux|TERMUX)         ssh termux    "$@" ;;
+        w|tw|window|win|WINDOW)     ssh window    "$@" ;;
+        gb|gitbash|GITBASH|g)       ssh window    "& '${WIN_GIT_BASH}' --login -i" "$@" ;;
+        mm|mumu|MUMU)               ssh mumu      "$@" ;;
+        wsl|WSL|WSL2)               ssh wsl       "$@" ;;
         *) cn r b "usage ssh_ <host>"; return 1 ;;
     esac     
 
 }
 # ตัวอย่างการใช้ rsync กับ SSH Host Alias
-#rsync -avz "file.txt" "mumu:/path/destination/"
+
 
 _rsync () {
-    local src=${1:-}
-    local dest=${2:-}
-    local host=${3:-$HOST_} # รับเป็นชื่อ alias เช่น mumu หรือ termux
-
+    local host  =${1:-$HOST_} # รับเป็นชื่อ alias เช่น mumu หรือ termux
+    local src   =${2:-}
+    local dest  =${3:-}
+    
+    #rsync -avz "file.txt" "host:/path/destination/"
     rsync -avz "${src}" "${host}:${dest}"
 }
 
 
  send(){
-     local dest_device=${1:-}
+     local host=${1:-}
      local src_=${2:-}
-     local dest=${3:-}
+     local dest_=${3:-}
      
-     case "$dest_device" in
+     case "$host" in
         tm|termux|TERMUX|t)
-                    
-                    USER_=termux
+                    HOST_=termux
                     ;;
         mumu|mm|MUMU)
-                    HOST_=mumu
-                    USER_=${NODE_MUMU_USER}
+                    HOST_=mumu  
                    ;;
+        w|win|window|W|WINDOW)
+                    HOST_=window
+                    ;;
+        wsl|WSL|WSL2)
+                    HOST_=wsl
+                    ;;
         *)          cn 198 b "UNNKOWN DEVICE"           
-     esac               
+     esac                                   
                     
-      _rsync "${src_}" "${dest_}" "$HOST_"            
+      _rsync "$HOST_" "${src_}" "${dest_}"            
  }

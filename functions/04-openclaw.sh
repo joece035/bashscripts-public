@@ -16,7 +16,7 @@ elif [[ "$JOE_ENV" == "GIT-BASH" ]]; then
     export OP_DIR="$HOME"
 
 else
-    export OP_DIR="$hwsl"
+    export OP_DIR="$HWSL"
 fi
 
 

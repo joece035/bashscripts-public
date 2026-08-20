@@ -63,9 +63,9 @@ case "$JOE_ENV" in
         export SSOT="$HOME/bashscripts"
         export hpc="$HOME"
         export hwsl="${hwsl:-//wsl.localhost/Ubuntu/home/usercivenz}"
-        export DASHBOARD_DIR="$hwsl/dashboard"
+        export DASHBOARD_DIR="$HWSL/dashboard"
         export OBSIDIAN_VAULT="$hpc/DESKTOP/obsidian/alphadev_vaults"
-        export home="$hwsl"
+        export home="$HWSL"
         export nexus_vault="$hpc/DESKTOP/nexus_vault"
         export MAIN_SYNC_DIR="$HOME/DESKTOP/main_sync"
         export SSH_PORT=2222

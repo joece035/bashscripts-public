@@ -393,4 +393,236 @@ g() {
     fi
 
  
+}replace_w() {
+    local old_name=${1:-}
+    local new_name=${2:-}
+    local target=${3:-$PWD}
+
+    if [[ -z "$old_name" || -z "$new_name" ]]; then
+        echo "Usage: change_word <old_name> <new_name> [target_folder]"
+        return 1
+    fi
+
+    echo "Replacing '$old_name' with '$new_name' in $target..."
+
+    # ครอบเครื่องหมายคำพูดซ้อนสไตล์นี้ปลอดภัยที่สุดครับ
+    find "$target" -type f -exec sed -i "s/""$old_name""/""$new_name""/g" {} +
+
+    echo "✨ All done!"
 }
+
+replace_w2() {
+    local old_name=${1:-}
+    local new_name=${2:-}
+    local target=${3:-$PWD}
+
+    # 1. ตรวจสอบว่ากรอกค่าคำเดิมและคำใหม่มาครบไหม
+    if [[ -z "$old_name" || -z "$new_name" ]]; then
+        echo "Usage: replace_w <old_name> <new_name> [target_folder]"
+        return 1
+    fi
+
+    echo "🔍 Searching for '$old_name' in $target..."
+
+    # 2. ค้นหาไฟล์ที่เจอคำนี้ พร้อมเก็บรายชื่อไว้ในตัวแปร array (ซ่อนไฟล์ขยะ/โฟลเดอร์ระบบ เช่น .git เพื่อความสะอาด)
+    # ใช้ mapfile เพื่อดึงผลลัพธ์จาก grep มาเก็บเป็นอาเรย์
+    local files=()
+    while IFS= read -r file; do
+        [[ -n "$file" ]] && files+=("$file")
+    done < <(grep -rl --exclude-dir={.git,node_modules} "$old_name" "$target" 2>/dev/null)
+
+    # 3. ถ้าไม่พบไฟล์เลย ให้แจ้งเตือนและจบการทำงาน
+    if [[ ${#files[@]} -eq 0 ]]; then
+        echo "❌ No files found containing '$old_name'."
+        return 0
+    fi
+
+    # 4. แสดงรายชื่อไฟล์ที่เจอทั้งหมด
+    echo ""
+    echo "📄 Found ${#files[@]} file(s) to update:"
+    for f in "${files[@]}"; do
+        echo "   - $f"
+    done
+    echo ""
+
+    # 5. ถามยืนยันความปลอดภัย (y/n)
+    read -p "❓ Do you want to replace '$old_name' with '$new_name' in these files? (y/N): " confirm
+    
+    # แปลงคำตอบเป็นตัวพิมพ์เล็กทั้งหมด เพื่อให้กด Y หรือ y ก็ได้
+    confirm=${confirm,,}
+
+    if [[ "$confirm" != "y" ]]; then
+        echo "🛑 Operation cancelled."
+        return 0
+    fi
+
+    echo "🔄 Replacing..."
+
+    # 6. ทำการแทนที่คำในไฟล์ที่คัดกรองมาแล้ว
+    for f in "${files[@]}"; do
+        sed -i "s/${old_name}/${new_name}/g" "$f"
+    done
+
+    echo "✨ All done!"
+}
+
+replace_w3() {
+    local old_name=${1:-}
+    local new_name=${2:-}
+    local target=${3:-$PWD}
+
+    # 1. ตรวจสอบว่ากรอกค่าคำเดิมและคำใหม่มาครบไหม
+    if [[ -z "$old_name" || -z "$new_name" ]]; then
+        echo "Usage: replace_w <old_name> <new_name> [target_folder]"
+        return 1
+    fi
+
+    echo "🔍 Searching for '$old_name' in $target..."
+
+    # 2. ค้นหาไฟล์ที่เจอคำนี้ พร้อมเก็บรายชื่อไว้ในตัวแปร array (ซ่อนไฟล์ขยะ/โฟลเดอร์ระบบ เช่น .git เพื่อความสะอาด)
+    # ใช้ mapfile เพื่อดึงผลลัพธ์จาก grep มาเก็บเป็นอาเรย์
+    local files=()
+    while IFS= read -r file; do
+        [[ -n "$file" ]] && files+=("$file")
+    done < <(grep -rl --exclude-dir={.git,node_modules} "$old_name" "$target" 2>/dev/null)
+
+    # 3. ถ้าไม่พบไฟล์เลย ให้แจ้งเตือนและจบการทำงาน
+    if [[ ${#files[@]} -eq 0 ]]; then
+        echo "❌ No files found containing '$old_name'."
+        return 0
+    fi
+
+    # 4. แสดงรายชื่อไฟล์ที่เจอทั้งหมด
+    echo ""
+    echo "📄 Found ${#files[@]} file(s) to update:"
+    for f in "${files[@]}"; do
+        echo "   - $f"
+    done
+    echo ""
+
+    # 5. ถามยืนยันความปลอดภัย (y/n)
+    read -p "❓ Do you want to replace '$old_name' with '$new_name' in these files? (y/N): " confirm
+    
+    # แปลงคำตอบเป็นตัวพิมพ์เล็กทั้งหมด เพื่อให้กด Y หรือ y ก็ได้
+    confirm=${confirm,,}
+
+    if [[ "$confirm" != "y" ]]; then
+        echo "🛑 Operation cancelled."
+        return 0
+    fi
+
+    echo "🔄 Replacing..."
+
+    # 6. ทำการแทนที่คำในไฟล์ที่คัดกรองมาแล้ว
+    for f in "${files[@]}"; do
+        sed -i "s/${old_name}/${new_name}/g" "$f"
+    done
+
+    echo "✨ All done!"
+}
+multi_w() {
+    # 1. เช็กว่ามีการส่ง Parameter มาอย่างน้อย 1 ตัวไหม
+    if [[ $# -lt 1 ]]; then
+        echo "Usage: replace_w <old1=new1> [old2=new2 ...] [target_folder]"
+        echo "Example: replace_w \"cat=dog\" \"apple=banana\" ./my_folder"
+        return 1
+    fi
+
+    local pairs=()
+    local target="$PWD"
+
+    # 2. แยกแยะระหว่าง "คู่คำ" กับ "target_folder"
+    # ถ้า Parameter ตัวสุดท้ายไม่ใช่รูป pattern "X=Y" และเป็นโฟลเดอร์/ไฟล์ที่มีอยู่จริง ให้ถือว่าเป็น target
+    local last_arg="${!#}"
+    if [[ ! "$last_arg" =~ = ]] && [[ -e "$last_arg" ]]; then
+        target="$last_arg"
+        pairs=("${@:1:$#-1}") # เอา Parameter ทุกตัวยกเว้นตัวสุดท้าย
+    else
+        pairs=("$@")         # เอา Parameter ทั้งหมดเป็นคู่คำ
+    fi
+
+    # 3. ตรวจสอบรูปแบบ Input ของคู่คำ
+    local old_words=()
+    local new_words=()
+
+    for pair in "${pairs[@]}"; do
+        if [[ ! "$pair" =~ = ]]; then
+            echo "❌ Error: Invalid format '$pair'. Must be 'old=new'"
+            return 1
+        fi
+        old_words+=("${pair%%=*}") # ดึงข้อความหน้าเครื่องหมาย =
+        new_words+=("${pair#*=}")  # ดึงข้อความหลังเครื่องหมาย =
+    done
+
+    echo "🔍 Target Directory: $target"
+    echo "📋 Replacement Pairs:"
+    for i in "${!old_words[@]}"; do
+        echo "   - '${old_words[$i]}' ➡️ '${new_words[$i]}'"
+    done
+    echo "------------------------------------------------"
+
+    # 4. ค้นหาไฟล์ที่มีคำใดคำหนึ่งในรายการ
+    local matched_files=()
+    local grep_pattern=""
+
+    # สร้าง pattern สำหรับ grep เช่น "word1\|word2"
+    for word in "${old_words[@]}"; do
+        grep_pattern+="${word}\|"
+    done
+    grep_pattern="${grep_pattern%\|}" # ตัด \| ตัวสุดท้ายออก
+
+    while IFS= read -r -d '' file; do
+        matched_files+=("$file")
+    done < <(find "$target" -type f -exec grep -l "$grep_pattern" {} + 2>/dev/null)
+
+    # 5. เช็กว่าเจอไฟล์หรือไม่
+    if [[ ${#matched_files[@]} -eq 0 ]]; then
+        echo "❌ No matching files found."
+        return 0
+    fi
+
+    # 6. แสดงรายการไฟล์ที่ค้นพบ
+    echo "Found '${#matched_files[@]}' file(s):"
+    for file in "${matched_files[@]}"; do
+        echo "  - $file"
+    done
+    echo "------------------------------------------------"
+
+    # 7. ถามยืนยัน Y/N
+    local confirm
+    read -rp "Proceed with replacement in these files? (y/N): " confirm
+
+    # 8. ทำการเปลี่ยนคำทุกคู่ในไฟล์ที่เจอ
+    case "$confirm" in
+        [yY]|[yY][eE][sS])
+            echo "🚀 Replacing..."
+            for file in "${matched_files[@]}"; do
+                for i in "${!old_words[@]}"; do
+                    # ใช้ # เป็น Delimiter แทน / ป้องกันปัญหาเรื่อง path/URL
+                    sed -i "s#${old_words[$i]}#${new_words[$i]}#g" "$file"
+                done
+            done
+            echo "✨ All done!"
+            ;;
+        *)
+            echo "🛑 Operation cancelled."
+            return 0
+            ;;
+    esac
+}
+change_w() {
+
+    replace_w2 "${2:-}" "${3:-}" "${1:-$PWD}"
+    if [[ "$4" != "" ]] && [[ "$5" != "" ]]; then 
+        replace_w3 "$4" "$5" "${1:-$PWD}"
+    fi
+    if [[ "$6" != "" ]] && [[ "$7" != "" ]]; then
+        replace_w2 "$6" "$7" "${1:-$PWD}"
+    fi
+    if [[ "$8" != "" ]] && [[ "$9" != "" ]]; then
+        replace_w3 "$8" "$9" "${1:-$PWD}"
+    fi
+   
+
+}
+

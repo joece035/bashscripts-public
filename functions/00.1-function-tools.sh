@@ -547,23 +547,6 @@ math()  { mth "$@"; }
 tp(){
     tput cols "$@"
 }
-replace_w() {
-    local old_name=${1:-}
-    local new_name=${2:-}
-    local target=${3:-$PWD}
-
-    if [[ -z "$old_name" || -z "$new_name" ]]; then
-        echo "Usage: change_word <old_name> <new_name> [target_folder]"
-        return 1
-    fi
-
-    echo "Replacing '$old_name' with '$new_name' in $target..."
-
-    # ครอบเครื่องหมายคำพูดซ้อนสไตล์นี้ปลอดภัยที่สุดครับ
-    find "$target" -type f -exec sed -i "s/""$old_name""/""$new_name""/g" {} +
-
-    echo "✨ All done!"
-}
 
 
 getp() {

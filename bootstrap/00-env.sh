@@ -44,7 +44,7 @@ case "$JOE_ENV" in
          ;;
     GIT-BASH)
          export HERMES_DIR="/mnt/c/Users/User/AppData/Local/hermes"
-         export PYTHON_VENV="$hwsl/.venv/bin/activate"
+         export PYTHON_VENV="$HWSL/.venv/bin/activate"
          export NODE_HOST="window"
          export WIN_PATH='/'
 
@@ -180,7 +180,7 @@ export NODE_TERMUX_ST_URL="http://${NODE_TERMUX_HOST}:${NODE_TERMUX_ST_PORT}"
 
 # --- WSL (Linux) ---
 export NODE_WSL_IP="$TAILSCALE_IP_WSL"
-export NODE_WSL_HOST="${wsl:-$TAILSCALE_IP_WSL}"
+export NODE_WSL_HOST="${HWSL:-$TAILSCALE_IP_WSL}"
 export NODE_WSL_USER="usercivenz"
 export NODE_WSL_PORT="$SSH_WSL_PORT"
 export NODE_WSL_ST_PORT="8385"

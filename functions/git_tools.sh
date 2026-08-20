@@ -311,7 +311,7 @@ EOF
 }
 
 copy(){
-  local src=${1:-$hwsl/bashscripts}
+  local src=${1:-$HWSL/bashscripts}
   local tar=${2:-$hpc/bashscripts}
 
   # validate directories exist

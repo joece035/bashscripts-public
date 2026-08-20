@@ -106,7 +106,7 @@ alias spy='source $PYTHON_VENV'
 # Directory shortcuts (using env vars from 00-env.sh)
 
 alias htm='cd $htm'
-alias hwsl='cd $hwsl'
+alias hwsl='cd $HWSL'
 alias hpc='cd $hpc'
 alias hmp='cd $hmp'
 alias bsc='cd $SSOT && pwd'
