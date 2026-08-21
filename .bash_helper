@@ -59,7 +59,7 @@ unbinding(){
             [ "$tt" = "function" ] && has_func=1
             ;;
         *)
-            c 198 b "unknown JOE_ENV: $JOE_ENV"; return 1
+            echo "unknown JOE_ENV: $JOE_ENV"; return 1
             ;;
     esac
 
@@ -69,40 +69,40 @@ unbinding(){
         a)
             if (( has_alias )); then
                 unalias "$target" 2>/dev/null && removed=1
-                c 45 b "done unalias"; cn 10 b "  $target"
+                echo "done unalias"; echo "  $target"
             else
-                cn 190 b "⚠ '$target' has no alias"; return 1
+                echo "⚠ '$target' has no alias"; return 1
             fi
             ;;
         f)
             if (( has_func )); then
                 unset -f "$target" 2>/dev/null && removed=1
-                c 45 b "done unfunction"; cn 10 b "  $target"
+                echo "done unfunction"; echo "  $target"
             else
-                cn 190 b "⚠ '$target' has no function"; return 1
+                echo "⚠ '$target' has no function"; return 1
             fi
             ;;
         af)
             if (( has_alias )); then
                 unalias "$target" 2>/dev/null && removed=1
-                c 45 b "done unalias"; cn 10 b "  $target"
+                echo "done unalias"; echo "  $target"
             fi
             if (( has_func )); then
                 unset -f "$target" 2>/dev/null && removed=1
-                c 45 b "done unfunction"; cn 10 b "  $target"
+                echo "done unfunction"; echo "  $target"
             fi
-            (( removed )) || { c 198 b "⚠ '$target' is not an alias/function"; return 1; }
+            (( removed )) || { echo "⚠ '$target' is not an alias/function"; return 1; }
             ;;
         *)
             # default: ลบตัวที่เจอตัวแรก
             if (( has_alias )); then
                 unalias "$target" 2>/dev/null && removed=1
-                c 45 b "done unalias"; cn 10 b "  $target"
+                echo "done unalias"; echo "  $target"
             elif (( has_func )); then
                 unset -f "$target" 2>/dev/null && removed=1
-                c 45 b "done unfunction"; cn 10 b "  $target"
+                echo "done unfunction"; echo "  $target"
             else
-                c 198 b "⚠ '$target' is not an alias/function"; return 1
+                echo "⚠ '$target' is not an alias/function"; return 1
             fi
             ;;
     esac
