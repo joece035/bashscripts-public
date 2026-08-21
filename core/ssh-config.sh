@@ -78,7 +78,7 @@ ssh_() {
         t|tm|termux|TERMUX)         ssh termux    "$@" ;;
         w|tw|window|win|WINDOW)     ssh window    "$@" ;;
         gb|gitbash|GITBASH|g)       ssh window    "& '${WIN_GIT_BASH}' --login -i" "$@" ;;
-        mm|mumu|MUMU)               ssh mumu      "$@" ;;
+        mm|mumu|MUMU|m)               ssh mumu      "$@" ;;
         wsl|WSL|WSL2)               ssh wsl       "$@" ;;
         *) cn r b "usage ssh_ <host>"; return 1 ;;
     esac     
@@ -120,3 +120,7 @@ _rsync () {
                     
       _rsync "$HOST_" "${src_}" "${dest_}"            
  }
+
+s(){
+  ssh_ "$@"
+}
