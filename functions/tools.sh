@@ -508,5 +508,9 @@ mv_() {
     echo "✅ ย้ายเสร็จ: $(ls "$dest" | wc -l) ไฟล์"
 }
 
-# wa() ถูกย้ายไป functions/clean.sh (2026-08-20, รวม duplicate)
+
+perm(){
+
+    chmod +x "$@" && c 10 bi "ให้สิทธิ์รันไฟล์  ";c 45 b "$(basename "$@")  ";cn 10 bi "เรียบร้อย" 
+}
 

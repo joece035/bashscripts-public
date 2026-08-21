@@ -1,35 +1,31 @@
-#-- HELPER FOR FRESH SHELL
-#-- helper for opject checking
-_check(){
-   local type=${1:--f} tar=${2:-} cmd=${3:-source}
+#!/bin/bash
+
+# ==========================================
+# 1. นิยามฟังก์ชัน _check() (เวอร์ชัน Cross-Shell)
+# ==========================================
+_check() {
+    local type="${1:--f}"
+    local tar_input="${2:-}"
+    local cmd="${3:-source}"
     shift 3
-    case "$type" in
-         -f)
-              if [[ -f "${tar}" ]]; then
-            "$cmd" "${tar}" "$@"
-              fi
-              ;;
-         -d)
-             if [[ -d "${tar}" ]]; then
-            "$cmd" "${tar}" "$@"
-             fi 
-             ;;
-        -z) 
-             if [[ -z "${tar}" ]]; then
-            "$cmd" "${tar}" "$@"
-             fi 
-             ;;
-        -n)
-             if [[ -n "${tar}" ]]; then
-            "$cmd" "${tar}" "$@"
-             fi 
-             ;;
-          *) echo 'try -f,-d, -d'  ;;
-   esac
-         
-}
+
+    if declare -p "$tar_input" 2>/dev/null | grep -E -q '(declare|typeset) -[aA]'; then
+        local -a items=()
+
+        if [ -n "$ZSH_VERSION" ]; then
+            items=("${(@)${(P)tar_input}}")
+        else
+            local -n ref="$tar_input"
+            items=("${ref[@]}")
+        fi
+
+        for item in "${items[@]}"; do
+            test "$type" "$item" && "$cmd" "$item" "$@"
+        done
+    else
+        test "$type" "$tar_input" && "$cmd" "$tar_input" "$@"
 #-- helper for  functin, alias unbinding
-unbinding(){
+unbind(){
     local mode=""
     local target=""
 
@@ -107,3 +103,4 @@ unbinding(){
             ;;
     esac
 }
+
