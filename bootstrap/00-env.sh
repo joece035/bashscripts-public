@@ -73,6 +73,8 @@ export ais_fiber="880-563-6522"
 export ais_phone="0814764210"
 export boom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
 export bk_boom="${WIN_PATH}h/boom"
+export _SHELL=$(basename $(echo $SHELL))
+export _USER=$(whoami)
 
 
 # ============================================================
