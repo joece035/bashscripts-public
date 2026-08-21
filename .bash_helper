@@ -24,6 +24,8 @@ _check() {
         done
     else
         test "$type" "$tar_input" && "$cmd" "$tar_input" "$@"
+    fi    
+}       
 #-- helper for  functin, alias unbinding
 unbind(){
     local mode=""
