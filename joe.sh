@@ -109,7 +109,7 @@ if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l &>/dev/null; then
     if [[ -f "$HOME/.ssh/id_ed25519" ]]; then
         ssh-add ~/.ssh/id_ed25519 2>/dev/null
     else
-        cn 198 b "⚠️  ~/.ssh/id_ed25519 not found — SSH key auth may not work" >&2
+        command -v cn &>/dev/null && cn 198 b "⚠️  ~/.ssh/id_ed25519 not found — SSH key auth may not work" >&2 || echo "⚠️  ~/.ssh/id_ed25519 not found — SSH key auth may not work" >&2
     fi
 fi
 
@@ -117,18 +117,18 @@ fi
 if [[ "$JOE_ENV" == "WSL" ]]; then
     # WSL: ใช้ service ssh
     if ! service ssh status >/dev/null 2>&1; then
-        sudo service ssh start >/dev/null 2>&1 && cn 10 b "SSH Service (WSL) started successfully." >&2 || cn 9 b "Failed to start SSH Service." >&2
+        sudo service ssh start >/dev/null 2>&1 && { command -v cn &>/dev/null && cn 10 b "SSH Service (WSL) started successfully." >&2; } || { command -v cn &>/dev/null && cn 9 b "Failed to start SSH Service." >&2; }
     else
-        cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
+        command -v cn &>/dev/null && cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
     fi
 elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     # Termux / MuMu: ใช้ sshd binary ตรงๆ
     # NOTE: Termux ใหม่ rename process เป็น "sshd-session" ไม่ใช่ "sshd"
     # → pgrep -x sshd ใช้ไม่ได้ ต้อง check จาก port ที่ bind อยู่จริงแทน
     if ! pgrep -f "sshd.*-p.*${SSH_PORT}" >/dev/null 2>&1; then
-        sshd -p "$SSH_PORT" >/dev/null 2>&1 && cn 10 b "SSH Daemon started on port ${SSH_PORT}." >&2 || cn 9 b "Failed to start sshd on port ${SSH_PORT}." >&2
+        sshd -p "$SSH_PORT" >/dev/null 2>&1 && { command -v cn &>/dev/null && cn 10 b "SSH Daemon started on port ${SSH_PORT}." >&2; } || { command -v cn &>/dev/null && cn 9 b "Failed to start sshd on port ${SSH_PORT}." >&2; }
     else
-        cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
+        command -v cn &>/dev/null && cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
     fi
 fi
 
@@ -220,13 +220,13 @@ pp() {
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 
+    ssot_load
     case "$JOE_ENV" in 
         TERMUX|MUMU) rc_delete >&2;;
         WSL) syncthing_auto;;
         GIT-BASH) ;;  
     esac
    pf mom
-   ssot_load
 
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
