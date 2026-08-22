@@ -105,4 +105,29 @@ unbind(){
             ;;
     esac
 }
+#-- helper for source in subforder
+guard() {
+    local target
+    local loaded_count=0
 
+    for target in "$@"; do
+        # 1. ถ้าเป็นโฟลเดอร์ ให้ค้นหาไฟล์ *.sh ในโฟลเดอร์ย่อยทั้งหมด (Recursive)
+        if [ -d "$target" ]; then
+            # ใช้ find ค้นหาไฟล์ -type f ที่ชื่อลงท้ายด้วย .sh
+            while IFS= read -r file; do
+                [ -f "$file" ] && source "$file" && ((loaded_count++))
+            done < <(find "$target" -type f -name "*.sh" 2>/dev/null | sort)
+
+        # 2. ถ้าเป็นไฟล์ธรรมดา ให้ source ได้เลย
+        elif [ -f "$target" ]; then
+            source "$target"
+            ((loaded_count++))
+        fi
+    done
+
+    # 3. ถ้าหาไฟล์ไม่เจอเลยทั้งในโฟลเดอร์และไฟล์ที่ระบุ ให้แจ้งเตือน
+    if [ "$loaded_count" -eq 0 ]; then
+        echo -e "\033[33m[WARNING]\033[0m No valid .sh files found to source from: $*" >&2
+        return 1
+    fi
+}

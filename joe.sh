@@ -11,17 +11,7 @@
 
 [[ -n "${MY_DEVICE:-}" ]] && export JOE_ENV=${MY_DEVICE:-$JOE_ENV}
 
-#-- Global shell refresh
-pp() {
-    clear
-    case $JOE_ENV in
-        TERMUX|MUMU) source "$HOME/.zshrc" ;;
-        WSL|GIT-BASH) source "$HOME/.bashrc" ;;
-    esac
-    cn 2 b "RELOADING....$(cn 10 bi "SUCCESSFULLY....!")"
-    cn 198 b "$PWD  🛼 🚄"
-    cn 45 b "${JOE_ENV:-unknown}"
-}
+
 #--- Global constants (machine-independent)
 
 
@@ -109,11 +99,6 @@ fi
 
 # ── Step 2: Source all modules using SCRIP S_PATH ──
 
-# Environment variables & paths (SSOT: bootstrap/00-env.sh)
-[ -f "$SSOT/bootstrap/00-env.sh" ] && source "$SSOT/bootstrap/00-env.sh"
-
-# Colors & Styles (must be sourced BEFORE sshd block — it uses cn)
-[ -f "$SSOT/core/01-colors.sh" ] && source "$SSOT/core/01-colors.sh"
 
 # Auto-start sshd if not running (guarded for git-bash which lacks pgrep)
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
@@ -153,7 +138,9 @@ fi
 ssot_load(){
     # -- Load all scripts in SSOT folders with priority order --
    local SHOW_LOAD="${1:-""}"
-   local load_files=(
+   local source_files=(
+    "$SSOT/bootstrap/00-env.sh"
+    "$SSOT/core/01-colors.sh"
     "$SSOT/core/ssh-config.sh"
     "$SSOT/core/3worlds.sh"
     "$SSOT/core/aliases.sh"
@@ -163,17 +150,65 @@ ssot_load(){
     "$SSOT/tools/syncctl/syncctl"
 
     )
-    _check -f "load_files" "source" 2>/dev/null &&
-
+    #-- run main cmd
+    _check -f "source_files" "source" 2>/dev/null &&
+    #-- เรียกดูไฟล์ท่ถูก source ตามลำดับ
     if [[ -n "${SHOW_LOAD}" && "${SHOW_LOAD}" =~ ^(true|1|yes)$ ]]; then
-        
-        for f in "${load_files[@]}"; do
-            cn 87 b "source $(basename ${f}) $(cn 10 b "done")"
+        local basen_files=() 
+        local max_len=0 
+
+        for i in "${source_files[@]}"; do
+            if [[ -f "$i" ]]; then
+                local f_name=$(basename "$i")            
+                basen_files+=("$f_name")
+            fi
         done
+        # -- Calculate max length --
+        local file_name
+        local max_len
+        local padding
+
+        for file in "${basen_files[@]}"; do
+            local len=${#file}
+            if (( len > max_len )); then
+                max_len=$len
+            fi
+        done
+        # -- Print with alignment --
+        for file_name in "${basen_files[@]}"; do
+            padding=$((max_len - ${#file_name}))
+            printf "%s %s%*s %s\n" \
+                "$(c 202 b "source")" \
+                "$(c 246 b "$file_name")" \
+                "$padding" "" \
+                "$(c 46 b "done")"
+        done        
     fi
+    
          
 }
-ssot_load "1"
+
+#-- Global shell refresh
+pp() {
+    local SHOW_LOAD="${1:-""}"
+    
+    clear
+    if [[ -n "${SHOW_LOAD}" && "${SHOW_LOAD}" =~ ^(s|show|1)$ ]]; then
+        case $JOE_ENV in    
+            TERMUX|MUMU) source ~/.zshrc ;;
+            WSL|GIT-BASH) source ~/.bashrc ;;
+        esac
+        ssot_load "${SHOW_LOAD}"
+    else
+        case $JOE_ENV in    
+            TERMUX|MUMU) exec zsh ;;
+            WSL|GIT-BASH) exec bash ;;
+        esac
+        cn 45 b "RELOADING....$(cn 10 bi "SUCCESSFULLY....!")"
+        cn 198 b "$PWD  🛼 🚄"
+        cn lm b "${JOE_ENV:-unknown}"
+    fi
+}
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #                      START UP                      #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
@@ -191,6 +226,7 @@ ssot_load "1"
         GIT-BASH) ;;  
     esac
    pf mom
+   ssot_load
 
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
