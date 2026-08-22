@@ -93,10 +93,9 @@ unbinding(){
 
 
   case "$JOE_ENV" in 
-        TERMUX|MUMU) unbinding -a g;;
+        TERMUX|MUMU) unbinding -a g 2>/dev/null || true;;
         WSL) ;;
-        GIT-BASH) unbinding -a ll
-        ;;  
+        GIT-BASH) unbinding -a ll 2>/dev/null || true;;  
     esac
 
 alias cls='clear'

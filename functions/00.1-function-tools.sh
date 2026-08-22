@@ -598,6 +598,7 @@ rc_delete() {
   if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     local rc
     local count=0
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS NULL_GLOB 2>/dev/null
     for rc in "$HOME"/.rc_*; do
        if [[ -f "$rc" ]]; then
          rm -f "$rc" && cn 28 "deleted $rc"
