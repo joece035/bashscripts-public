@@ -10,6 +10,19 @@
 # ค่าที่ใช้ได้: TERMUX | WSL | GIT-BASH | MUMU
 
 [[ -n "${MY_DEVICE:-}" ]] && export JOE_ENV=${MY_DEVICE:-$JOE_ENV}
+if [[ -z "${JOE_ENV:-}" ]]; then
+    if [[ -d "/data/data/com.termux" ]]; then
+        if [[ -n "${MUMU_DEVICE:-}" ]] || [[ "$(getprop ro.product.model 2>/dev/null)" =~ (MuMu|vphone) ]]; then
+            export JOE_ENV="MUMU"
+        else
+            export JOE_ENV="TERMUX"
+        fi
+    elif grep -qi microsoft /proc/version 2>/dev/null; then
+        export JOE_ENV="WSL"
+    elif [[ -n "${MSYSTEM:-}" ]] || [[ "$OSTYPE" == "msys" ]]; then
+        export JOE_ENV="GIT-BASH"
+    fi
+fi
 
 
 #--- Global constants (machine-independent)
@@ -137,21 +150,24 @@ fi
 
 ssot_load(){
     # -- Load all scripts in SSOT folders with priority order --
-   local SHOW_LOAD="${1:-""}"
-   local source_files=(
-    "$SSOT/bootstrap/00-env.sh"
-    "$SSOT/core/01-colors.sh"
-    "$SSOT/core/ssh-config.sh"
-    "$SSOT/core/3worlds.sh"
-    "$SSOT/core/aliases.sh"
-    "$SSOT/core/profiles.sh"
-    "$SSOT/core/theme.sh"
-    "$SSOT/functions"/*.sh
-    "$SSOT/tools/syncctl/syncctl"
+    if ! typeset -f _check &>/dev/null && [ -f "$SSOT/.bash_helper" ]; then
+        source "$SSOT/.bash_helper"
+    fi
 
+    local SHOW_LOAD="${1:-""}"
+    local source_files=(
+        "$SSOT/bootstrap/00-env.sh"
+        "$SSOT/core/01-colors.sh"
+        "$SSOT/core/ssh-config.sh"
+        "$SSOT/core/3worlds.sh"
+        "$SSOT/core/aliases.sh"
+        "$SSOT/core/profiles.sh"
+        "$SSOT/core/theme.sh"
+        "$SSOT/functions"/*.sh
+        "$SSOT/tools/syncctl/syncctl"
     )
     #-- run main cmd
-    _check -f "source_files" "source" 2>/dev/null &&
+    _check -f "source_files" "source" 2>/dev/null
     #-- เรียกดูไฟล์ท่ถูก source ตามลำดับ
     if [[ -n "${SHOW_LOAD}" && "${SHOW_LOAD}" =~ ^(true|1|yes)$ ]]; then
         local basen_files=() 

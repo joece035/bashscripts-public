@@ -13,7 +13,9 @@ _check() {
         local -a items=()
 
         if [ -n "$ZSH_VERSION" ]; then
-            items=("${(@)${(P)tar_input}}")
+            setopt LOCAL_OPTIONS
+            unsetopt KSH_ARRAYS 2>/dev/null
+            items=("${(@P)tar_input}")
         else
             local -n ref="$tar_input"
             items=("${ref[@]}")
