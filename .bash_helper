@@ -9,7 +9,7 @@ _check() {
     local cmd="${3:-source}"
     shift 3
 
-    if declare -p "$tar_input" 2>/dev/null | grep -E -q '(declare|typeset) -[aA]'; then
+    if declare -p "$tar_input" 2>/dev/null | grep -E -q '(declare|typeset).*-[^=]*[aA]'; then
         local -a items=()
 
         if [ -n "$ZSH_VERSION" ]; then
