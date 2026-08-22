@@ -147,39 +147,33 @@ elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     fi
 fi
 
-#-----SSH configurations 
-[ -f "$SSOT/core/ssh-config.sh" ] && source "$SSOT/core/ssh-config.sh"
-
-#-----SSH and 3-Worlds (tm, tw, push, pull, world)
-[ -f "$SSOT/core/3worlds.sh" ] && source "$SSOT/core/3worlds.sh"
-
-#-----Aliases
-[ -f "$SSOT/core/aliases.sh" ] && source "$SSOT/core/aliases.sh"
-
-#-----Profiiles switching
-[ -f "$SSOT/core/profiles.sh" ] && source "$SSOT/core/profiles.sh"
-
-#----Theme
-[ -f "$SSOT/core/theme.sh" ] && source "$SSOT/core/theme.sh"
-
-# Function Modules
-# Skip Syncthing conflict files (*.sync-conflict-*.sh) — they have broken
-# half-merged state and will produce syntax errors when sourced.
-# Top-level files only — nested modules (e.g. joe-block/block/*.sh) must
-# be sourced by their own entry point to avoid double-source + banner spam.
-if [ -d "$SSOT/functions" ]; then
-    for func_file in "$SSOT"/functions/*.sh; do
-        [ -f "$func_file" ] && source "$func_file"
-    done
-
-fi
-
-# syncctl — Syncthing ownership controller (sourced as function)
-if [ -f "$SSOT/tools/syncctl/syncctl" ]; then
-    source "$SSOT/tools/syncctl/syncctl"
-fi
 
 
+
+ssot_load(){
+    # -- Load all scripts in SSOT folders with priority order --
+   local SHOW_LOAD="${1:-""}"
+   local load_files=(
+    "$SSOT/core/ssh-config.sh"
+    "$SSOT/core/3worlds.sh"
+    "$SSOT/core/aliases.sh"
+    "$SSOT/core/profiles.sh"
+    "$SSOT/core/theme.sh"
+    "$SSOT/functions"/*.sh
+    "$SSOT/tools/syncctl/syncctl"
+
+    )
+    _check -f "load_files" "source" 2>/dev/null &&
+
+    if [[ -n "${SHOW_LOAD}" && "${SHOW_LOAD}" =~ ^(true|1|yes)$ ]]; then
+        
+        for f in "${load_files[@]}"; do
+            cn 87 b "source $(basename ${f}) $(cn 10 b "done")"
+        done
+    fi
+         
+}
+ssot_load "1"
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #                      START UP                      #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
