@@ -248,12 +248,13 @@ slink(){
    # 1. กำหนดค่าตัวแปร และครอบ Double Quotes เพื่อป้องกันปัญหาเรื่อง Path ที่มี Space (ช่องว่าง) source = symlink , target=fileจริง
    local src="${1:-${PWD}}"
    local tar="${2:?SELECT TARGET}"
-   
+   local dir="$(dirname "${tar}")"
+   local bk_dir="${BACKUP_DIR}"
+
+   [[ -d "$tar" ]] && rm -rf "$tar" && cn 45 b "DONE DELETED $tar" 
+   #_check -d "$tar"'rm -rf' && cn 45 b "DONE DELETED" || return 0
    # 2. คัดลอกและแบ็คอัพ
-   cp -r "${src}" "${tar}" && mv "${src}" "${src}bk"
-   
-   # 3. สร้าง Symlink และแสดงผล (แก้เรื่องการซ้อน Quotes และคำผิดนิดหน่อย)
-   ln -s "${tar}" "${src}" && echo "done symbolic link ${src} --> ${tar}"
-   # หมายเหตุ: ถ้าแกมีฟังก์ชัน c lg bi อยู่แล้ว ให้ใช้:
-   # ln -s "${tar}" "${src}" && c lg bi "done symbolic link ${src} --> ${tar}"
+   cp -r "${src}" "${dir}" && cn 45 b "DONE COPYING ${src} --> ${dir}" || { cn 196 b "COPY FAILED"; return 1; }
+   mv "${src}" "${bk_dir}/$(basename "${src}").bak" && cn 45 b "DONE BACKUP ${src} --> ${bk_dir}/$(basename "${src}").bak " || { cn 196 b "BACKUP FAILED"; return 1; }
+   ln -s "${tar}" "${src}" && cn 45 b "DONE MAKING SYMBOLIC LINK ${src} --> ${tar}" || { cn 196 b "LINK FAILED"; return 1; }
 }

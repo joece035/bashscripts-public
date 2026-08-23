@@ -172,7 +172,7 @@ export TAILSCALE_IP_MUMU=100.100.176.94
 
 # --- Termux (Android) ---
 export NODE_TERMUX_IP="$TAILSCALE_IP_TERMUX"
-export NODE_TERMUX_HOST="${termux:-$TAILSCALE_IP_TERMUX}"
+export NODE_TERMUX_HOST="termux"
 export NODE_TERMUX_USER="u0_a331"
 export NODE_TERMUX_PORT="$SSH_TERMUX_PORT"
 export NODE_TERMUX_ST_PORT="8383"
@@ -182,7 +182,7 @@ export NODE_TERMUX_ST_URL="http://${NODE_TERMUX_HOST}:${NODE_TERMUX_ST_PORT}"
 
 # --- WSL (Linux) ---
 export NODE_WSL_IP="$TAILSCALE_IP_WSL"
-export NODE_WSL_HOST="${HWSL:-$TAILSCALE_IP_WSL}"
+export NODE_WSL_HOST="wsl"
 export NODE_WSL_USER="usercivenz"
 export NODE_WSL_PORT="$SSH_WSL_PORT"
 export NODE_WSL_ST_PORT="8385"
@@ -192,7 +192,7 @@ export NODE_WSL_ST_URL="http://${NODE_WSL_HOST}:${NODE_WSL_ST_PORT}"
 
 # --- Windows ---
 export NODE_WIN_IP="$TAILSCALE_IP_WINDOW"
-export NODE_WIN_HOST="${window:-$TAILSCALE_IP_WINDOW}"
+export NODE_WIN_HOST="window"
 export NODE_WIN_USER="User"
 export NODE_WIN_ST_PORT="8384"
 export NODE_WIN_ST_KEY="9AQa4xCCRuZEDs2qDNUY9s6T27NJS9sU"
@@ -201,7 +201,7 @@ export NODE_WIN_ST_URL="http://${NODE_WIN_HOST}:${NODE_WIN_ST_PORT}"
 
 # --- MUMUPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
 export NODE_MUMU_IP="$TAILSCALE_IP_MUMU"
-export NODE_MUMU_HOST="${mumu:-$TAILSCALE_IP_MUMU}"
+export NODE_MUMU_HOST="mumu"
 export NODE_MUMU_USER="u0_a62"
 export NODE_MUMU_PORT="$SSH_MUMU_PORT"
 export NODE_MUMU_ST_PORT="8386"

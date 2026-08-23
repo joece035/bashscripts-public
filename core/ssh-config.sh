@@ -124,3 +124,116 @@ _rsync () {
 s(){
   ssh_ "$@"
 }
+
+# ============================================================
+# SSOT: Windows PowerShell shared constants & helpers
+# ============================================================
+# These vars/functions are the canonical reference for any module that
+# needs to talk to Windows PowerShell via SSH (3worlds.sh, plugins, etc).
+# อย่า duplicate — ให้ source ssh-config.sh ก่อนแล้วเรียก helpers เหล่านี้
+#
+# Why constants:
+#   - PS_BANNER_LINES  : จำนวนบรรทัด banner ที่ JoeMSI PowerShell profile.ps1
+#                        เขียนออกมาทุกครั้ง (proven 2026-08-24) — ตัวกรอง output
+#   - PS_REMOTE_CMD    : command line สำหรับ `ssh window` ที่:
+#                        * bypass default OpenSSH PowerShell login shell (via cmd /c)
+#                        * suppress profile.ps1 banner (-NoProfile)
+#                        * suppress startup banner (-NoLogo)
+#                        * run unsigned scripts (-ExecutionPolicy Bypass)
+#                        * read script body from stdin (-Command -)
+#   - PS_HOST          : SSH alias (resolves from ~/.ssh/config)
+#
+# Remote-side gotcha (see ps_remote comment):
+#   - Multi-line PS with backtick continuation → broken through stdin pipe
+#     (use single-line scripts only)
+#   - Format-Table output drops through SSH pipe (use ConvertTo-Json -Compress)
+#   - scp to JoeMSI fails (banner garbage) — always pipe stdin
+
+PS_HOST="${PS_HOST:-window}"
+PS_BANNER_LINES="${PS_BANNER_LINES:-5}"   # JoeMSI user profile.ps1 prints 5 lines
+PS_REMOTE_CMD="${PS_REMOTE_CMD:-cmd /c \"powershell -NoProfile -NoLogo -ExecutionPolicy Bypass -Command -\"}"
+
+export PS_HOST PS_BANNER_LINES PS_REMOTE_CMD
+
+# ps_strip_banner — strip leading banner lines from PowerShell output
+#   Usage: ps_remote '...' | ps_strip_banner
+#   Use when caller can't hardcode tail -n +N
+ps_strip_banner() {
+  tail -n +"$((PS_BANNER_LINES + 1))"
+}
+
+# ============================================================
+# ps_remote — Run PowerShell on Windows (escape-safe)
+# ============================================================
+# ปัญหาเดิม (3 layers):
+#   1) ssh window "powershell -Command \$_.Foo" → bash ตีความ $_ ก่อน
+#   2) Windows PowerShell user profile.ps1 prints banner on every start
+#      → ทุก non-interactive SSH command ได้ banner ปน output (~5KB noise)
+#   3) scp พัง ("message too long 458960955") — binary garbage จาก profile
+#
+# วิธีนี้ (proven):
+#   pipe PS script ผ่าน stdin → ssh window 'cmd /c "powershell -NoProfile -NoLogo -Command -"'
+#   - cmd wrapper bypass default OpenSSH PowerShell login shell
+#   - -NoProfile กัน user profile.ps1
+#   - PowerShell อ่าน script จาก stdin (the trailing "-")
+#   - ไม่ต้องสร้างไฟล์ชั่วคราว
+#
+# Usage:
+#   ps_remote 'Get-Process | Select-Object -First 3 Name,Id'
+#   ps_remote <<'PS'   # ใช้ <<'PS' (single-quoted) กัน bash expand
+#     Get-ItemProperty HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* |
+#       Where-Object { $_.DisplayName -match 'CapCut' }
+#   PS
+ps_remote() {
+  local script=""
+
+  # Case 1: arguments mode — join all args with spaces
+  if [[ $# -gt 0 ]]; then
+    script="$*"
+  # Case 2: stdin heredoc mode — read until EOF
+  else
+    script="$(cat)"
+  fi
+
+  [[ -z "$script" ]] && { echo "Usage: ps_remote '<ps_script>'  OR  ps_remote <<'PS' ... PS" >&2; return 1; }
+
+  # Pipe script via stdin → ssh $PS_HOST "$PS_REMOTE_CMD" → PowerShell -Command -
+  # Constants PS_HOST + PS_REMOTE_CMD live in ssh-config.sh (SSOT).
+  printf '%s\n' "$script" | ssh "$PS_HOST" "$PS_REMOTE_CMD" 2>/dev/null \
+    | sed 's/\r$//'
+  return ${PIPESTATUS[1]}
+}
+
+# ps_remote_file <local.ps1> [args...]
+#   → เหมือน ps_remote แต่รับ path ของ .ps1 (เหมาะ script ยาว)
+#   ใช้ 'Get-Content -Raw | Invoke-Expression' ผ่าน stdin pipe
+ps_remote_file() {
+  local local_ps1="$1"; shift || { echo "Usage: ps_remote_file <local.ps1> [args...]" >&2; return 1; }
+  [[ ! -f "$local_ps1" ]] && { echo "ps_remote_file: file not found: $local_ps1" >&2; return 1; }
+
+  cat "$local_ps1" | ssh "$PS_HOST" "$PS_REMOTE_CMD" 2>/dev/null \
+    | sed 's/\r$//'
+  return ${PIPESTATUS[1]}
+}
+
+# win_programs [search_pattern]
+#   → List installed programs on Windows (HKLM uninstall registry)
+#   Default search: 'CapCut|Clipchamp|DaVinci|OBS|ShareX|VLC|ffmpeg'
+#
+# Implementation notes:
+#   1) ConvertTo-Json -Compress (NOT Format-Table) → Format-Table's rich
+#      formatting doesn't survive SSH stdin pipe (buffering drops output);
+#      JSON is line-buffered and survives intact
+#   2) Banner จาก JoeMSI PowerShell profile.ps1 ยังโผล่ (5 lines) — strip
+#      ด้วย `tail -n +6` ก่อนส่งออก
+#   3) **Single-line script only** — multi-line with backtick continuation
+#      through SSH stdin pipe พัง (PowerShell -Command - รอ stdin ต่อจาก
+#      backtick ที่บอกว่า "อ่านต่อ" แต่ stdin ปิดไปแล้ว → ไม่มี output)
+#   4) Pattern ใส่ใน PowerShell **double-quoted** string ("...") — ไม่ต้อง
+#      escape single-quote เพราะ pattern ของผู้ใช้คาดว่ามี pipe (|) ไม่มี quote
+win_programs() {
+  local pat="${1:-CapCut|Clipchamp|DaVinci|OBS|ShareX|VLC|ffmpeg}"
+  # Single-line PowerShell — backtick continuation ใช้ไม่ได้ผ่าน SSH stdin
+  printf 'Get-ItemProperty HKLM:\\Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\* -EA SilentlyContinue | Where-Object { $_.DisplayName -match "%s" } | Select-Object DisplayName, DisplayVersion, Publisher | ConvertTo-Json -Compress\n' "${pat}" \
+    | ps_remote | ps_strip_banner
+}

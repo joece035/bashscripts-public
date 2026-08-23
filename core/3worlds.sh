@@ -175,12 +175,37 @@ micro-fix() {
     fi
 }
 
-# twpws — SSH into Windows PowerShell (default shell)
+# ============================================================
+# Windows PowerShell helpers (shared with ssh-config.sh)
+# ============================================================
+# Ensure ssh-config.sh is sourced (provides PS_HOST / PS_REMOTE_CMD /
+# ps_remote / ps_strip_banner). joe.sh may or may not have loaded it yet,
+# depending on module load order — guard explicitly.
+if ! declare -F ps_remote >/dev/null 2>&1; then
+  # Resolve SSOT path robustly — $SSOT may not be set if 3worlds.sh was
+  # sourced standalone (e.g. during testing).
+  local _ssh_cfg="${SSOT:-$(dirname "${BASH_SOURCE[0]}")}/core/ssh-config.sh"
+  [[ -f "$_ssh_cfg" ]] || _ssh_cfg="/home/usercivenz/bashscripts/core/ssh-config.sh"
+  if [[ -f "$_ssh_cfg" ]]; then
+    source "$_ssh_cfg"
+  fi
+fi
+
+# twpws — SSH into Windows PowerShell (default shell) for interactive use
+#   Note: this opens an interactive PowerShell session — banner WILL appear
+#   (by design). For non-interactive commands, prefer `ps_remote` or `twp`.
 twpws() {
   _ssh_node "${NODE_WIN_USER}" "${NODE_WIN_HOST}" "${NODE_WIN_PORT:-22}" -- "$@"
 }
-# Legacy alias
 alias Tw='twpws'
+
+# twp — Thin wrapper around `ps_remote` for symmetry with `tm`/`tw`
+#   Usage: twp '<ps_script>'  OR  twp <<'PS' ... PS
+#   Same as `ps_remote` but named `twp` to fit the `t<m|w|p|...>` family.
+#   Backed by shared SSOT constants in ssh-config.sh.
+twp() {
+  ps_remote "$@"
+}
 
 # ---Helper functions---  
 # _rsync_to <user> <host> <port> <local_src> <remote_dst>

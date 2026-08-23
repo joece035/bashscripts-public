@@ -394,23 +394,7 @@ g() {
 
  
 }
-replace_w() {
-    local old_name=${1:-}
-    local new_name=${2:-}
-    local target=${3:-$PWD}
 
-    if [[ -z "$old_name" || -z "$new_name" ]]; then
-        echo "Usage: change_word <old_name> <new_name> [target_folder]"
-        return 1
-    fi
-
-    echo "Replacing '$old_name' with '$new_name' in $target..."
-
-    # ครอบเครื่องหมายคำพูดซ้อนสไตล์นี้ปลอดภัยที่สุดครับ
-    find "$target" -type f -exec sed -i "s/""$old_name""/""$new_name""/g" {} +
-
-    echo "✨ All done!"
-}
 
 replace_w2() {
     local old_name=${1:-}
@@ -467,60 +451,7 @@ replace_w2() {
     echo "✨ All done!"
 }
 
-replace_w3() {
-    local old_name=${1:-}
-    local new_name=${2:-}
-    local target=${3:-$PWD}
 
-    # 1. ตรวจสอบว่ากรอกค่าคำเดิมและคำใหม่มาครบไหม
-    if [[ -z "$old_name" || -z "$new_name" ]]; then
-        echo "Usage: replace_w <old_name> <new_name> [target_folder]"
-        return 1
-    fi
-
-    echo "🔍 Searching for '$old_name' in $target..."
-
-    # 2. ค้นหาไฟล์ที่เจอคำนี้ พร้อมเก็บรายชื่อไว้ในตัวแปร array (ซ่อนไฟล์ขยะ/โฟลเดอร์ระบบ เช่น .git เพื่อความสะอาด)
-    # ใช้ mapfile เพื่อดึงผลลัพธ์จาก grep มาเก็บเป็นอาเรย์
-    local files=()
-    while IFS= read -r file; do
-        [[ -n "$file" ]] && files+=("$file")
-    done < <(grep -rl --exclude-dir={.git,node_modules} "$old_name" "$target" 2>/dev/null)
-
-    # 3. ถ้าไม่พบไฟล์เลย ให้แจ้งเตือนและจบการทำงาน
-    if [[ ${#files[@]} -eq 0 ]]; then
-        echo "❌ No files found containing '$old_name'."
-        return 0
-    fi
-
-    # 4. แสดงรายชื่อไฟล์ที่เจอทั้งหมด
-    echo ""
-    echo "📄 Found ${#files[@]} file(s) to update:"
-    for f in "${files[@]}"; do
-        echo "   - $f"
-    done
-    echo ""
-
-    # 5. ถามยืนยันความปลอดภัย (y/n)
-    read -p "❓ Do you want to replace '$old_name' with '$new_name' in these files? (y/N): " confirm
-    
-    # แปลงคำตอบเป็นตัวพิมพ์เล็กทั้งหมด เพื่อให้กด Y หรือ y ก็ได้
-    confirm=${confirm,,}
-
-    if [[ "$confirm" != "y" ]]; then
-        echo "🛑 Operation cancelled."
-        return 0
-    fi
-
-    echo "🔄 Replacing..."
-
-    # 6. ทำการแทนที่คำในไฟล์ที่คัดกรองมาแล้ว
-    for f in "${files[@]}"; do
-        sed -i "s/${old_name}/${new_name}/g" "$f"
-    done
-
-    echo "✨ All done!"
-}
 multi_w() {
     # 1. เช็กว่ามีการส่ง Parameter มาอย่างน้อย 1 ตัวไหม
     if [[ $# -lt 1 ]]; then
