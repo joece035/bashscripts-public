@@ -239,11 +239,17 @@ pp() {
 
     ssot_load 1
     case "$JOE_ENV" in 
-        TERMUX|MUMU) rc_delete >&2;;
+        TERMUX|MUMU) rc_delete ;;
     esac
-   pf mom
-   syncthing_auto >&2
 
+
+
+{
+    pf mom
+    if [[ "$JOE_ENV" != "GIT-BASH" ]]; then
+        ( syncthing_auto > /dev/null 2>&1 ) &
+    fi
+} >&2
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
 # after each command, but joe.sh uses unset variables (dbp, $2, etc.)
