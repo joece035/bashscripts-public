@@ -210,16 +210,17 @@ pp() {
     
     clear
     if [[ -n "${SHOW_LOAD}" && "${SHOW_LOAD}" =~ ^(s|show|1)$ ]]; then
-        case $JOE_ENV in    
-            TERMUX|MUMU) source ~/.zshrc ;;
-            WSL|GIT-BASH) source ~/.bashrc ;;
+        case "$_SHELL" in    
+             zsh) source ~/.zshrc ;;
+             bash) source ~/.bashrc ;;
         esac
         ssot_load "${SHOW_LOAD}"
     else
-        case $JOE_ENV in    
-            TERMUX|MUMU) exec zsh ;;
-            WSL|GIT-BASH) exec bash ;;
-        esac
+        case "$_SHELL" in
+             bash) exec bash ;;
+              zsh)  exec zsh ;;
+              *) return ;;
+         esac    
         cn 45 b "RELOADING....$(cn 10 bi "SUCCESSFULLY....!")"
         cn 198 b "$PWD  🛼 🚄"
         cn lm b "${JOE_ENV:-unknown}"
@@ -239,10 +240,9 @@ pp() {
     ssot_load 1
     case "$JOE_ENV" in 
         TERMUX|MUMU) rc_delete >&2;;
-        WSL) #syncthing_auto;;
-        GIT-BASH) ;;  
     esac
    pf mom
+   syncthing_auto >&2
 
 
 # Disable nounset after everything is loaded — ble.sh restores set -u

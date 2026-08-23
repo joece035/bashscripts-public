@@ -133,3 +133,10 @@ guard() {
         return 1
     fi
 }
+csh(){
+    case $1 in
+        b|bash) chsh -s bash && cn 10 b 'switched to bash' ;;
+        z|zsh) chsh -s zsh && cn 10 b 'switched to zsh' ;;
+        *) exit
+    esac    
+}
