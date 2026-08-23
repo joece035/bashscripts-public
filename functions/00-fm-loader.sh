@@ -7,8 +7,8 @@
 
 fm(){
     if [[ -z "$BASH_MANAGER" ]]; then
-        [[ -f "$SSOT/core/bash-manager.sh" ]]&& source "$SSOT/core/bash-manager.sh" &&
-            cn 10 b 'loading script is done ' || c y b "not found bash-manager.sh"
+        [[ -f "$SSOT/tools/files_manage.sh" ]]&& source "$SSOT/tools/files_manage.sh" &&
+            cn 10 b 'loading script is done ' || c y b "not found files_manage.sh"
     else
         c 45 b "BASH_MANAGER is Loaded"
     fi

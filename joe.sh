@@ -192,11 +192,11 @@ ssot_load(){
         done
         # -- Print with alignment --
         for file_name in "${basen_files[@]}"; do
-            padding=$((max_len - ${#file_name}))
-            printf "%s %s%*s %s\n" \
+            padding=$((max_len - ${#file_name} + 5))
+            printf "%s   %s%*s %s\n" \
                 "$(c 202 b "source")" \
                 "$(c 246 b "$file_name")" \
-                "$padding" "" \
+                "${padding}" "" \
                 "$(c 46 b "done")"
         done        
     fi
@@ -236,10 +236,10 @@ pp() {
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 
-    ssot_load
+    ssot_load 1
     case "$JOE_ENV" in 
         TERMUX|MUMU) rc_delete >&2;;
-        WSL) syncthing_auto;;
+        WSL) #syncthing_auto;;
         GIT-BASH) ;;  
     esac
    pf mom

@@ -513,5 +513,11 @@ perm(){
 
     chmod +x "$@" && c 10 bi "ให้สิทธิ์รันไฟล์  ";c 45 b "$(basename "$@")  ";cn 10 bi "เรียบร้อย" 
 }
-
+_g(){
+    
+    git add -A &&
+    git -m commit "$@" &&
+    git pull && 
+    cn 10 b "DONE PULL" 
+}
 

@@ -88,12 +88,12 @@ ssh_() {
 
 
 _rsync () {
-    local host  =${1:-$HOST_} # รับเป็นชื่อ alias เช่น mumu หรือ termux
-    local src   =${2:-}
-    local dest  =${3:-}
+    local src   =${1:-}
+    local dest  =${2:-}
+    local host  =${3:-$HOST_} # รับเป็นชื่อ alias เช่น mumu หรือ termux
     
     #rsync -avz "file.txt" "host:/path/destination/"
-    rsync -avz "${src}" "${host}:${dest}"
+    rsync -avz "${src}" "${host}:${dest}" && cn 10 bi "DOWNLOAD DONE : ${src} ${dest}"
 }
 
 
