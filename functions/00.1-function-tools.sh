@@ -676,3 +676,16 @@ sc() {
   esac
 }
 
+# ============================================================
+# envm / envmgr — SSOT Environment Variable Manager
+# ============================================================
+envm() {
+  local tool_script="${SSOT:-$HOME/bashscripts}/tools/env-manager.sh"
+  if [[ -f "$tool_script" ]]; then
+    bash "$tool_script" "$@"
+  else
+    cn 196 bi "envm: $tool_script not found"
+    return 1
+  fi
+}
+

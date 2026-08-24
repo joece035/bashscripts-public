@@ -156,4 +156,7 @@ alias rbdb='rbfe && opdb'
 #                       alias                        #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 alias ssot='cd $SSOT && cdc .'
+alias envm='bash "$SSOT/tools/env-manager.sh"'
+alias envmgr='bash "$SSOT/tools/env-manager.sh"'
+
 

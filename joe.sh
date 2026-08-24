@@ -159,13 +159,14 @@ ssot_load(){
         "$SSOT/bootstrap/00-env.sh"
         "$SSOT/core/01-colors.sh"
         "$SSOT/core/ssh-config.sh"
-        "$SSOT/core/3worlds.sh"
+        #"$SSOT/core/3worlds.sh"
         "$SSOT/core/aliases.sh"
         "$SSOT/core/profiles.sh"
         "$SSOT/core/theme.sh"
         "$SSOT/functions"/*.sh
-        "$SSOT/tools/syncctl/syncctl"
+        #"$SSOT/tools/syncctl/syncctl"
         "$SSOT/lessons/practicing_functions.sh"
+        "$SSOT/functions/joe-block/entry.sh"
     )
     #-- run main cmd
     _check -f "source_files" "source" 2>/dev/null

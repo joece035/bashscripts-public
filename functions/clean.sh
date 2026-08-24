@@ -559,4 +559,324 @@ change_w() {
 }
 
 
+# ============================================================
+# big_clean — Full junk sweep for $SSOT and custom targets
+# ============================================================
+# Usage:
+#   big_clean              → dry-run on $SSOT (show what will be removed)
+#   big_clean -s           → summary only (count+size per category, no file list)
+#   big_clean -x           → execute clean on $SSOT (with confirm)
+#   big_clean [dir] -x     → execute clean on custom dir
+#   big_clean -h           → show help
+#
+# Junk categories:
+#   [TMP]    *.tmp *.temp *~ *.swp *.swo *.orig *.rej
+#   [BAK]    *.bak *.bk *.old *.backup
+#   [LOG]    *.log *.log.* (plain log files, NOT inside node_modules)
+#   [CACHE]  __pycache__/  .cache/  .pytest_cache/  *.pyc  *.pyo
+#   [SYNC]   *.sync-conflict-*  (Syncthing junk — reuse del_c logic)
+#   [OS]     .DS_Store  Thumbs.db  Desktop.ini  ehthumbs.db
+#   [EMPTY]  empty directories (after removing files above)
+#   [ETEXT]  .etext_backup_* (etext backup dirs from etext function)
+# ============================================================
+big_clean() {
+    local target=""
+    local execute=0
+    local summary=0
+    local show_help=0
 
+    # ── parse args ────────────────────────────────────────────
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            -x|--exec|--execute) execute=1; shift ;;
+            -s|--summary)        summary=1; shift ;;
+            -h|--help)           show_help=1; shift ;;
+            -*)  cn 196 b "✗ Unknown flag: $1  (use -h for help)"; return 1 ;;
+            *)   target="$1"; shift ;;
+        esac
+    done
+
+    if (( show_help )); then
+        c 51 b "big_clean"; cn 255 "" " — full junk sweep"
+        echo "  Usage:"
+        echo "    big_clean              → dry-run on \$SSOT (list all files)"
+        echo "    big_clean [dir]        → dry-run on custom dir"
+        echo "    big_clean -s           → summary only (count+size per category)"
+        echo "    big_clean -x           → execute on \$SSOT (with confirm)"
+        echo "    big_clean [dir] -x     → execute on custom dir"
+        echo "  Categories: TMP BAK LOG CACHE SYNC OS EMPTY ETEXT"
+        return 0
+    fi
+
+    # ── resolve scan root ────────────────────────────────────
+    local scan_root="${target:-${SSOT:-$HOME/bashscripts}}"
+    [[ -d "$scan_root" ]] || { cn 196 b "✗ Directory not found: $scan_root"; return 1; }
+
+    # ── separator helper ─────────────────────────────────────
+    local SEP="─────────────────────────────────────────────────────────"
+
+    # ── announce ─────────────────────────────────────────────
+    echo ""
+    c 51 b "🧹 BIG CLEAN"; c 255 "" " — scanning: "; cn 220 b "$scan_root"
+    if   (( summary )); then cn 45  b "   MODE: SUMMARY (count+size per category)"
+    elif (( execute )); then cn 196 b "   MODE: EXECUTE (will delete after confirm)"
+    else                     cn 226 b "   MODE: DRY-RUN (no files will be deleted)"
+    fi
+    cn 245 "" "$SEP"
+
+    # ── collect junk (NUL-safe) ──────────────────────────────
+    local -a junk_files=()
+    local -a junk_dirs=()
+
+    # [TMP] temp / editor swap files
+    while IFS= read -r -d '' f; do
+        junk_files+=("TMP|$f")
+    done < <(find "$scan_root" \
+        -not -path "*/.git/*" \
+        -not -path "*/node_modules/*" \
+        -type f \( \
+            -name "*.tmp"   -o -name "*.temp"  -o \
+            -name "*~"      -o -name "*.swp"   -o \
+            -name "*.swo"   -o -name "*.orig"  -o \
+            -name "*.rej" \
+        \) -print0 2>/dev/null)
+
+    # [BAK] backup files
+    while IFS= read -r -d '' f; do
+        junk_files+=("BAK|$f")
+    done < <(find "$scan_root" \
+        -not -path "*/.git/*" \
+        -not -path "*/node_modules/*" \
+        -type f \( \
+            -name "*.bak"    -o -name "*.bk"   -o \
+            -name "*.old"    -o -name "*.backup" \
+        \) -print0 2>/dev/null)
+
+    # [LOG] log files
+    while IFS= read -r -d '' f; do
+        junk_files+=("LOG|$f")
+    done < <(find "$scan_root" \
+        -not -path "*/.git/*" \
+        -not -path "*/node_modules/*" \
+        -type f -name "*.log" \
+        -print0 2>/dev/null)
+
+    # [CACHE] python cache dirs & pyc files
+    while IFS= read -r -d '' d; do
+        junk_dirs+=("CACHE|$d")
+    done < <(find "$scan_root" \
+        -not -path "*/.git/*" \
+        -type d \( \
+            -name "__pycache__"    -o \
+            -name ".pytest_cache"  -o \
+            -name ".mypy_cache"    -o \
+            -name ".ruff_cache"    -o \
+            -name ".cache" \
+        \) -print0 2>/dev/null)
+
+    while IFS= read -r -d '' f; do
+        junk_files+=("CACHE|$f")
+    done < <(find "$scan_root" \
+        -not -path "*/.git/*" \
+        -not -path "*/__pycache__/*" \
+        -type f \( -name "*.pyc" -o -name "*.pyo" \) \
+        -print0 2>/dev/null)
+
+    # [SYNC] Syncthing conflict files
+    while IFS= read -r -d '' f; do
+        junk_files+=("SYNC|$f")
+    done < <(find "$scan_root" \
+        -type f -name "*.sync-conflict-*" \
+        -print0 2>/dev/null)
+
+    # [OS] OS-generated junk
+    while IFS= read -r -d '' f; do
+        junk_files+=("OS|$f")
+    done < <(find "$scan_root" \
+        -not -path "*/.git/*" \
+        -type f \( \
+            -name ".DS_Store"    -o \
+            -name "Thumbs.db"   -o \
+            -name "Desktop.ini" -o \
+            -name "ehthumbs.db" -o \
+            -name "._.DS_Store" \
+        \) -print0 2>/dev/null)
+
+    # [ETEXT] etext backup directories
+    while IFS= read -r -d '' d; do
+        junk_dirs+=("ETEXT|$d")
+    done < <(find "$scan_root" \
+        -maxdepth 4 \
+        -type d -name ".etext_backup_*" \
+        -print0 2>/dev/null)
+
+    # ── display results ───────────────────────────────────────
+    local total_files=${#junk_files[@]}
+    local total_dirs=${#junk_dirs[@]}
+
+    if (( total_files == 0 && total_dirs == 0 )); then
+        cn 46 b "✓ No junk found in $scan_root — already clean!"
+        return 0
+    fi
+
+    # Count by category + per-category size
+    local -A cat_count=()
+    local -A cat_size=()
+    for entry in "${junk_files[@]}" "${junk_dirs[@]}"; do
+        local cat="${entry%%|*}"
+        local path="${entry#*|}"
+        cat_count[$cat]=$(( ${cat_count[$cat]:-0} + 1 ))
+        local sz
+        sz=$(du -sh "$path" 2>/dev/null | cut -f1)
+        cat_size[$cat]+="${sz} "
+    done
+
+    # ── SUMMARY MODE: print table then exit ──────────────────
+    if (( summary )); then
+        local total_items=$(( total_files + total_dirs ))
+        echo ""
+        c 51 b "  Category"; printf '%-10s' ""; c 220 b "Count"; printf '%-6s' ""; cn 196 b "Files"
+        cn 245 "" "  ──────────────────────────────────────────"
+        local cat_order=(TMP BAK LOG CACHE SYNC OS ETEXT)
+        for cat in "${cat_order[@]}"; do
+            [[ -z "${cat_count[$cat]:-}" ]] && continue
+            local cnt="${cat_count[$cat]}"
+            # compute size for this category's paths
+            local -a cat_paths=()
+            for entry in "${junk_files[@]}" "${junk_dirs[@]}"; do
+                [[ "${entry%%|*}" == "$cat" ]] && cat_paths+=("${entry#*|}")
+            done
+            local cat_total_sz
+            cat_total_sz=$(du -sch "${cat_paths[@]}" 2>/dev/null | tail -1 | cut -f1)
+            printf '  '; c 220 b "$(printf '%-10s' "[$cat]")"; \
+            c 45  b "$(printf '%5s' "$cnt")"; c 255 "" " items   "; \
+            cn 196 b "~$cat_total_sz"
+        done
+        echo ""
+        cn 245 "" "$SEP"
+        local grand_total_sz
+        local -a all_paths=()
+        for entry in "${junk_files[@]}" "${junk_dirs[@]}"; do
+            all_paths+=("${entry#*|}")
+        done
+        grand_total_sz=$(du -sch "${all_paths[@]}" 2>/dev/null | tail -1 | cut -f1)
+        c 255 b "  TOTAL: "; c 214 b "$total_items"; c 255 "" " items   "; c 196 b "~$grand_total_sz"; cn 255 "" " reclaimable"
+        echo ""
+        cn 226 b "  → Run 'big_clean -x' to delete, or 'big_clean' to list all files."
+        echo ""
+        return 0
+    fi
+
+    # Print files by category
+    local _last_cat=""
+    for entry in "${junk_files[@]}"; do
+        local cat="${entry%%|*}"
+        local path="${entry#*|}"
+        if [[ "$cat" != "$_last_cat" ]]; then
+            echo ""
+            c 220 b "  [${cat}]"; c 245 "" "  (${cat_count[$cat]} item(s))"
+            echo ""
+            _last_cat="$cat"
+        fi
+        local sz
+        sz=$(du -sh "$path" 2>/dev/null | cut -f1)
+        c 245 "" "    "; c 198 "" "$sz"; cn 255 "" "  $path"
+    done
+
+    # Print dirs by category
+    for entry in "${junk_dirs[@]}"; do
+        local cat="${entry%%|*}"
+        local path="${entry#*|}"
+        if [[ "$cat" != "$_last_cat" ]]; then
+            echo ""
+            c 220 b "  [${cat}]"; c 245 "" "  (${cat_count[$cat]} item(s))"
+            echo ""
+            _last_cat="$cat"
+        fi
+        local sz
+        sz=$(du -sh "$path" 2>/dev/null | cut -f1)
+        c 245 "" "    "; c 214 "" "$sz"; cn 255 "" "  $path/  "; c 245 "" "(dir)"
+        echo ""
+    done
+
+    # ── summary ──────────────────────────────────────────────
+    echo ""
+    cn 245 "" "$SEP"
+    local total_items=$(( total_files + total_dirs ))
+
+    # Calculate total size
+    local total_sz
+    local -a all_paths=()
+    for entry in "${junk_files[@]}" "${junk_dirs[@]}"; do
+        all_paths+=("${entry#*|}")
+    done
+    total_sz=$(du -sch "${all_paths[@]}" 2>/dev/null | tail -1 | cut -f1)
+
+    c 255 b "  Summary: "; c 214 b "$total_items"; c 255 "" " item(s)   "; c 196 b "~$total_sz"; cn 255 "" " reclaimable"
+    echo ""
+
+    # ── dry-run → done ───────────────────────────────────────
+    if (( ! execute )); then
+        cn 226 b "  ↑ DRY-RUN only. Run with -x to actually delete."
+        echo ""
+        return 0
+    fi
+
+    # ── execute: confirm ─────────────────────────────────────
+    c 196 b "⚠  DELETE $total_items items (~$total_sz) from $scan_root?"
+    c 11 b " [y/N] "
+    local ans
+    read -r ans
+    [[ "$ans" =~ ^[Yy]$ ]] || { cn 220 b "→ cancelled (nothing changed)"; return 0; }
+
+    # ── execute: delete ───────────────────────────────────────
+    local ok=0 fail=0
+
+    for entry in "${junk_files[@]}"; do
+        local path="${entry#*|}"
+        if rm -f -- "$path" 2>/dev/null; then
+            c 46 "" "  ✓ "; cn 255 "" "$path"
+            (( ok++ ))
+        else
+            c 196 b "  ✗ "; cn 255 "" "$path"
+            (( fail++ ))
+        fi
+    done
+
+    for entry in "${junk_dirs[@]}"; do
+        local path="${entry#*|}"
+        if rm -rf -- "$path" 2>/dev/null; then
+            c 46 "" "  ✓ "; c 245 "" "(dir) "; cn 255 "" "$path"
+            (( ok++ ))
+        else
+            c 196 b "  ✗ "; c 245 "" "(dir) "; cn 255 "" "$path"
+            (( fail++ ))
+        fi
+    done
+
+    # ── sweep empty dirs (bonus pass) ────────────────────────
+    local empty_removed=0
+    while IFS= read -r -d '' d; do
+        rmdir -- "$d" 2>/dev/null && (( empty_removed++ )) || true
+    done < <(find "$scan_root" \
+        -not -path "*/.git/*" \
+        -not -path "*/node_modules/*" \
+        -mindepth 1 -type d -empty \
+        -print0 2>/dev/null | sort -rz)
+
+    # ── final report ─────────────────────────────────────────
+    echo ""
+    cn 245 "" "$SEP"
+    if (( fail == 0 )); then
+        c 46 b "✓ Done: "; c 220 b "$ok"; c 46 b " deleted"
+        (( empty_removed > 0 )) && { c 245 "" "  +"; c 45 b "$empty_removed"; cn 245 "" " empty dirs swept"; } || echo ""
+    else
+        c 46 b "⚠ Done: "; c 220 b "$ok"; c 46 b " deleted, "
+        c 196 b "$fail"; cn 196 b " failed (check permissions)"
+    fi
+    echo ""
+}
+
+# alias shorthand
+alias bclean='big_clean'
+alias bcleanx='big_clean -x'
