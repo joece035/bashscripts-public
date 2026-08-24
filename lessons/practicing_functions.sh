@@ -115,3 +115,58 @@ fpid() {
         cn y b "Process $pid not killed."
     fi
 }
+
+fnex(){
+    local target pattern files count move_dir copy_dir
+    target="${1:-$PWD}"
+    pattern="${2:-*.sh}"
+    count="$(find "$target" -type f -name "${pattern}" 2>/dev/null | wc -l)"
+
+    
+
+    #เช็คว่ามีไฟล์
+    files="$(find "$target" -type f -name "${pattern}" 2>/dev/null | sort -u)"
+    if [[ -z "$files" ]]; then
+        cn r bi "No files found matching pattern "${pattern}" in directory "$target""; return 1
+    fi
+    
+    #แสดง
+    cn 45 b "$files"
+    cn 10 b "$count files found!"
+    read -p "what do you want to do with these files? (rm/mv/cp/exit) : " answer
+
+    if [[ "$answer" == "rm" ]]; then
+        find "$target" -type f -name "${pattern}" 2>/dev/null | xargs -p rm -v
+    elif [[ "$answer" == "mv" ]]; then
+        read -p "Enter the directory to move the files to: " move_dir
+        find "$target" -type f -name "${pattern}" 2>/dev/null | xargs -p mv -v -t "${move_dir:-}"
+    elif [[ "$answer" == "cp" ]]; then
+        read -p "Enter the directory to copy the files to: " copy_dir
+        find "$target" -type f -name "${pattern}" 2>/dev/null | xargs -p cp -v -t "$copy_dir"
+    else
+        cn y b "Invalid input."
+    fi      
+}
+
+_clean_(){
+
+echo "=== เริ่มต้นทำความสะอาดระบบ ==="
+
+# 1. ลบไฟล์แคชการติดตั้งโปรแกรมของ APT (.deb ที่โหลดมาเก็บไว้)
+echo "[1/4] ล้างแคช APT Package..."
+sudo apt-get clean
+
+# 2. ถอดถอนแพ็กเกจ/ความสัมพันธ์ที่ไม่ได้ใช้งานแล้ว (Unused dependencies)
+echo "[2/4] ลบโปรแกรมขยะที่ไม่ได้ใช้..."
+sudo apt-get autoremove -y
+
+# 3. ล้าง User Cache ของผู้ใช้ปัจจุบัน (เช่น แคชเบราว์เซอร์, แอปพลิเคชัน)
+echo "[3/4] ล้าง User Cache..."
+rm -rf ~/.cache/*
+
+# 4. ลบไฟล์ Temp ที่ค้างในระบบ
+echo "[4/4] ล้างไฟล์ชั่วคราว (/tmp)..."
+sudo rm -rf /tmp/*
+
+echo "=== ทำความสะอาดเรียบร้อยแล้ว! ==="
+}

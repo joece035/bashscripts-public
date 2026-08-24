@@ -510,8 +510,8 @@ mv_() {
 
 
 perm(){
-
-    chmod +x "$@" && c 10 bi "ให้สิทธิ์รันไฟล์  ";c 45 b "$(basename "$@")  ";cn 10 bi "เรียบร้อย" 
+    local target="${1:-$(cb_read)}"
+    chmod +x "$target" && c 10 bi "ให้สิทธิ์รันไฟล์  ";c 45 b "$(basename "$target")  ";cn 10 bi "เรียบร้อย" 
 }
 _g(){
     bsc &&

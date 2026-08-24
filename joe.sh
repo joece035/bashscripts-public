@@ -239,7 +239,7 @@ pp() {
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 
-    ssot_load 1
+    ssot_load 
     case "$JOE_ENV" in 
         TERMUX|MUMU) rc_delete ;;
     esac
