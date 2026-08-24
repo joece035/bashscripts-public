@@ -134,10 +134,12 @@ guard() {
     fi
 }
 csh(){
+    [[ -z "$1" ]]&& c 198 "b" "SHELL : ";cn ora b "$_SHELL"
+
     case $1 in
         b|bash) chsh -s bash && cn 10 b 'switched to bash' ;;
         z|zsh) chsh -s zsh && cn 10 b 'switched to zsh' ;;
-        *) exit
+        
     esac    
 }
 
