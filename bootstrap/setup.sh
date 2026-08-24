@@ -81,6 +81,72 @@ if [[ ! -f "$BIN_DIR/joe" ]]; then
     echo "✅ Created symlink: $BIN_DIR/joe → joe.sh"
 fi
 
+shell_setup(){
+    
+    local pf=""
+
+        case "$JOE_ENV" in
+                TERMUX)
+                    if [[ ! -f "$HOME/.bashrc" ]]; then
+                         pf="${SSOT}/profiles/termux/.bashrc"
+                        if [[ -f "$pf" ]]; then
+                            ln -s "$pf" "$HOME/.bashrc" && echo "symlink $pf >>> $HOME/.bashrc done" || echo "FAIL"
+                        else
+                            echo "not found $pf"    
+                        fi
+                    fi     
+                    if [[ ! -f "$HOME/.zshrc" ]]; then
+                         pf="${SSOT}/profiles/termux/.zshrc"
+                         if [[ -f "$pf" ]]; then
+                             ln -s "$pf" "$HOME/.zshrc" && echo "symlink $pf >>> $HOME/.zshrc done" || echo "FAIL"
+                         else
+                             echo "not found $pf"
+                         fi
+                    fi
+                    ;;
+                MUMU) 
+                    if [[ ! -f "$HOME/.bashrc" ]]; then
+                         pf="${SSOT}/profiles/mumu/.bashrc"
+                         if [[ -f "$pf" ]]; then
+                            ln -s "$pf" "$HOME/.bashrc" && echo "symlink $pf >>> $HOME/.bashrc done" || echo "FAIL"
+                         else
+                            echo "not found $pf"
+                         fi
+                    fi
+                    if [[ ! -f "$HOME/.zshrc" ]]; then
+                         pf="${SSOT}/profiles/mumu/.zshrc"
+                         if [[ -f "$pf" ]]; then
+                             ln -s "$pf" "$HOME/.zshrc" && echo "symlink $pf >>> $HOME/.zshrc done" || echo "FAIL"
+                         else
+                             echo "not found $pf"
+                         fi
+                    fi
+                    ;;
+                WSL)
+                    if [[ ! -f "$HOME/.bashrc" ]]; then
+                         pf="${SSOT}/profiles/wsl/.bashrc"
+                         if [[ -f "$pf" ]]; then
+                            ln -s "$pf" "$HOME/.bashrc" && echo "symlink $pf >>> $HOME/.bashrc done" || echo "FAIL"
+                         else
+                            echo "not found $pf"
+                         fi
+                    fi
+                    ;;
+                GIT-BASH )
+                    if [[ ! -f "$HOME/.bashrc" ]]; then
+                         pf="${SSOT}/profiles/git-bash/.bashrc"
+                         if [[ -f "$pf" ]]; then
+                            ln -s "$pf" "$HOME/.bashrc" && echo "symlink $pf >>> $HOME/.bashrc done" || echo "FAIL"
+                         else
+                            echo "not found $pf"
+                         fi
+                    fi
+                    ;;
+                *) echo unknow ;;    
+         esac               
+}
+
+shell_setup
 # ── Summary ──
 echo ""
 echo "═══════════════════════════════════════════════════════════"

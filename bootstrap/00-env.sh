@@ -75,6 +75,10 @@ export boom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
 export bk_boom="${WIN_PATH}h/boom"
 export _SHELL=$(basename $(echo $SHELL))
 export _USER=$(whoami)
+export pftermux="${SSOT}/profiles/termux"
+export ptwsl="${SSOT}/profiles/wsl"
+export pfmumu="${SSOT}/profiles/mumu"
+export pfwin="${SSOT}/profiles/git-bash"
 
 
 # ============================================================
