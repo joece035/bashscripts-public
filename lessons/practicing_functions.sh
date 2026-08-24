@@ -43,6 +43,7 @@ rename_multi(){
 }
 
 fpid() {
+    # 1. เช็คว่าใส่ Port มาหรือไม่
     local port="${1:-}"
     if [ -z "$port" ]; then
         cn y bi "Usage: fpid <port>" ; return 1
@@ -50,48 +51,67 @@ fpid() {
 
     local pid=""
     local os_type="$(uname -s 2>/dev/null)"
-
-    # --- 1. กรณีรันบน Git Bash (Windows / MSYS / MINGW) ---
-    if [[ "$os_type" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
-        # ใช้ netstat.exe ของ Windows สกัดเอา PID
-        pid=$(netstat.exe -ano | grep LISTENING | grep ":$port " | awk '{print $5}' | sort -u | xargs)
-        
-        if [ -z "$pid" ]; then
-            cn r bi "No process is running on port $port" ; return 1
-        fi
-
-        cn 87 b "Found process on Windows port $port (PID: $pid)"
-        read -p "Do you want to kill process $pid? (y/n): " answer
-
-        if [[ "$answer" =~ ^[Yy]$ ]]; then
-            # ใช้ taskkill.exe ของ Windows สั่งลบโปรเซส
-            taskkill.exe //F //PID $pid 2>/dev/null && cn 10 b "Process $pid killed." || cn y bi "Can't kill process $pid."
-        fi
-        return 0
-    fi
-
-    # --- 2. กรณีรันบน Linux / WSL / Termux (ใช้โค้ดเดิม) ---
     local use_sudo=""
-    if [ -z "$TERMUX_VERSION" ] && [ "$(id -u)" -ne 0 ] && command -v sudo &>/dev/null; then
-        use_sudo="sudo"
+
+    # --- 2. ค้นหา PID ตามสภาพแวดล้อม ---
+    if [[ "$os_type" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
+        # ฝั่ง Windows / Git Bash
+        pid=$(netstat.exe -ano | grep LISTENING | grep ":$port " | awk '{print $5}' | sort -u | xargs)
+    else
+        # ฝั่ง Linux / WSL / Termux
+        if [ -z "$TERMUX_VERSION" ] && [ "$(id -u)" -ne 0 ] && command -v sudo &>/dev/null; then
+            use_sudo="sudo"
+        fi
+
+        if command -v lsof &>/dev/null; then
+            pid=$($use_sudo lsof -ti:"$port" 2>/dev/null | sort -u | xargs)
+        elif command -v ss &>/dev/null; then
+            pid=$($use_sudo ss -tulpn "sport = :$port" 2>/dev/null | grep -oP 'pid=\K\d+' | sort -u | xargs)
+        elif command -v netstat &>/dev/null; then
+            pid=$($use_sudo netstat -tulpn 2>/dev/null | grep ":$port " | grep -oP '\d+(?=/) | sort -u | xargs')
+        fi
     fi
 
-    if command -v lsof &>/dev/null; then
-        pid=$($use_sudo lsof -ti:"$port" 2>/dev/null | sort -u | xargs)
-    elif command -v ss &>/dev/null; then
-        pid=$($use_sudo ss -tulpn "sport = :$port" 2>/dev/null | grep -oP 'pid=\K\d+' | sort -u | xargs)
-    fi
-
+    # --- 3. เช็คว่าเจอ PID หรือไม่ ---
     if [ -z "$pid" ]; then
         cn r bi "No process is running on port $port" ; return 1
     fi
 
-    cn 87 b "Found process on port $port (PID: $pid)"
+    # --- 4. ถามยืนยันเพื่อ Kill Process ---
+    cn 87 b "Found process running on port $port: (PID: $pid)"
     read -p "Do you want to kill process $pid? (y/n): " answer
 
     if [[ "$answer" =~ ^[Yy]$ ]]; then
-        $use_sudo kill -9 $pid 2>/dev/null && cn 10 b "Process $pid killed." || cn y bi "Can't kill process $pid."
+        if [[ "$os_type" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
+            # Windows: ดึงชื่อไฟล์ .exe (เช่น syncthing.exe) จาก PID
+            local exe_name
+            exe_name=$(tasklist.exe //FI "PID eq $pid" //FO CSV 2>/dev/null | awk -F'","' 'NR==2{print $1}' | tr -d '"')
+
+            if [ -n "$exe_name" ]; then
+                # สั่ง //IM เพื่อ kill ทุก Process ที่ชื่อตรงกัน (ตัวแม่+ตัวลูก) และใส่ //T กวาดทั้ง Tree
+                taskkill.exe //F //IM "$exe_name" //T 2>/dev/null && cn 10 b "Killed all instances of '$exe_name'."
+            else
+                # Fallback สั่ง Tree kill ผ่าน PID
+                taskkill.exe //F //T //PID $pid 2>/dev/null && cn 10 b "Process $pid killed."
+            fi
+        else
+            # Linux / Termux / WSL: พยายามดึงชื่อเพื่อ pkill กวาดล้างทั้งตระกูล
+            local first_pid
+            first_pid=$(echo "$pid" | awk '{print $1}')
+            
+            local proc_name=""
+            proc_name=$(ps -p "$first_pid" -o comm= 2>/dev/null | xargs)
+            [ -z "$proc_name" ] && proc_name=$(cat "/proc/$first_pid/comm" 2>/dev/null)
+
+            if [ -n "$proc_name" ] && command -v pkill &>/dev/null; then
+                $use_sudo pkill -9 -f "$proc_name" 2>/dev/null
+                cn 10 b "Killed all processes associated with '$proc_name'."
+            else
+                $use_sudo kill -9 $pid 2>/dev/null
+                cn 10 b "Process $pid killed."
+            fi
+        fi
+    else
+        cn y b "Process $pid not killed."
     fi
 }
-
-

@@ -248,9 +248,16 @@ pp() {
 {
     pf mom
     if [[ "$JOE_ENV" != "GIT-BASH" ]]; then
-        ( syncthing_auto > /dev/null 2>&1 ) &
+        if ! command -v pgrep >/dev/null 2>&1; then
+            cn 9 b "pgrep not found, skipping syncthing check"
+        elif ! pgrep -f syncthing >/dev/null 2>&1; then
+            cn 202 b "syncthing not running, starting..."
+                ( syncthing_auto > /dev/null 2>&1 ) &
+        else
+            cn 202 b "Syncthing is already running"
+        fi
     fi
-} >&2
+} >/dev/null 2>&1
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
 # after each command, but joe.sh uses unset variables (dbp, $2, etc.)
