@@ -120,12 +120,8 @@ alias bkboom='cd $bk_boom'
 # ============================================================
 
 # Shell-aware reload (zsh uses .zshrc, bash uses .bashrc)
-if [[ -n "${ZSH_VERSION:-}" ]]; then
-    alias reload='source "$HOME/.zshrc" && cn 46 b "✓ Config reloaded!"'
-else
-    alias reload='source "$HOME/.bashrc" && cn 46 b "✓ Config reloaded!"'
-fi
-alias re="clear && reload"
+
+
 # ============================================================
 # SYSTEM & PROCESS MANAGEMENT
 # ============================================================

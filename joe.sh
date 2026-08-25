@@ -207,11 +207,18 @@ ssot_load(){
 
 #-- Global shell refresh
 pp() {
-    
-    SHOW_LOAD="${1:-""}"
-    
-    re
+    clear &&
+    LOAD_LIST="${1:-""}"
+    AI_PROFILE="${2:-"mom"}"
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
+        source "$HOME/.zshrc"
+    else
+        source "$HOME/.bashrc"
+    fi
+    cn 46 b "✓ Config reloaded!"
 }
+alias re="pp"
+
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #                      START UP                      #
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
@@ -223,15 +230,14 @@ pp() {
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 
-    ssot_load ${SHOW_LOAD:-}
+    ssot_load ${LOAD_LIST:-}
+    pf ${AI_PROFILE:-mom}
     case "$JOE_ENV" in 
         TERMUX|MUMU) rc_delete ;;
     esac
-
-
-
+    unset LOAD_LIST
+    unset AI_PROFILE
 {
-    pf mom
     if [[ "$JOE_ENV" != "GIT-BASH" ]]; then
         if ! command -v pgrep >/dev/null 2>&1; then
             cn 9 b "pgrep not found, skipping syncthing check"
@@ -243,6 +249,9 @@ pp() {
         fi
     fi
 } >/dev/null 2>&1
+
+
+
 
 # Disable nounset after everything is loaded — ble.sh restores set -u
 # after each command, but joe.sh uses unset variables (dbp, $2, etc.)
