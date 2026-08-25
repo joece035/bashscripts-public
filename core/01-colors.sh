@@ -336,6 +336,7 @@ alias cmp2='color_comparison2'
 # 256-COLOR CHART (V2 — visual reference)
 # ============================================================
 c256() {
+    local i
     for i in {0..255}; do
         printf "%s%3d%s " "$(_c "$i")" "$i" "$(_r)"
         (( (i+1)%16==0 )) && echo
@@ -343,6 +344,7 @@ c256() {
 }
 
 c256_() {
+    local i
     for i in {0..255}; do
         local block=$(cmp2 "$i")
         printf "%s code = %s\n" "$block" "$i"

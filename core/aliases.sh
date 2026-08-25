@@ -92,14 +92,15 @@ unbinding(){
 }
 
 
+
+
   case "$JOE_ENV" in 
         TERMUX|MUMU) unbinding -a g 2>/dev/null || true;;
         WSL) ;;
         GIT-BASH) unbinding -a ll 2>/dev/null || true;;  
     esac
 
-alias cls='clear'
-alias h='help'
+
 alias spy='source $PYTHON_VENV'
 
 # Directory shortcuts (using env vars from 00-env.sh)

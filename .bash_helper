@@ -7,6 +7,7 @@ _check() {
     local type="${1:--f}"
     local tar_input="${2:-}"
     local cmd="${3:-source}"
+    local item=""
     shift 3
 
     if declare -p "$tar_input" 2>/dev/null | grep -E -q '(declare|typeset).*-[^=]*[aA]'; then

@@ -301,7 +301,7 @@ fm_info() {
 #   fm rm    <node> <path>        - fm_rm
 #   fm exec  <node> <cmd...>      - fm_exec
 #   fm bkp   <file...>            - backup (calls bkp from backup.sh)
-fm() {
+fn() {
   local action="${1:-}"
   [[ -z "$action" ]] && { _fm_help; return 0; }
   shift

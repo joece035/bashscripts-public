@@ -159,7 +159,7 @@ ssot_load(){
         "$SSOT/bootstrap/00-env.sh"
         "$SSOT/core/01-colors.sh"
         "$SSOT/core/ssh-config.sh"
-        #"$SSOT/core/3worlds.sh"
+        "$SSOT/core/3worlds.sh"
         "$SSOT/core/aliases.sh"
         "$SSOT/core/profiles.sh"
         "$SSOT/core/theme.sh"
@@ -174,20 +174,22 @@ ssot_load(){
     if [[ -n "${SHOW_LOAD}" && "${SHOW_LOAD}" =~ ^(true|1|yes)$ ]]; then
         local basen_files=() 
         local max_len=0 
+        local sf=""
 
-        for i in "${source_files[@]}"; do
-            if [[ -f "$i" ]]; then
-                local f_name=$(basename "$i")            
+        for sf in "${source_files[@]}"; do
+            if [[ -f "$sf" ]]; then
+                local f_name=""
+                f_name=$(basename "$sf")            
                 basen_files+=("$f_name")
             fi
         done
         # -- Calculate max length --
-        local file_name
-        local max_len
-        local padding
+        local file_name=""
+        local len=0
+        local padding=0
 
-        for file in "${basen_files[@]}"; do
-            local len=${#file}
+        for file_name in "${basen_files[@]}"; do
+            len=${#file_name}
             if (( len > max_len )); then
                 max_len=$len
             fi
@@ -202,8 +204,6 @@ ssot_load(){
                 "$(c 46 b "done")"
         done        
     fi
-    
-         
 }
 
 #-- Global shell refresh
