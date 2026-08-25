@@ -73,8 +73,8 @@ export ais_fiber="880-563-6522"
 export ais_phone="0814764210"
 export boom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
 export bk_boom="${WIN_PATH}h/boom"
-export _SHELL=$(basename $(echo $SHELL))
-export _USER=$(whoami)
+export _SHELL="${_SHELL:-${SHELL##*/}}"
+export _USER="${USER:-${USERNAME:-$(whoami 2>/dev/null)}}"
 export pftermux="${SSOT}/profiles/termux"
 export ptwsl="${SSOT}/profiles/wsl"
 export pfmumu="${SSOT}/profiles/mumu"
@@ -85,28 +85,16 @@ export pfwin="${SSOT}/profiles/git-bash"
 # Dynamic env switching
 # ============================================================
 ai_bin() {
-    local ai_providers=()
-
-    ai_providers=( "openclaw" "hermes" )
-
-    for ai in "${ai_providers[@]}"; do
-        if command -v "$ai" &>/dev/null; then
-             case "$ai" in
-                "openclaw")
-                    export OPENCLAW_BIN="$(which openclaw)"
-                    ;;
-                "hermes")
-                    export HERMES_BIN="$(which hermes)"
-                    ;;
-             esac
-        else
-             case "$ai" in
-                "openclaw") export OPENCLAW_BIN ;;
-                "hermes")   export HERMES_BIN ;;
-             esac
-        fi
-    done
-
+    if command -v openclaw >/dev/null 2>&1; then
+        export OPENCLAW_BIN="openclaw"
+    else
+        unset OPENCLAW_BIN
+    fi
+    if command -v hermes >/dev/null 2>&1; then
+        export HERMES_BIN="hermes"
+    else
+        unset HERMES_BIN
+    fi
 }
 ai_bin
 # ============================================================
@@ -164,11 +152,20 @@ export CURRENT_OC_PROFILE="${CURRENT_OC_PROFILE:-None (Default)}"
 #   ST_KEY    — Syncthing API key
 #   ST_URL    — Syncthing base URL (no trailing slash)
 # ============================================================
-# -- TAILSCALING: All nodes must have Tailscale installed and running.
-export TAILSCALE_BIN="$(which tailscale)"
-# timeout protection: tailscale daemon can hang → block entire shell init
-export TAILSCALE_STATUS="$(timeout 3 tailscale status 2>/dev/null || echo "tailscale not running")"
-export TAILSCALE_IP="$(timeout 3 tailscale ip -4 2>/dev/null || echo "tailscale not running")"
+# -- TAILSCALING: Tailscale environment detection
+if command -v tailscale >/dev/null 2>&1; then
+    export TAILSCALE_BIN="tailscale"
+    if [[ "$JOE_ENV" != "GIT-BASH" ]]; then
+        export TAILSCALE_STATUS="$(tailscale status 2>/dev/null || echo "tailscale not running")"
+        export TAILSCALE_IP="$(tailscale ip -4 2>/dev/null || echo "tailscale not running")"
+    else
+        export TAILSCALE_STATUS="available"
+        export TAILSCALE_IP="100.69.181.45"
+    fi
+else
+    export TAILSCALE_STATUS="tailscale not running"
+    export TAILSCALE_IP="tailscale not running"
+fi
 export TAILSCALE_IP_TERMUX=100.110.26.16
 export TAILSCALE_IP_WINDOW=100.69.181.45
 export TAILSCALE_IP_WSL=100.80.195.120

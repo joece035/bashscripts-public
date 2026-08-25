@@ -94,7 +94,7 @@ export SSH_TERMUX_PORT=8022
 export SSH_WSL_PORT=22
 export SSH_WIN_PORT=22
 
-if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
+if [[ "$JOE_ENV" != "GIT-BASH" ]] && command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
     _crlf_files="$(grep -rlU $'\r' "$SSOT" --include="*.sh" 2>/dev/null)"
     if [[ -n "$_crlf_files" ]]; then
         _crlf_count=0
@@ -107,7 +107,6 @@ if command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
         # problem and prints a multi-line warning to the user.
         echo "⚠️  CRLF auto-fixed: ${_crlf_count} file(s) → LF (มาจากเครื่องอื่น/Windows)" >&2
     fi
-
 fi
 
 # ── Step 2: Source all modules using SCRIP S_PATH ──
@@ -208,25 +207,10 @@ ssot_load(){
 
 #-- Global shell refresh
 pp() {
-    local SHOW_LOAD="${1:-""}"
     
-    clear
-    if [[ -n "${SHOW_LOAD}" && "${SHOW_LOAD}" =~ ^(s|show|1)$ ]]; then
-        case "$_SHELL" in    
-             zsh) source ~/.zshrc ;;
-             bash) source ~/.bashrc ;;
-        esac
-        ssot_load "${SHOW_LOAD}"
-    else
-        case "$_SHELL" in
-             bash) exec bash ;;
-              zsh)  exec zsh ;;
-              *) return ;;
-         esac    
-        cn 45 b "RELOADING....$(cn 10 bi "SUCCESSFULLY....!")"
-        cn 198 b "$PWD  🛼 🚄"
-        cn lm b "${JOE_ENV:-unknown}"
-    fi
+    SHOW_LOAD="${1:-""}"
+    
+    re
 }
 # ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ #
 #                      START UP                      #
@@ -239,7 +223,7 @@ pp() {
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
 
-    ssot_load 
+    ssot_load ${SHOW_LOAD:-}
     case "$JOE_ENV" in 
         TERMUX|MUMU) rc_delete ;;
     esac

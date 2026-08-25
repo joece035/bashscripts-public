@@ -95,10 +95,10 @@ unbinding(){
 
 
   case "$JOE_ENV" in 
-        TERMUX|MUMU) unbinding -a g 2>/dev/null || true;;
+        TERMUX|MUMU) unbinding -a g >/dev/null 2>&1 || true ;;
         WSL) ;;
-        GIT-BASH) unbinding -a ll 2>/dev/null || true;;  
-    esac
+        GIT-BASH) unbinding -a ll >/dev/null 2>&1 || true ;;  
+  esac
 
 
 alias spy='source $PYTHON_VENV'

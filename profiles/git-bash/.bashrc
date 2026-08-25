@@ -9,53 +9,43 @@ HISTFILESIZE=2000
 shopt -s checkwinsize
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
-# ── 2. BASH LINE EDITOR (Source only, no attach yet) ──
-if [[ $- == *i* && -f ~/.local/share/blesh/ble.sh ]]; then
-    [[ ${BLE_VERSION-} ]] || source ~/.local/share/blesh/ble.sh --attach=none
+# ── 2. BASH LINE EDITOR (Disabled on Windows Git Bash for high performance) ──
+# ble.sh causes significant fork/subshell latency on MSYS2. Enable only on Linux/WSL.
+
+# ── 3. LAZY LOAD NVM & NODE (Instant shell startup) ──
+export NVM_DIR="$HOME/.nvm"
+if [ -d "$NVM_DIR" ]; then
+    _load_nvm() {
+        unset -f nvm node npm npx _load_nvm 2>/dev/null
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+        [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    }
+    nvm()  { _load_nvm && nvm "$@"; }
+    node() { _load_nvm && node "$@"; }
+    npm()  { _load_nvm && npm "$@"; }
+    npx()  { _load_nvm && npx "$@"; }
 fi
 
-# ── 3. NVM & COMPLETIONS (MUST come BEFORE .env) ──
-# .env reads NVM_DIR to find node path — needs NVM init first
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-nvm use default >/dev/null 2>&1 || true
-
 # ── 4. ENVIRONMENT & PATHS ──
-. "$HOME/.local/bin/env"
+[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
-export SSOT="$HOME/bashscripts"
-export MY_DEVICE=${WSL:-$JOE_ENV}
+export SSOT="${SSOT:-$HOME/bashscripts}"
+export MY_DEVICE="${MY_DEVICE:-GIT-BASH}"
 [ -f ~/.env ] && source ~/.env
 
 # ── 5. ALIASES & COMPLETIONS ──
 [ -f ~/.bash_aliases ] && source ~/.bash_aliases
 
 # ── 6. PERSONAL COMMAND CENTER (JOE) ──
-# Source joe.sh; suppress all errors so any function-level bugs
-# don't kill the shell (defensive — not a fix, just safety net)
-# CRLF guard: ถ้า joe.sh ถูกบันทึกเป็น CRLF (จาก Windows/Acode-X) bash จะ
-# parse ไม่ผ่าน → แปลงกลับเป็น LF ก่อน source (joe.sh มี self-heal ข้างในด้วย)
-if [ -f ~/bashscripts/joe.sh ] && grep -qU $'\r' ~/bashscripts/joe.sh 2>/dev/null; then
-    sed -i 's/\r$//' ~/bashscripts/joe.sh
+# CRLF guard: ถ้า joe.sh ถูกบันทึกเป็น CRLF (จาก Windows/Acode-X) แปลงกลับเป็น LF ก่อน source
+if [ -f "$SSOT/joe.sh" ] && grep -qU $'\r' "$SSOT/joe.sh" 2>/dev/null; then
+    sed -i 's/\r$//' "$SSOT/joe.sh"
     echo "⚠️  CRLF→LF: joe.sh (auto-fixed)"
 fi
-[ -f ~/bashscripts/joe.sh ] && . ~/bashscripts/joe.sh 2>/dev/null
+[ -f "$SSOT/joe.sh" ] && . "$SSOT/joe.sh" 2>/dev/null
 
-# ── 6. STARSHIP ──
-# if [[ $- == *i* && -z "$STARSHIP_LOADED" ]]; then
-#     eval "$(starship init bash)"
-#     STARSHIP_LOADED=1
-# fi
-
-# ── 8. ATTACH BLE.SH ──
-if [[ $- == *i* && ${BLE_VERSION-} && -z "$BLE_ATTACHED" ]]; then
-    export BLE_ATTACHED=1
-    ble-attach
-fi
-
-# ── 9. FINAL SETTINGS ──
-
+# ── 7. FINAL SETTINGS ──
 alias ktmux="tmux kill-server"
 
 # OpenClaw Completion

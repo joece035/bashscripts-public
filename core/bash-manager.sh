@@ -113,10 +113,13 @@ _confirm() {
 }
 
 _human_size() {
-  local bytes=$1
-  if   (( bytes >= 1073741824 )); then printf "%.1f GB" "$(echo "scale=1; $bytes/1073741824" | bc)"
-  elif (( bytes >= 1048576    )); then printf "%.1f MB" "$(echo "scale=1; $bytes/1048576"    | bc)"
-  elif (( bytes >= 1024       )); then printf "%.1f KB" "$(echo "scale=1; $bytes/1024"       | bc)"
+  local bytes=${1:-0}
+  if ! command -v bc_ >/dev/null 2>&1 && [[ -f "${SCRIPTS_PATH:-$HOME/bashscripts}/functions/00.1-function-tools.sh" ]]; then
+    source "${SCRIPTS_PATH:-$HOME/bashscripts}/functions/00.1-function-tools.sh" 2>/dev/null
+  fi
+  if   (( bytes >= 1073741824 )); then printf "%s GB" "$(bc_ 1 "$bytes/1073741824")"
+  elif (( bytes >= 1048576    )); then printf "%s MB" "$(bc_ 1 "$bytes/1048576")"
+  elif (( bytes >= 1024       )); then printf "%s KB" "$(bc_ 1 "$bytes/1024")"
   else printf "%d B" "$bytes"; fi
 }
 
