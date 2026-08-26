@@ -192,6 +192,8 @@ export NODE_WSL_ST_ID="3S42YWK-JLYGQXU-NR37KDQ-7WFSODG-42TZPEX-XLTGR3W-XNK67EL-K
 export NODE_WSL_ST_URL="http://${NODE_WSL_HOST}:${NODE_WSL_ST_PORT}"
 
 # --- Windows ---
+# ssh host window 's port
+export NODE_WIN_PORT="22"
 export NODE_WIN_IP="$TAILSCALE_IP_WINDOW"
 export NODE_WIN_HOST="window"
 export NODE_WIN_USER="User"
@@ -416,5 +418,4 @@ zsh_setup(){
 
 
 
-# ssh host window 's port
-export NODE_WIN_PORT="22"
+
