@@ -79,3 +79,6 @@ export PATH="$HOME/.local/bin:$PATH"
 
 
 export TERM=xterm-256color
+
+source -- ~/.local/share/blesh/ble.sh
+stty sane

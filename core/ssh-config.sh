@@ -33,6 +33,7 @@ ssh_kgen(){
   else
     # ใส่ -N "" เพื่อสร้าง Key แบบไม่มี passphrase ทันที ป้องกัน Script ค้างถาม
     ssh-keygen -t ed25519 -C "${machine}" -f "${keyfile}" -N ""
+    
   fi
 
   local pub_key
@@ -85,7 +86,97 @@ ssh_() {
     esac     
 
 }
-# ตัวอย่างการใช้ rsync กับ SSH Host Alias
+## ============================================================
+# Node Resolver Helper (ดึงค่า SSOT ตามชื่อเครื่อง/Alias)
+# ============================================================
+node_resolve() {
+    local target="${1:-}"
+    TARGET_HOST=""
+    TARGET_PORT=""
+    TARGET_USER=""
+
+    case "$target" in
+        t|tm|termux|TERMUX)
+            TARGET_HOST="$NODE_TERMUX_HOST"
+            TARGET_PORT="${NODE_TERMUX_PORT:-8022}"
+            TARGET_USER="$NODE_TERMUX_USER"
+            ;;
+        w|win|window|WINDOW)
+            TARGET_HOST="$NODE_WIN_HOST"
+            TARGET_PORT="${NODE_WIN_PORT:-22}"
+            TARGET_USER="$NODE_WIN_USER"
+            ;;
+        m|mm|mumu|MUMU)
+            TARGET_HOST="$NODE_MUMU_HOST"
+            TARGET_PORT="${NODE_MUMU_PORT:-8022}"
+            TARGET_USER="$NODE_MUMU_USER"
+            ;;
+        wsl|WSL|WSL2)
+            TARGET_HOST="$NODE_WSL_HOST"
+            TARGET_PORT="${NODE_WSL_PORT:-22}"
+            TARGET_USER="$NODE_WSL_USER"
+            ;;
+        *)
+            cn r b "Error: Unknown node '$target'"
+            echo "Usage: <termux|window|mumu|wsl> (or alias: t, w, m, wsl)" >&2
+            return 1
+            ;;
+    esac
+}
+
+# ============================================================
+# Push: ส่งไฟล์/โฟลเดอร์จากเครื่องนี้ (Local) -> Node ปลายทาง (Remote)
+# Usage: push_cmd <node> [src_path] [dest_path]
+# ============================================================
+push_cmd() {
+    local node="${1:-}"
+    local src="${2:-${PWD}/}"
+    local dest="${3:-}"
+
+    if [[ -z "$node" ]]; then
+        cn y b "Usage: push_cmd <node> [src_path] [dest_path]"
+        return 1
+    fi
+
+    # ดึง Config ของปลายทาง
+    node_resolve "$node" || return 1
+
+    # ปลายทางเริ่มต้น: ถ้าไม่ระบุให้ลงที่ Path เดียวกันกับฝั่งต้นทาง
+    dest="${dest:-$src}"
+
+    cn 10 bi ">> Pushing to ${TARGET_HOST} (${TARGET_USER}@${TARGET_HOST}:${TARGET_PORT})..."
+    
+    # รัน rsync: แยก -e "ssh -p ..." ออกจาก source และ destination
+    rsync -avz --progress \
+        -e "ssh -p ${TARGET_PORT}" \
+        "${src}" \
+        "${TARGET_USER}@${TARGET_HOST}:${dest}"
+}
+
+# ============================================================
+# Pull: ดึงไฟล์/โฟลเดอร์จาก Node ปลายทาง (Remote) -> เครื่องนี้ (Local)
+# Usage: pull_cmd <node> <remote_src> [local_dest]
+# ============================================================
+pull_cmd() {
+    local node="${1:-}"
+    local remote_src="${2:-}"
+    local local_dest="${3:-${PWD}/}"
+
+    if [[ -z "$node" || -z "$remote_src" ]]; then
+        cn y b "Usage: pull_cmd <node> <remote_src_path> [local_dest_path]"
+        return 1
+    fi
+
+    # ดึง Config ของปลายทาง
+    node_resolve "$node" || return 1
+
+    cn 10 bi "<< Pulling from ${TARGET_HOST} (${TARGET_USER}@${TARGET_HOST}:${TARGET_PORT})..."
+
+    rsync -avz --progress \
+        -e "ssh -p ${TARGET_PORT}" \
+        "${TARGET_USER}@${TARGET_HOST}:${remote_src}" \
+        "${local_dest}"
+}
 
 
 _rsync () {

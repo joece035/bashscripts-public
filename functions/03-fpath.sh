@@ -35,27 +35,7 @@ cdc() {
   [[ -d "$1" ]] && cd "$1" && cn 10 b "$(pwd)" || cn 196 b " no such file or directory "
 }
 #--------------------------------------#
-fn() {
-  local j=$(echo "$SSOT/functions/00.1-function-tools.sh")
-  local jb="$(dirname $j)/joe-block/entry.sh"
-  case "$1" in
-    j)
-      if (( $# >= 2 )); then
-        printf '%s\n' "$SSOT/joe.learn/$2"   # fn j <file> → $SSOT/joe.learn/<file>
-      else
-        printf '%s' "$j"
-      fi
-      ;;
-    jb) source "$jb" ;;
-    *)
-      if (( $# == 0 )); then
-        printf '%s' "$SSOT/functions"
-      else
-        printf '%s\n' "$SSOT/functions/$@"
-      fi
-    ;;
-  esac
-}
+
 #----symbolic link----#
 slink_() {
     # สลับไฟล์จริง(src)กับไฟล์ที่สร้างลิงก์ไปหา(tar) แล้วค่อยสร้างลิงก์ใหม่

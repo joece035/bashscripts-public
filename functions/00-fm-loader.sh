@@ -24,9 +24,11 @@ fm(){
 }
 
 fn(){
+
     if command -v _check  > /dev/null 2>&1 ; then
-        _check "$SSOT/tools/files_manage.sh" "source" && 
-        cn 10 b 'loading script is done ' && fn "$@"
+        _check -f "$SSOT/tools/files_manage.sh" "source" && 
+        cn 10 b 'loading script is done ' && 
+        fn "$@"
     else
         cn 198 b "not found _check"
         return 1
