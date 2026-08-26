@@ -170,3 +170,32 @@ sudo rm -rf /tmp/*
 
 echo "=== ทำความสะอาดเรียบร้อยแล้ว! ==="
 }
+new() {
+    local is_dir=0
+    case ${1:--d} in
+            -d) is_dir=1 && shift ;;
+            -f|sh) is_dir=0 && shift ;;
+            *)  cn y b "usage : -d or -f"; return 1 ;;
+    esac
+    local target="${2:-}"
+
+    if [[ $is_dir -eq 1 ]]; then
+        mkdir -p "$target" && cn y bi "✅ โฟลเดอร์ถูกสร้างเรียบร้อยที่: $target"
+    else
+        if [[ "$is_dir" -eq 0 && "$1" == "sh" ]]; then
+           sh_ "$target"
+        else
+            mkdir -p "$(dirname "$target")" 
+            touch "$target" && cn y bi "✅ ไฟล์ถูกสร้างเรียบร้อยที่: $target"
+        fi
+    fi
+}
+
+
+sh_(){
+    local target="${1:-}"
+    mkdir -p "$(dirname "$target")"  
+    touch "$target" && perm "$target" && cn y bi "✅ ไฟล์ .sh ถูกสร้างเรียบร้อยที่: $target"
+}
+
+ 

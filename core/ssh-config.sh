@@ -27,7 +27,9 @@ ssh_kgen(){
   #-- สร้าง public/private key หากยังไม่มี
   local machine="${1:-}"
   local keyfile="$HOME/.ssh/id_ed25519_${machine}"
-
+  
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
   if [[ -f "$keyfile" ]]; then
     echo "SSH key already exists at $keyfile"
   else

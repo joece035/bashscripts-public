@@ -21,69 +21,6 @@ _nl(){ echo -e ""; }
 #   d | down | rounddown | floor — ROUNDDOWN (ปัดลง/ตัดทศนิยมทิ้ง)
 #   r | round                   — ROUND (ปัดเศษมาตรฐาน >= 0.5)
 # ============================================================
-bc___() {
-    [[ -z "$1" ]] && return
-    local decimal=0 mode="default"
-
-    # Step 1: Check for mode keyword in arg1
-    case "${1:-}" in
-        u|up|roundup|ceil) mode="up"; shift ;;
-        d|down|rounddown|floor|trunc) mode="down"; shift ;;
-        r|round) mode="round"; shift ;;
-    esac
-
-    # Step 2: Check if scale is specified as a standalone number (e.g. 2 10/3 or 2 u 10/3)
-    if [[ "$1" =~ ^[0-9]+$ ]] && [[ $# -gt 1 ]]; then
-        if [[ "$2" =~ ^(u|up|roundup|ceil|d|down|rounddown|floor|trunc|r|round)$ ]]; then
-            decimal="$1"
-            shift
-            case "$1" in
-                u|up|roundup|ceil) mode="up" ;;
-                d|down|rounddown|floor|trunc) mode="down" ;;
-                r|round) mode="round" ;;
-            esac
-            shift
-        elif ! [[ "$2" =~ ^[+*/%^-] ]]; then
-            decimal="$1"
-            shift
-        fi
-    fi
-
-    # Step 3: Check mode again if shifted
-    case "${1:-}" in
-        u|up|roundup|ceil) mode="up"; shift ;;
-        d|down|rounddown|floor|trunc) mode="down"; shift ;;
-        r|round) mode="round"; shift ;;
-    esac
-
-    local expr="$*"
-    [[ -z "$expr" ]] && return
-
-    awk -v d="$decimal" -v m="$mode" 'BEGIN {
-        val = ('"$expr"')
-        mult = 10^d
-        sign = (val >= 0 ? 1 : -1)
-        abs_v = (val >= 0 ? val : -val) * mult
-        iv = int(abs_v)
-        if (m == "up") {
-            res = sign * (abs_v > iv ? iv + 1 : iv) / mult
-        } else if (m == "down") {
-            res = sign * iv / mult
-        } else if (m == "round") {
-            res = sign * int(abs_v + 0.5) / mult
-        } else {
-            res = sign * iv / mult
-        }
-        printf "%.*f\n", d, res
-    }'
-}
-
-
-
-
-# Standalone Excel-style Rounding Functions
-
-
 
 mathsnew() {
     [[ -z "$1" ]] && return

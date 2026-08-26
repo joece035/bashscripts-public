@@ -124,20 +124,7 @@ unbinding_all (){
     c 45 b "$label";
     cn 10 b "  $target"
 }
-mkdir_() {
-    local is_dir=0
-    [[ "${1:-}" == "-d" ]] && is_dir=1 && shift
-    local target="${1:-$HOME/test.txt}"
 
-    if (( is_dir )); then
-        mkdir -p "$target"
-        echo "✅ โฟลเดอร์ถูกสร้างเรียบร้อย: $target"
-    else
-        mkdir -p "$(dirname "$target")"
-        touch "$target"
-        echo "✅ ไฟล์ถูกสร้างเรียบร้อย: $target"
-    fi
-}
 # -- ฟังก์ชั่นหา Display Width ที่แท้จริง (รวม Emoji และตัด ANSI Code ออก)
 get_w() {
     local text="$1"
