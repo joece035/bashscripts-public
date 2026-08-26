@@ -9,6 +9,11 @@ HISTFILESIZE=2000
 shopt -s checkwinsize
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
+# ── Fix ble.sh locale (MuMu / Android UTF-8 fix) ──
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export LC_CTYPE="en_US.UTF-8"
+
 # ── 2. BASH LINE EDITOR (Source only, no attach yet) ──
 if [[ $- == *i* && -f $HOME/.local/share/blesh/ble.sh ]]; then
     [[ ${BLE_VERSION-} ]] || source $HOME/.local/share/blesh/ble.sh --attach=none
@@ -79,7 +84,5 @@ export PATH="$HOME/.local/bin:$PATH"
 
 
 export TERM=xterm-256color
-export LANG=en_US.UTF-8
-export LC_ALL=en_US.UTF-8
 stty sane
 

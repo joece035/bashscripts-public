@@ -12,8 +12,9 @@ shopt -s checkwinsize
 # ── 2. BASH LINE EDITOR (Source only, no attach yet) ──
 
 # ── Fix ble.sh locale (Termux has no locale command) ──
-export LANG=C.UTF-8
-export LC_CTYPE=C.UTF-8
+export LANG="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export LC_CTYPE="en_US.UTF-8"
 if [[ $- == *i* && -f $HOME/.local/share/blesh/ble.sh ]]; then
     [[ ${BLE_VERSION-} ]] || source $HOME/.local/share/blesh/ble.sh --attach=none
 fi
