@@ -27,18 +27,18 @@ _style_default(){
     fi 
     
     # -- leyout constant
-       set_ OFFSET            "-0.25"  
+       set_ OFFSET            "-0.80"  
 
     # -- RANDOM COLOR OBJECT
        set_ BORDER_RANDOM      "▫▭▫"
-       set_ FRAME_RANDOM       "⟬ ⟭"
+       set_ FRAME_RANDOM       "‖"
 
     # -- SEPARATOR OBJECT
-       set_ MID_LINE           "▫▭▫"
-       set_ ROW_FRAME_L        "⟬▫⟭"
-       set_ ROW_FRAME_R        "⟬▫⟭"
-       set_ MID_FRAME_L        "⟬▫⟭"
-       set_ MID_FRAME_R        "⟬▫⟭"
+       set_ MID_LINE           "-"
+       set_ ROW_FRAME_L        "‖"
+       set_ ROW_FRAME_R        "‖"
+       set_ MID_FRAME_L        "‖"
+       set_ MID_FRAME_R        "‖"
        set_ TOP_BORDER         "▮▭▮▭"
        set_ BOT_BORDER         "▭▮▭▮"
        set_ MD_SEP_            " : "
@@ -78,18 +78,18 @@ _style_a(){
     fi 
     
     # -- leyout constant (bc_ อาจ fail ถ้าไม่ได้ source → fallback tp/4)
-    set_ OFFSET            "0"    # 3/4ขวา
+    set_ OFFSET            "0"    
    
     # -- RANDOM COLOR OBJECT
-    set_ BORDER_RANDOM      "◊ "
+    set_ BORDER_RANDOM      "▨"
     set_ FRAME_RANDOM       "‖"
 
     # -- SEPARATOR OBJECT
-    set_ MID_LINE           "┈"
-    set_ ROW_FRAME_L        "⟬"
-    set_ ROW_FRAME_R        "⟭"
-    set_ MID_FRAME_L        "⟭"
-    set_ MID_FRAME_R        "⟬"
+    set_ MID_LINE           "-"
+    set_ ROW_FRAME_L        "‖"
+    set_ ROW_FRAME_R        "‖"
+    set_ MID_FRAME_L        "‖"
+    set_ MID_FRAME_R        "‖"
     set_ TOP_BORDER         "◙"
     set_ BOT_BORDER         "◙"
     

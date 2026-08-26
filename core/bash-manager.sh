@@ -40,36 +40,159 @@ if [[ -z "$TERMUX_IP" ]]; then
 fi
 
 # ─────────────────────────────────────────────────────────────────
+# DYNAMIC BLOCK HELPERS (Visual width & padding)
+# ─────────────────────────────────────────────────────────────────
+_dblock_strip_ansi() {
+  printf '%s' "$1" | sed -E $'s/\x1b\\[[0-9;]*[a-zA-Z]//g'
+}
+
+_dblock_vis_len() {
+  local clean
+  clean=$(_dblock_strip_ansi "$1")
+  # Strip combining marks for accurate terminal cell width
+  local clean_no_combining
+  clean_no_combining=$(printf '%s' "$clean" | tr -d "ัิีึืฺุู็่้๊๋์ํ๎" 2>/dev/null || echo "$clean")
+  echo "${#clean_no_combining}"
+}
+
+_dblock_repeat() {
+  local count=$1 char=$2 out="" c
+  (( count < 0 )) && count=0
+  for (( c=0; c<count; c++ )); do out+="$char"; done
+  printf '%s' "$out"
+}
+
+# ─────────────────────────────────────────────────────────────────
 # LEARN MODE TOGGLE
 # ─────────────────────────────────────────────────────────────────
 FM_LEARN=${FM_LEARN:-0}
 
 # _learn_box <title> <cmd_line> [flag|desc] [flag|desc] ...
-# แสดง box อธิบายคำสั่งจริงที่กำลังรัน — จะแสดงเฉพาะตอน FM_LEARN=1
+# แสดง box อธิบายคำสั่งจริงที่กำลังรัน — ปรับความกว้าง Dynamic ตามเนื้อหาจริง (title, cmd, flags, descriptions)
 _learn_box() {
   [[ "$FM_LEARN" != "1" ]] && return
   local title="$1"; shift
   local cmd="$1";   shift
+  local -a annotations=("$@")
+
+  # 1. Measure dimensions
+  local max_flag=0 max_desc=0
+  local -a p_flags=() p_descs=()
+
+  for item in "${annotations[@]}"; do
+    local flag="${item%%|*}"
+    local desc="${item##*|}"
+    p_flags+=("$flag")
+    p_descs+=("$desc")
+
+    local l_f; l_f=$(_dblock_vis_len "$flag")
+    local l_d; l_d=$(_dblock_vis_len "$desc")
+    (( l_f > max_flag )) && max_flag=$l_f
+    (( l_d > max_desc )) && max_desc=$l_d
+  done
+
+  local l_title; l_title=$(_dblock_vis_len "$title")
+  local l_cmd; l_cmd=$(_dblock_vis_len "$cmd")
+  local cmd_display="\$ ${cmd}"
+  local l_cmd_disp=$(( l_cmd + 2 ))
+
+  # Minimum default width
+  local inner_w=65
+
+  # Content width from flags + descriptions
+  local flag_section_w=$(( max_flag + 4 + max_desc ))
+
+  # Find max needed inner width
+  (( l_title + 4 > inner_w )) && inner_w=$(( l_title + 4 ))
+  (( l_cmd_disp + 4 > inner_w )) && inner_w=$(( l_cmd_disp + 4 ))
+  (( flag_section_w + 4 > inner_w )) && inner_w=$(( flag_section_w + 4 ))
+
+  # Cap at terminal width - 6
+  local term_cols=$(tput cols 2>/dev/null || echo 80)
+  local max_term=$(( term_cols - 6 ))
+  (( max_term < 40 )) && max_term=40
+  (( inner_w > max_term )) && inner_w=$max_term
+
+  # Style colors
+  local c_box="$(_c 208)"
+  local c_rst="$(_r)"
+  local c_cmd="$(_c 46)"
+  local c_flag="$(_c 51)$(_b)"
+  local c_desc="$(_c 244)"
+  local c_dim="$(_c 244)$(_d)"
+  local c_title="$(_c 255)$(_b)"
+
+  local top_fill=$(( inner_w - 16 ))
+  (( top_fill < 1 )) && top_fill=1
+  local hz_top; hz_top=$(_dblock_repeat "$top_fill" "─")
+  local hz_mid; hz_mid=$(_dblock_repeat "$inner_w" "─")
+  local hz_bot; hz_bot=$(_dblock_repeat "$inner_w" "─")
 
   echo ""
-  cn 208 "  ┌─ 📚 LEARN MODE ─────────────────────────────────────────────────┐"
-  printf  "  %s\n" "$(c 208 '' '│')$(c w b "$(printf '%-65s' "$title")")$(c 208 '' '│')"
-  cn 208 "  ├─────────────────────────────────────────────────────────────────┤"
-  printf '%s\n' "$(c 208 '' '  │')$(c 244 d '  Raw command:')"
-  local _cmd_display="\$ ${cmd}"
-  local _pad=$(printf "%*s" $((65 - ${#_cmd_display})) "")
-  printf '%s\n' "$(c 208 '' '  │')$(c 46 "" "  ${_cmd_display}${_pad}")$(c 208 '' '│')"
+  # Top Header
+  printf "  %s┌─ 📚 LEARN MODE %s┐%s\n" "$c_box" "$hz_top" "$c_rst"
 
-  if [[ $# -gt 0 ]]; then
-    cn 208 "  │"
-    printf '%s\n' "$(c 208 '' '  │')$(c 244 d '  Flags & options อธิบาย:')"
-    for annotation in "$@"; do
-      local flag="${annotation%%|*}"
-      local desc="${annotation##*|}"
-      printf '%s\n' "$(c 208 '' '  │')$(printf '  %s' "$(c 51 b "$(printf '%-22s' "$flag")")")$(printf '%s' "$(c 244 '' "$desc")")"
+  # Title Line
+  local pad_t=$(( inner_w - l_title - 2 ))
+  (( pad_t < 0 )) && pad_t=0
+  local s_pad_t; s_pad_t=$(_dblock_repeat "$pad_t" " ")
+  printf "  %s│%s  %s%s%s%s%s│%s\n" "$c_box" "$c_rst" "$c_title" "$title" "$c_rst" "$s_pad_t" "$c_box" "$c_rst"
+
+  # Mid Separator
+  printf "  %s├%s┤%s\n" "$c_box" "$hz_mid" "$c_rst"
+
+  # Raw Command Header
+  local pad_raw_hdr=$(( inner_w - 14 ))
+  (( pad_raw_hdr < 0 )) && pad_raw_hdr=0
+  local s_pad_raw_hdr; s_pad_raw_hdr=$(_dblock_repeat "$pad_raw_hdr" " ")
+  printf "  %s│%s  %sRaw command:%s%s%s│%s\n" "$c_box" "$c_rst" "$c_dim" "$c_rst" "$s_pad_raw_hdr" "$c_box" "$c_rst"
+
+  # Raw Command Line
+  local pad_cmd=$(( inner_w - l_cmd_disp - 2 ))
+  (( pad_cmd < 0 )) && pad_cmd=0
+  local s_pad_cmd; s_pad_cmd=$(_dblock_repeat "$pad_cmd" " ")
+  printf "  %s│%s  %s%s%s%s%s│%s\n" "$c_box" "$c_rst" "$c_cmd" "$cmd_display" "$c_rst" "$s_pad_cmd" "$c_box" "$c_rst"
+
+  # Annotations (Flags & options)
+  if [[ ${#p_flags[@]} -gt 0 ]]; then
+    # Blank row inside box
+    local s_blank; s_blank=$(_dblock_repeat "$inner_w" " ")
+    printf "  %s│%s%s%s│%s\n" "$c_box" "$c_rst" "$s_blank" "$c_box" "$c_rst"
+
+    # Flags Header
+    local pad_flags_hdr=$(( inner_w - 25 ))
+    (( pad_flags_hdr < 0 )) && pad_flags_hdr=0
+    local s_pad_flags_hdr; s_pad_flags_hdr=$(_dblock_repeat "$pad_flags_hdr" " ")
+    printf "  %s│%s  %sFlags & options อธิบาย:%s%s%s│%s\n" "$c_box" "$c_rst" "$c_dim" "$c_rst" "$s_pad_flags_hdr" "$c_box" "$c_rst"
+
+    local i
+    for (( i=0; i<${#p_flags[@]}; i++ )); do
+      local f="${p_flags[$i]}"
+      local d="${p_descs[$i]}"
+      local lf; lf=$(_dblock_vis_len "$f")
+      local ld; ld=$(_dblock_vis_len "$d")
+
+      local f_pad=$(( max_flag - lf + 2 ))
+      (( f_pad < 1 )) && f_pad=1
+      local s_f_pad; s_f_pad=$(_dblock_repeat "$f_pad" " ")
+
+      local row_len=$(( 2 + lf + f_pad + ld ))
+      local right_pad=$(( inner_w - row_len - 2 ))
+      (( right_pad < 0 )) && right_pad=0
+      local s_right_pad; s_right_pad=$(_dblock_repeat "$right_pad" " ")
+
+      printf "  %s│%s  %s%s%s%s%s%s%s%s%s│%s\n" \
+        "$c_box" "$c_rst" \
+        "$c_flag" "$f" "$c_rst" \
+        "$s_f_pad" \
+        "$c_desc" "$d" "$c_rst" \
+        "$s_right_pad" \
+        "$c_box" "$c_rst"
     done
   fi
-  cn 208 "  └─────────────────────────────────────────────────────────────────┘"
+
+  # Bottom Border
+  printf "  %s└%s┘%s\n" "$c_box" "$hz_bot" "$c_rst"
   echo ""
 }
 
@@ -122,6 +245,182 @@ _human_size() {
   elif (( bytes >= 1024       )); then printf "%s KB" "$(bc_ 1 "$bytes/1024")"
   else printf "%d B" "$bytes"; fi
 }
+
+# ─────────────────────────────────────────────────────────────────
+# DYNAMIC BLOCK ENGINE — Auto-calculates width from max_label & max_value
+# ─────────────────────────────────────────────────────────────────
+dynamic_block() {
+  local title="" border_style="round" border_color="51" label_color="226" val_color="255" sep_str=" : "
+  local -a raw_rows=()
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -t|--title)  title="$2"; shift 2 ;;
+      -s|--style)  border_style="$2"; shift 2 ;;
+      -c|--color)  border_color="$2"; shift 2 ;;
+      -lc)         label_color="$2"; shift 2 ;;
+      -vc)         val_color="$2"; shift 2 ;;
+      -sep)        sep_str="$2"; shift 2 ;;
+      *)           raw_rows+=("$1"); shift ;;
+    esac
+  done
+
+  # Read from stdin if no positional row args
+  if [[ ${#raw_rows[@]} -eq 0 ]]; then
+    local line
+    while IFS= read -r line; do
+      [[ -n "$line" ]] && raw_rows+=("$line")
+    done
+  fi
+
+  [[ ${#raw_rows[@]} -eq 0 ]] && return 0
+
+  # Border glyphs
+  local tl tr bl br hz vt
+  case "$border_style" in
+    double) tl="╔"; tr="╗"; bl="╚"; br="╝"; hz="═"; vt="║" ;;
+    single) tl="┌"; tr="┐"; bl="└"; br="┘"; hz="─"; vt="│" ;;
+    heavy)  tl="┏"; tr="┓"; bl="┗"; br="┛"; hz="━"; vt="┃" ;;
+    *)      tl="╭"; tr="╮"; bl="╰"; br="╯"; hz="─"; vt="│" ;; # round
+  esac
+
+  # 1. Parse rows & Calculate max_label / max_value
+  local -a p_eml=() p_lbl=() p_val=() p_emr=()
+  local max_eml=0 max_lbl=0 max_val=0 max_emr=0
+
+  for row in "${raw_rows[@]}"; do
+    local eml="" lbl="" val="" emr=""
+    IFS='|' read -r -a parts <<< "$row"
+    local n=${#parts[@]}
+
+    case $n in
+      4) eml="${parts[0]}"; lbl="${parts[1]}"; val="${parts[2]}"; emr="${parts[3]}" ;;
+      3)
+        if [[ -z "${parts[0]}" ]]; then
+          lbl="${parts[1]}"; val="${parts[2]}"
+        elif [[ -z "${parts[2]}" ]]; then
+          lbl="${parts[0]}"; val="${parts[1]}"
+        else
+          eml="${parts[0]}"; lbl="${parts[1]}"; val="${parts[2]}"
+        fi
+        ;;
+      2) lbl="${parts[0]}"; val="${parts[1]}" ;;
+      *) lbl="$row"; val="" ;;
+    esac
+
+    p_eml+=("$eml"); p_lbl+=("$lbl"); p_val+=("$val"); p_emr+=("$emr")
+
+    local l_eml; l_eml=$(_dblock_vis_len "$eml")
+    local l_lbl; l_lbl=$(_dblock_vis_len "$lbl")
+    local l_val; l_val=$(_dblock_vis_len "$val")
+    local l_emr; l_emr=$(_dblock_vis_len "$emr")
+
+    (( l_eml > max_eml )) && max_eml=$l_eml
+    (( l_lbl > max_lbl )) && max_lbl=$l_lbl
+    (( l_val > max_val )) && max_val=$l_val
+    (( l_emr > max_emr )) && max_emr=$l_emr
+  done
+
+  local sep_len; sep_len=$(_dblock_vis_len "$sep_str")
+  local eml_slot=0 emr_slot=0
+  (( max_eml > 0 )) && eml_slot=$(( max_eml + 1 ))
+  (( max_emr > 0 )) && emr_slot=$(( max_emr + 1 ))
+
+  # Calculate inner content width
+  local content_w=$(( eml_slot + max_lbl + sep_len + max_val + emr_slot ))
+  local inner_w=$(( content_w + 2 ))
+
+  # Adjust width for title if present
+  local title_len=0
+  if [[ -n "$title" ]]; then
+    title_len=$(_dblock_vis_len "$title")
+    if (( title_len + 4 > inner_w )); then
+      inner_w=$(( title_len + 4 ))
+      max_val=$(( inner_w - 2 - eml_slot - max_lbl - sep_len - emr_slot ))
+    fi
+  fi
+
+  # Style colors
+  local c_border="$(_c "$border_color")"
+  local c_lbl="$(_c "$label_color")$(_b)"
+  local c_val="$(_c "$val_color")"
+  local c_sep="$(_c 244)"
+  local c_rst="$(_r)"
+
+  _dblock_repeat() {
+    local count=$1 char=$2 out="" c
+    for (( c=0; c<count; c++ )); do out+="$char"; done
+    printf '%s' "$out"
+  }
+
+  # Render Top Border
+  if [[ -n "$title" ]]; then
+    local fill_w=$(( inner_w - title_len - 3 ))
+    (( fill_w < 1 )) && fill_w=1
+    local hz_fill; hz_fill=$(_dblock_repeat "$fill_w" "$hz")
+    printf "  %s%s%s %s%s%s %s%s%s%s\n" \
+      "$c_border" "$tl" "$hz" \
+      "$(_c 255)$(_b)" "$title" "$c_rst" \
+      "$c_border" "$hz_fill" "$tr" "$c_rst"
+  else
+    local hz_fill; hz_fill=$(_dblock_repeat "$inner_w" "$hz")
+    printf "  %s%s%s%s%s\n" "$c_border" "$tl" "$hz_fill" "$tr" "$c_rst"
+  fi
+
+  # Render Rows
+  local total_rows=${#p_lbl[@]}
+  local i
+  for (( i=0; i<total_rows; i++ )); do
+    local cur_eml="${p_eml[$i]}"
+    local cur_lbl="${p_lbl[$i]}"
+    local cur_val="${p_val[$i]}"
+    local cur_emr="${p_emr[$i]}"
+
+    local l_eml; l_eml=$(_dblock_vis_len "$cur_eml")
+    local l_lbl; l_lbl=$(_dblock_vis_len "$cur_lbl")
+    local l_val; l_val=$(_dblock_vis_len "$cur_val")
+    local l_emr; l_emr=$(_dblock_vis_len "$cur_emr")
+
+    local s_eml=""
+    if (( max_eml > 0 )); then
+      if (( l_eml > 0 )); then s_eml="${cur_eml} "
+      else s_eml="$(_dblock_repeat "$eml_slot" ' ')"
+      fi
+    fi
+
+    local lbl_pad=$(( max_lbl - l_lbl ))
+    local s_lbl="${cur_lbl}$(_dblock_repeat "$lbl_pad" ' ')"
+
+    local val_pad=$(( max_val - l_val ))
+    (( val_pad < 0 )) && val_pad=0
+    local s_val="${cur_val}$(_dblock_repeat "$val_pad" ' ')"
+
+    local s_emr=""
+    if (( max_emr > 0 )); then
+      if (( l_emr > 0 )); then s_emr=" ${cur_emr}"
+      else s_emr="$(_dblock_repeat "$emr_slot" ' ')"
+      fi
+    fi
+
+    local line_vis_len=$(( max_eml > 0 ? eml_slot : 0 ))
+    line_vis_len=$(( line_vis_len + max_lbl + sep_len + l_val + val_pad + (max_emr > 0 ? emr_slot : 0) ))
+    local right_slack=$(( inner_w - 2 - line_vis_len ))
+    (( right_slack < 0 )) && right_slack=0
+    local s_slack; s_slack=$(_dblock_repeat "$right_slack" ' ')
+
+    local row_content="${s_eml}${c_lbl}${s_lbl}${c_rst}${c_sep}${sep_str}${c_rst}${c_val}${s_val}${c_rst}${s_emr}${s_slack}"
+    printf "  %s%s%s %s %s%s%s\n" \
+      "$c_border" "$vt" "$c_rst" \
+      "$row_content" \
+      "$c_border" "$vt" "$c_rst"
+  done
+
+  # Render Bottom Border
+  local hz_bot; hz_bot=$(_dblock_repeat "$inner_w" "$hz")
+  printf "  %s%s%s%s%s\n" "$c_border" "$bl" "$hz_bot" "$br" "$c_rst"
+}
+dblock() { dynamic_block "$@"; }
+alias dblock="dynamic_block"
 
 # _fm_list_dir <target> <show_hidden:yes|no>
 # Internal helper — does the actual listing (used by fm_ls and fm_lsa)
@@ -1335,6 +1634,7 @@ fm() {
     rls)         fm_rls "$@"        ;;
     rrun)        fm_rrun "$@"       ;;
     learn)       fm_learn "$@"      ;;
+    block|dblock) dynamic_block "$@" ;;
     help|--help|-h|"") fm_help "$@" ;;
     *)
       _err "ไม่รู้จักคำสั่ง: $cmd"
@@ -1434,21 +1734,25 @@ _xfm_lower() {
 # MACHINE CONFIG — อ้างอิงจาก 00-env.sh (SSOT) เท่านั้น
 # ห้าม hardcode ค่าที่นี่ — แก้ที่ 00-env.sh แทน
 # ─────────────────────────────────────────────────────────────────
-xfm_WIN_IP="${WINDOWS_IP}"
-xfm_WIN_USER="${WINDOWS_USER}"
+xfm_WIN_HOST="${NODE_WIN_HOST:-${NODE_WIN_IP:-${WINDOWS_IP}}}"
+xfm_WIN_USER="${NODE_WIN_USER:-${WINDOWS_USER:-User}}"
 xfm_WIN_PORT="${NODE_WIN_PORT:-22}"
 
-xfm_WSL_IP="${WSL_IP}"
-xfm_WSL_USER="${WSL_USER}"
+xfm_WSL_HOST="${NODE_WSL_HOST:-${NODE_WSL_IP:-${WSL_IP}}}"
+xfm_WSL_USER="${NODE_WSL_USER:-${WSL_USER:-usercivenz}}"
 xfm_WSL_PORT="${NODE_WSL_PORT:-22}"
 
-xfm_tx_IP="${TERMUX_IP}"
-xfm_tx_USER="${TERMUX_USER}"
-xfm_tx_PORT="${NODE_TERMUX_PORT:-8022}"
+xfm_TM_HOST="${NODE_TERMUX_HOST:-${NODE_TERMUX_IP:-${TERMUX_IP}}}"
+xfm_TM_USER="${NODE_TERMUX_USER:-${TERMUX_USER:-u0_a331}}"
+xfm_TM_PORT="${NODE_TERMUX_PORT:-8022}"
 
-xfm_DEB_IP="${DEBIAN_IP}"
-xfm_DEB_USER="${DEBIAN_USER}"
-xfm_DEB_PORT="${DEBIAN_PORT:-${NODE_DEBIAN_PORT:-22}}"
+xfm_MM_HOST="${NODE_MUMU_HOST:-${NODE_MUMU_IP:-mumu}}"
+xfm_MM_USER="${NODE_MUMU_USER:-u0_a62}"
+xfm_MM_PORT="${NODE_MUMU_PORT:-8020}"
+
+xfm_DEB_HOST="${NODE_DEBIAN_HOST:-${DEBIAN_IP:-debian}}"
+xfm_DEB_USER="${NODE_DEBIAN_USER:-${DEBIAN_USER:-root}}"
+xfm_DEB_PORT="${NODE_DEBIAN_PORT:-${DEBIAN_PORT:-22}}"
 
 # SSOT per-machine — ไม่ hardcode, ใช้ remote lookup ตอน translate
 
@@ -1456,13 +1760,14 @@ xfm_DEB_PORT="${DEBIAN_PORT:-${NODE_DEBIAN_PORT:-22}}"
 # MACHINE RESOLVER HELPERS
 # ─────────────────────────────────────────────────────────────────
 
-# รับ nickname → คืน IP
+# รับ nickname → คืน Hostname หรือ IP
 _xfm_host() {
   case "$(_xfm_lower "$1")" in
-    win|windows) echo "$xfm_WIN_IP"  ;;
-    wsl)         echo "$xfm_WSL_IP"  ;;
-    tm|termux)   echo "$xfm_tx_IP"   ;;
-    deb|debian)  echo "$xfm_DEB_IP"  ;;
+    win|windows) echo "$xfm_WIN_HOST" ;;
+    wsl)         echo "$xfm_WSL_HOST" ;;
+    tm|termux)   echo "$xfm_TM_HOST"  ;;
+    mm|mumu)     echo "$xfm_MM_HOST"  ;;
+    deb|debian)  echo "$xfm_DEB_HOST" ;;
     local|.)     echo "localhost"     ;;
     *) return 1 ;;
   esac
@@ -1473,9 +1778,10 @@ _xfm_user() {
   case "$(_xfm_lower "$1")" in
     win|windows) echo "$xfm_WIN_USER" ;;
     wsl)         echo "$xfm_WSL_USER" ;;
-    tm|termux)   echo "$xfm_tx_USER"  ;;
+    tm|termux)   echo "$xfm_TM_USER"  ;;
+    mm|mumu)     echo "$xfm_MM_USER"  ;;
     deb|debian)  echo "$xfm_DEB_USER" ;;
-    local|.)     echo "$USER"          ;;
+    local|.)     echo "${USER:-$USERNAME}" ;;
     *) return 1 ;;
   esac
 }
@@ -1485,9 +1791,10 @@ _xfm_port() {
   case "$(_xfm_lower "$1")" in
     win|windows) echo "$xfm_WIN_PORT" ;;
     wsl)         echo "$xfm_WSL_PORT" ;;
-    tm|termux)   echo "$xfm_tx_PORT"  ;;
+    tm|termux)   echo "$xfm_TM_PORT"  ;;
+    mm|mumu)     echo "$xfm_MM_PORT"  ;;
     deb|debian)  echo "$xfm_DEB_PORT" ;;
-    local|.)     echo ""               ;;
+    local|.)     echo ""              ;;
     *) return 1 ;;
   esac
 }
@@ -1498,16 +1805,17 @@ _xfm_label() {
     win|windows) cn 75 b "🖥️  win"    ;;
     wsl)         cn 46 b "🐧  wsl"   ;;
     tm|termux)   cn 226 b "📱  tm"    ;;
+    mm|mumu)     cn 208 b "🎮  mm"    ;;
     deb|debian)  cn 87 b "🔷  deb"   ;;
     local|.)     cn 255 b "💻  local"  ;;
-    *)           cn 244 "" "❓  $1"      ;;
+    *)           cn 244 "" "❓  $1"    ;;
   esac
 }
 
 # Validate machine name
 _xfm_valid() {
   case "$(_xfm_lower "$1")" in
-    win|windows|wsl|tm|termux|deb|debian|local|.) return 0 ;;
+    win|windows|wsl|tm|termux|mm|mumu|deb|debian|local|.) return 0 ;;
     *) return 1 ;;
   esac
 }
@@ -1589,11 +1897,12 @@ _xfm_ssh() {
   host=$(_xfm_host "$machine") || { _err "ไม่รู้จัก machine: $machine"; return 1; }
   user=$(_xfm_user "$machine")
   port=$(_xfm_port "$machine")
-  if [[ -n "$port" ]]; then
-    ssh -p "$port" -o ConnectTimeout=8 -o BatchMode=yes "$user@$host" "$@"
-  else
-    ssh -o ConnectTimeout=8 -o BatchMode=yes "$user@$host" "$@"
-  fi
+  local -a ssh_opts=(-o ConnectTimeout=5 -o BatchMode=yes)
+  local key="${KEY_NODE:-${HOME}/.ssh/id_ed25519_node}"
+  [[ -f "$key" ]] && ssh_opts+=(-i "$key")
+  [[ -n "$port" ]] && ssh_opts+=(-p "$port")
+
+  ssh "${ssh_opts[@]}" "$user@$host" "$@"
 }
 
 # rsync: local → remote
@@ -1604,9 +1913,11 @@ _xfm_push() {
   host=$(_xfm_host "$machine")
   user=$(_xfm_user "$machine")
   port=$(_xfm_port "$machine")
-  local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
-  [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
-  rsync -avz --progress -e "ssh $ssh_opt" "$src" "$user@$host:$dst"
+  local key="${KEY_NODE:-${HOME}/.ssh/id_ed25519_node}"
+  local ssh_cmd="ssh -o ConnectTimeout=5 -o BatchMode=yes"
+  [[ -f "$key" ]] && ssh_cmd="$ssh_cmd -i $key"
+  [[ -n "$port" ]] && ssh_cmd="$ssh_cmd -p $port"
+  rsync -avz --progress -e "$ssh_cmd" "$src" "$user@$host:$dst"
 }
 
 # rsync: remote → local
@@ -1617,22 +1928,26 @@ _xfm_pull() {
   host=$(_xfm_host "$machine")
   user=$(_xfm_user "$machine")
   port=$(_xfm_port "$machine")
-  local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
-  [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
-  rsync -avz --progress -e "ssh $ssh_opt" "$user@$host:$src" "$dst"
+  local key="${KEY_NODE:-${HOME}/.ssh/id_ed25519_node}"
+  local ssh_cmd="ssh -o ConnectTimeout=5 -o BatchMode=yes"
+  [[ -f "$key" ]] && ssh_cmd="$ssh_cmd -i $key"
+  [[ -n "$port" ]] && ssh_cmd="$ssh_cmd -p $port"
+  rsync -avz --progress -e "$ssh_cmd" "$user@$host:$src" "$dst"
 }
 
 # Check ว่า machine online ไหม คืน latency ms หรือ -1 ถ้า offline
 _xfm_ping() {
   local machine="$1"
   local host; host=$(_xfm_host "$machine") || { echo "-1"; return; }
-  local t0 t1 ms
+  local t0 t1
   t0=$(date +%s%N 2>/dev/null || echo 0)
-  if ssh -p "$(_xfm_port "$machine")" \
-       -o ConnectTimeout=5 \
-       -o BatchMode=yes \
-       -o StrictHostKeyChecking=no \
-       "$(_xfm_user "$machine")@$host" "echo ok" &>/dev/null; then
+  local -a ssh_opts=(-o ConnectTimeout=3 -o BatchMode=yes -o StrictHostKeyChecking=no)
+  local key="${KEY_NODE:-${HOME}/.ssh/id_ed25519_node}"
+  [[ -f "$key" ]] && ssh_opts+=(-i "$key")
+  local port; port=$(_xfm_port "$machine")
+  [[ -n "$port" ]] && ssh_opts+=(-p "$port")
+
+  if ssh "${ssh_opts[@]}" "$(_xfm_user "$machine")@$host" "echo ok" &>/dev/null; then
     t1=$(date +%s%N 2>/dev/null || echo 0)
     echo $(( (t1 - t0) / 1000000 ))
   else
@@ -1646,20 +1961,21 @@ _xfm_ping() {
 xfm_help() {
   echo ""
   cn 87 "  ╔══════════════════════════════════════════════════════════════════╗"
-  printf '%s\n' "$(c 87 b '  ║')  $(c 255 b '🌐  xfm — Cross-Machine File Manager  v1.0')                    $(c 87 b '║')"
-  printf '%s\n' "$(c 87 b '  ║')  $(c 244 d '4 มิติ: win │ wsl │ tm (Termux) │ deb (Debian)')             $(c 87 b '║')"
+  printf '%s\n' "$(c 87 b '  ║')  $(c 255 b '🌐  xfm — Cross-Machine File Manager  v2.0')                    $(c 87 b '║')"
+  printf '%s\n' "$(c 87 b '  ║')  $(c 244 d 'Multi-World: win │ wsl │ tm (Termux) │ mm (MuMu) │ deb')     $(c 87 b '║')"
   cn 87 "  ╚══════════════════════════════════════════════════════════════════╝"
 
   echo ""
   cn 141 "  🏷️   MACHINE NICKNAMES"
   hline 66
-  ctab "1:10 51:22 2:20 0:0" "ALIAS" "USER@IP" "PORT" "MACHINE"
+  ctab "1:10 51:24 2:10 0:0" "ALIAS" "HOST / USER" "PORT" "MACHINE"
   hline 66
-  ctab "75:10 244:22 2:20 0:0" "win"       "$xfm_WIN_USER@$xfm_WIN_IP" "$xfm_WIN_PORT" "🖥️  Windows"
-  ctab "46:10 244:22 2:20 0:0" "wsl"       "$xfm_WSL_USER@$xfm_WSL_IP" "$xfm_WSL_PORT" "🐧  WSL"
-  ctab "226:10 244:22 2:20 0:0" "tm"        "$xfm_tx_USER@$xfm_tx_IP" "$xfm_tx_PORT" "📱  Termux (Android)"
-  ctab "87:10 244:22 2:20 0:0" "deb"       "$xfm_DEB_USER@$xfm_DEB_IP" "$xfm_DEB_PORT" "🔷  Debian (proot)"
-  ctab "255:10 244:22 2:20 0:0" "local / ." "$(whoami)@localhost" "-" "💻  เครื่องนี้"
+  ctab "75:10 244:24 2:10 0:0"  "win"       "$xfm_WIN_USER@$xfm_WIN_HOST" "$xfm_WIN_PORT" "🖥️  Windows"
+  ctab "46:10 244:24 2:10 0:0"  "wsl"       "$xfm_WSL_USER@$xfm_WSL_HOST" "$xfm_WSL_PORT" "🐧  WSL"
+  ctab "226:10 244:24 2:10 0:0" "tm"        "$xfm_TM_USER@$xfm_TM_HOST"   "$xfm_TM_PORT"  "📱  Termux (Android)"
+  ctab "208:10 244:24 2:10 0:0" "mm"        "$xfm_MM_USER@$xfm_MM_HOST"   "$xfm_MM_PORT"  "🎮  MuMu (Android VM)"
+  ctab "87:10 244:24 2:10 0:0"  "deb"       "$xfm_DEB_USER@$xfm_DEB_HOST" "$xfm_DEB_PORT" "🔷  Debian (proot)"
+  ctab "255:10 244:24 2:10 0:0" "local / ." "${USER:-$USERNAME}@localhost" "-"           "💻  เครื่องนี้"
   hline 66
 
   echo ""
@@ -1667,24 +1983,25 @@ xfm_help() {
   hline 66
   ctab "1:22 51:34 0:0" "COMMAND" "SYNTAX" "DESCRIPTION"
   hline 66
-  ctab "46:22 244:34 0:0" "xfm status"  "xfm status"                        "ping ทุกเครื่อง + disk summary"
-  ctab "46:22 244:34 0:0" "xfm ls"      "xfm ls <machine> [path]"           "แสดงไฟล์บน remote"
-  ctab "46:22 244:34 0:0" "xfm cp"      "xfm cp <src> <dst>"                "copy ข้ามเครื่อง (any→any)"
-  ctab "46:22 244:34 0:0" "xfm mv"      "xfm mv <src> <dst>"                "ย้ายข้ามเครื่อง (cp + rm src)"
-  ctab "46:22 244:34 0:0" "xfm rm"      "xfm rm <machine:path>"             "ลบไฟล์บน remote (ถามยืนยัน)"
-  ctab "46:22 244:34 0:0" "xfm mkdir"   "xfm mkdir <machine:path>"          "สร้างโฟลเดอร์บน remote"
-  ctab "46:22 244:34 0:0" "xfm info"    "xfm info <machine:path>"           "รายละเอียดไฟล์บน remote"
-  ctab "46:22 244:34 0:0" "xfm df"      "xfm df [machine|all]"              "disk usage (ทีละเครื่อง หรือทุกเครื่อง)"
-  ctab "46:22 244:34 0:0" "xfm du"      "xfm du <machine:path>"             "ขนาดโฟลเดอร์ย่อยบน remote"
-  ctab "46:22 244:34 0:0" "xfm find"    "xfm find <machine> <name> [path]"  "ค้นหาไฟล์บน remote"
-  ctab "46:22 244:34 0:0" "xfm sync"    "xfm sync <src> <dst>"              "rsync สองทิศทาง (any→any)"
+  ctab "46:22 244:34 0:0" "xfm status"  "xfm status"                          "ping ทุกเครื่อง + disk summary"
+  ctab "46:22 244:34 0:0" "xfm ls"      "xfm ls <machine> [path]"             "แสดงไฟล์บน remote"
+  ctab "46:22 244:34 0:0" "xfm cp"      "xfm cp <src> <dst>"                  "copy ข้ามเครื่อง (any→any)"
+  ctab "46:22 244:34 0:0" "xfm mv"      "xfm mv <src> <dst>"                  "ย้ายข้ามเครื่อง (cp + rm src)"
+  ctab "46:22 244:34 0:0" "xfm rm"      "xfm rm <machine:path>"               "ลบไฟล์บน remote (ถามยืนยัน)"
+  ctab "46:22 244:34 0:0" "xfm mkdir"   "xfm mkdir <machine:path>"            "สร้างโฟลเดอร์บน remote"
+  ctab "46:22 244:34 0:0" "xfm info"    "xfm info <machine:path>"             "รายละเอียดไฟล์บน remote"
+  ctab "46:22 244:34 0:0" "xfm df"      "xfm df [machine|all]"                "disk usage (ทีละเครื่อง หรือทุกเครื่อง)"
+  ctab "46:22 244:34 0:0" "xfm du"      "xfm du <machine:path>"               "ขนาดโฟลเดอร์ย่อยบน remote"
+  ctab "46:22 244:34 0:0" "xfm find"    "xfm find <machine> <name> [path]"    "ค้นหาไฟล์บน remote"
+  ctab "46:22 244:34 0:0" "xfm sync"    "xfm sync <src> <dst>"                "rsync สองทิศทาง (any→any)"
   ctab "46:22 244:34 0:0" "xfm push"    "xfm push <local_path> <machine:dst>" "local → remote (shorthand)"
   ctab "46:22 244:34 0:0" "xfm pull"    "xfm pull <machine:src> [local_dst]"  "remote → local (shorthand)"
+  ctab "46:22 244:34 0:0" "xfm merge"   "xfm merge <A:path> <B:path>"         "Smart merge ข้ามเครื่อง (env/json/sh)"
   hline 66
 
   echo ""
   cn 244 d "  ┌──────────────────────────────────────────────────────────────────┐"
-  echo -e "  \e[2m│\e[0m  \e[1mSyntax:\e[0m \e[38;5;87mmachine:path\e[0m  เช่น \e[38;5;226mtm:~/storage\e[0m  \e[38;5;75mwin:/Users/User/doc.txt\e[0m   \e[2m│\e[0m"
+  echo -e "  \e[2m│\e[0m  \e[1mSyntax:\e[0m \e[38;5;87mmachine:path\e[0m  เช่น \e[38;5;226mtm:~/storage\e[0m  \e[38;5;208mmm:~/sdcard\e[0m  \e[38;5;75mwin:/Users/User/doc.txt\e[0m   \e[2m│\e[0m"
   echo -e "  \e[2m│\e[0m  ไม่ใส่ machine = local  เช่น \e[38;5;255m~/myfile.txt\e[0m                    \e[2m│\e[0m"
   echo -e "  \e[2m│\e[0m  \e[38;5;208m📚 Learn Mode:\e[0m \e[38;5;51mfm learn on\e[0m เพื่อดูคำสั่งจริงทุกครั้ง            \e[2m│\e[0m"
   cn 244 d "  └──────────────────────────────────────────────────────────────────┘"
@@ -1710,7 +2027,7 @@ xfm_status() {
   ctab "1:6 1:22 1:6 1:8 1:10 1:0" "NAME" "CONNECTION" "PORT" "LATENCY" "DISK USE" "STATUS"
   _sep
 
-  local machines=("win" "wsl" "tm" "deb")
+  local machines=("win" "wsl" "tm" "mm" "deb")
   for m in "${machines[@]}"; do
     local host user port label conn_str
     host=$(_xfm_host "$m")
@@ -1723,9 +2040,10 @@ xfm_status() {
     local ms; ms=$(_xfm_ping "$m")
 
     if [[ "$ms" -ge 0 ]] 2>/dev/null; then
-      # get disk usage
+      # get disk usage (filter only percentage token to prevent login banner pollution)
       local disk
-      disk=$(_xfm_ssh "$m" "df -h / 2>/dev/null | tail -1 | awk '{print \$5}'" 2>/dev/null || echo "?")
+      disk=$(_xfm_ssh "$m" "df -h / 2>/dev/null" 2>/dev/null | grep -o -E '[0-9]+%' | tail -n 1)
+      [[ -z "$disk" ]] && disk="?"
       local disk_num="${disk//%/}"
       local disk_color="46"
       (( disk_num >= 90 )) 2>/dev/null && disk_color="203"
@@ -1746,12 +2064,12 @@ xfm_status() {
 xfm_ls() {
   local machine="${1:?Usage: xfm ls <machine> [path]}"
   local path="${2:-~}"
-  _xfm_valid "$machine" || { _err "ไม่รู้จัก machine: $machine  (win|wsl|tx|deb|local)"; return 1; }
+  _xfm_valid "$machine" || { _err "ไม่รู้จัก machine: $machine  (win|wsl|tm|mm|deb|local)"; return 1; }
 
   _learn_box "xfm ls — แสดงไฟล์บน remote" \
     "ssh -p <port> user@host 'ls -lAh --color=never \"$path\"'" \
     "ssh            |เชื่อมต่อ remote แล้วรัน command" \
-    "-p <port>      |port ที่ตั้งไว้ตาม machine (tx=8022, deb=9022, win/wsl=22)" \
+    "-p <port>      |port ที่ตั้งไว้ตาม machine (tm=8022, mm=8020, win/wsl=22)" \
     "ls -lAh        |l=long format A=all incl. dotfiles h=human-readable size" \
     "--color=never  |ปิดสี ls เพราะ xfm จะจัด format เอง"
 
@@ -1759,11 +2077,13 @@ xfm_ls() {
   printf '%s\n' "  $(_xfm_label "$machine")  $(c 87 b "📂  $path")"
   _sep
 
-  if [[ "$(_xfm_lower "$machine")" == "local" || "${machine,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$machine")" == "local" || "$machine" == "." ]]; then
     ls -lAh --color=always "$path" 2>/dev/null || _err "ไม่พบ path: $path"
   else
+    local remote_target="$path"
+    [[ "$remote_target" == "~"* ]] && remote_target="\${HOME}${remote_target#\~}"
     _xfm_ssh "$machine" \
-      "ls -lAh --color=never \"$path\" 2>/dev/null || echo 'ERROR: path not found'" \
+      "eval ls -lAh --color=never \"$remote_target\" 2>/dev/null || ls -lAh --color=never \"$path\" 2>/dev/null || echo 'ERROR: path not found'" \
       | while IFS= read -r line; do
           if [[ "$line" == total* ]]; then
             echo -e "  \e[2m$line\e[0m"
@@ -1886,7 +2206,7 @@ xfm_mv() {
   xfm_cp "$src_arg" "$dst_arg" || { _err "copy ล้มเหลว — source ยังอยู่ครบ"; return 1; }
 
   _info "ลบ source: $src_m:$src_p ..."
-  if [[ "$(_xfm_lower "$src_m")" == "local" || "${src_m,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$src_m")" == "local" || "$src_m" == "." ]]; then
     rm -rf "$src_p" && _ok "ลบ source สำเร็จ"
   else
     _xfm_ssh "$src_m" "rm -rf \"$src_p\"" && _ok "ลบ source บน $src_m สำเร็จ"
@@ -1911,7 +2231,7 @@ xfm_rm() {
   _warn "กำลังจะลบบน $(_xfm_label "$machine"): $path"
   _confirm "ยืนยันการลบบน remote?" || { _info "ยกเลิก"; return 0; }
 
-  if [[ "$(_xfm_lower "$machine")" == "local" || "${machine,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$machine")" == "local" || "$machine" == "." ]]; then
     rm -rv "$path" && _ok "ลบสำเร็จ"
   else
     _xfm_ssh "$machine" "rm -rv \"$path\"" && _ok "ลบสำเร็จบน $machine"
@@ -1932,7 +2252,7 @@ xfm_mkdir() {
     "mkdir -pv      |p=สร้าง parent อัตโนมัติ v=verbose" \
     "ssh ... cmd    |ส่ง command ไปรันบน remote แล้วดู output กลับมา"
 
-  if [[ "$(_xfm_lower "$machine")" == "local" || "${machine,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$machine")" == "local" || "$machine" == "." ]]; then
     mkdir -pv "$path" && _ok "สร้างโฟลเดอร์สำเร็จ"
   else
     _xfm_ssh "$machine" "mkdir -pv \"$path\"" && _ok "สร้างโฟลเดอร์สำเร็จบน $machine"
@@ -1969,7 +2289,7 @@ xfm_info() {
     wc -lw "$f" 2>/dev/null || echo "n/a"
   '
 
-  if [[ "$(_xfm_lower "$machine")" == "local" || "${machine,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$machine")" == "local" || "$machine" == "." ]]; then
     bash -c "$remote_cmd" 2>/dev/null
   else
     _xfm_ssh "$machine" "$remote_cmd" 2>/dev/null \
@@ -1997,7 +2317,7 @@ xfm_df() {
     "(all)          |xfm loop ทุก machine และรัน df พร้อมกัน (background &)" \
     "(parallel)     |ส่ง SSH request ทุกเครื่องพร้อมกัน แล้วรอ output ทีเดียว"
 
-  local machines=("win" "wsl" "tm" "deb")
+  local machines=("win" "wsl" "tm" "mm" "deb")
   [[ "$target" != "all" ]] && machines=("$target")
 
   for m in "${machines[@]}"; do
@@ -2005,7 +2325,7 @@ xfm_df() {
     echo ""
     echo -e "  $(_xfm_label "$m")  \e[2m$(_xfm_conn_str "$m")\e[0m"
     _sep
-    if [[ "$(_xfm_lower "$m")" == "local" || "${m,,}" == "." ]]; then
+    if [[ "$(_xfm_lower "$m")" == "local" || "$m" == "." ]]; then
       df -h
     else
       _xfm_ssh "$m" "df -h" 2>/dev/null \
@@ -2044,7 +2364,7 @@ xfm_du() {
   printf '%s\n' "  $(_xfm_label "$machine")  $(c 87 b "📊  $path")"
   _sep
 
-  if [[ "$(_xfm_lower "$machine")" == "local" || "${machine,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$machine")" == "local" || "$machine" == "." ]]; then
     du -sh "$path"/*/ 2>/dev/null | sort -rh | head -20 \
       | awk -v CY="$(printf '\e[1;38;5;226m')" -v R="$(printf '\e[0m')" '{printf "  " CY "%-10s" R "  %s\n", $1, $2}'
   else
@@ -2075,7 +2395,7 @@ xfm_find() {
   _info "ค้นหา '$name' บน $(_xfm_label "$machine") ใน $path ..."
   echo ""
 
-  if [[ "$(_xfm_lower "$machine")" == "local" || "${machine,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$machine")" == "local" || "$machine" == "." ]]; then
     find "$path" -iname "*${name}*" -not -path '*/\.*' 2>/dev/null
   else
     _xfm_ssh "$machine" \
@@ -2111,12 +2431,15 @@ xfm_sync() {
   _warn "--delete จะลบไฟล์ที่ dst แต่ไม่มีใน src"
   _confirm "ยืนยัน sync: $src_arg → $dst_arg?" || { _info "ยกเลิก"; return 0; }
 
+  local key="${KEY_NODE:-${HOME}/.ssh/id_ed25519_node}"
+
   # local → remote
-  if [[ "$(_xfm_lower "$src_m")" == "local" || "${src_m,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$src_m")" == "local" || "$src_m" == "." ]]; then
     _step "sync: local:$src_p  →  $dst_m:$dst_p"
     local host user port
     host=$(_xfm_host "$dst_m"); user=$(_xfm_user "$dst_m"); port=$(_xfm_port "$dst_m")
-    local ssh_opt="-o ConnectTimeout=8"
+    local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
+    [[ -f "$key" ]] && ssh_opt="$ssh_opt -i $key"
     [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
     rsync -avz --progress --delete -e "ssh $ssh_opt" "$src_p" "$user@$host:$dst_p" \
       && _ok "sync สำเร็จ"
@@ -2124,11 +2447,12 @@ xfm_sync() {
   fi
 
   # remote → local
-  if [[ "$(_xfm_lower "$dst_m")" == "local" || "${dst_m,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$dst_m")" == "local" || "$dst_m" == "." ]]; then
     _step "sync: $src_m:$src_p  →  local:$dst_p"
     local host user port
     host=$(_xfm_host "$src_m"); user=$(_xfm_user "$src_m"); port=$(_xfm_port "$src_m")
-    local ssh_opt="-o ConnectTimeout=8"
+    local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
+    [[ -f "$key" ]] && ssh_opt="$ssh_opt -i $key"
     [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
     rsync -avz --progress --delete -e "ssh $ssh_opt" "$user@$host:$src_p" "$dst_p" \
       && _ok "sync สำเร็จ"
@@ -2146,7 +2470,8 @@ xfm_sync() {
   _info "Step 2/2 — push ไปยัง $dst_m ..."
   local host user port
   host=$(_xfm_host "$dst_m"); user=$(_xfm_user "$dst_m"); port=$(_xfm_port "$dst_m")
-  local ssh_opt="-o ConnectTimeout=8"
+  local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
+  [[ -f "$key" ]] && ssh_opt="$ssh_opt -i $key"
   [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
   rsync -avz --progress --delete -e "ssh $ssh_opt" "$relay_dir/" "$user@$host:$dst_p" \
     && _ok "sync สำเร็จ"
@@ -2200,6 +2525,7 @@ xfm() {
     sync)        xfm_sync "$@"     ;;
     push)        xfm_push "$@"     ;;
     pull)        xfm_pull "$@"     ;;
+    merge)       xfm_merge "$@"    ;;
     help|--help|-h|"") xfm_help   ;;
     *)
       _err "ไม่รู้จักคำสั่ง xfm: $cmd"
@@ -2659,7 +2985,7 @@ xfm_merge() {
   local filename; filename=$(basename "$pa")
   local ext="${filename##*.}"
   local ftype
-  case "${ext,,}" in
+  case "$(_xfm_lower "$ext")" in
     env)         ftype="env"  ;;
     json)        ftype="json" ;;
     sh|bash|zsh) ftype="sh"   ;;
@@ -2690,14 +3016,14 @@ xfm_merge() {
 
   # ── Pull both files ───────────────────────────────────────────
   _info "ดึงไฟล์จาก $(_xfm_label "$ma") ..."
-  if [[ "${ma,,}" == "local" || "${ma,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$ma")" == "local" || "$ma" == "." ]]; then
     cp "$pa" "$file_a" || { _err "ไม่พบ: $pa"; return 1; }
   else
     _xfm_pull "$ma" "$pa" "$file_a" 2>/dev/null || { _err "pull จาก $ma ล้มเหลว"; return 1; }
   fi
 
   _info "ดึงไฟล์จาก $(_xfm_label "$mb") ..."
-  if [[ "${mb,,}" == "local" || "${mb,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$mb")" == "local" || "$mb" == "." ]]; then
     cp "$pb" "$file_b" || { _err "ไม่พบ: $pb"; return 1; }
   else
     _xfm_pull "$mb" "$pb" "$file_b" 2>/dev/null || { _err "pull จาก $mb ล้มเหลว"; return 1; }
@@ -2754,14 +3080,14 @@ xfm_merge() {
 
   # ── Push to both machines ─────────────────────────────────────
   _step "push → $ma:$pa ..."
-  if [[ "${ma,,}" == "local" || "${ma,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$ma")" == "local" || "$ma" == "." ]]; then
     cp "$merged" "$pa" && _ok "อัปเดต local:$pa"
   else
     _xfm_push "$merged" "$ma" "$pa" && _ok "อัปเดต $ma:$pa"
   fi
 
   _step "push → $mb:$pb ..."
-  if [[ "${mb,,}" == "local" || "${mb,,}" == "." ]]; then
+  if [[ "$(_xfm_lower "$mb")" == "local" || "$mb" == "." ]]; then
     cp "$merged" "$pb" && _ok "อัปเดต local:$pb"
   else
     _xfm_push "$merged" "$mb" "$pb" && _ok "อัปเดต $mb:$pb"
@@ -2770,23 +3096,6 @@ xfm_merge() {
   echo ""
   echo -e "  \e[38;5;46m✔  merge สำเร็จ!\e[0m  \e[2mทั้งสองเครื่องมีไฟล์เดียวกันแล้ว\e[0m"
   echo ""
-}
-
-# ─────────────────────────────────────────────────────────────────
-# HOOK เข้า xfm dispatcher — เพิ่ม subcommand merge
-# ─────────────────────────────────────────────────────────────────
-# สแนปช็อต dispatcher เดิม (ที่ประกาศด้านบน) เป็น xfm_base ก่อน override
-# แล้ว delegate ผ่าน xfm_base — ไม่ต้องก็อปปี้ case ทั้งหมดซ้ำ
-# (ก่อนหน้านี้ _xfm_orig ไม่เคยถูก set → xfm ทุกคำสั่งนอกจาก merge เงียบหาย)
-eval "$(declare -f xfm | sed '1s/^xfm */xfm_base /')"
-
-xfm() {
-  if [[ "$1" == "merge" ]]; then
-    shift
-    xfm_merge "$@"
-  else
-    xfm_base "$@"
-  fi
 }
 
 #printf '%s\n' "$(c 208 b '  🔀  XFM Merge loaded!')  พิมพ์ $(c w b 'xfm merge <A:path> <B:path>')"

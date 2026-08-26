@@ -73,107 +73,63 @@ _ssh_node() {
 # Signatures are frozen. Internal implementation uses Transport Layer.
 
 # TM — SSH into Termux (Android)
-#   tm  <cmd...>           — uses key id_ed25519_termux if exists, else default
-tm() {
-  local key=""
-  [[ -f "${HOME}/.ssh/id_ed25519_tm" ]] && key="-i ${HOME}/.ssh/id_ed25519_tm"
-  _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" \
-    -o ConnectTimeout=5 -o BatchMode=yes $key -- "$@"
-}
-# tm_ — same as tm but always uses id_ed25519 (default key)
-tm_() {
-  _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" \
-    -i "${HOME}/.ssh/id_ed25519" -o ConnectTimeout=5 -o BatchMode=yes -- "$@"
-}
+# -- all device using the same name of key identity folders (id_ed25519_node)
+# KEY_NODE="${HOME}/.ssh/id_ed25519_node"
+KEY_NODE="${HOME}/.ssh/id_ed25519_node"
 
-# MUMU — SSH into Termux on MUMUPlayer (uses dedicated key id_ed25519_mumu)
-mumu() {
-  local key=""
-  [[ -f "${HOME}/.ssh/id_ed25519_mumu" ]] && key="-i ${HOME}/.ssh/id_ed25519_mumu"
-  _ssh_node "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "${NODE_MUMU_PORT}" \
-    -o ConnectTimeout=5 -o BatchMode=yes $key -- "$@"
-}
-mumu_() {
-  _ssh_node "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "${NODE_MUMU_PORT}" \
-    -i "${HOME}/.ssh/id_ed25519_mumu" -o ConnectTimeout=5 -o BatchMode=yes -- "$@"
-}
-
-# tw — SSH into Windows แล้วเปิด pwsh (interactive)
-# Windows OpenSSH default shell = PowerShell → เรียกผ่าน PS call operator (&)
 tw() {
-  ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& \"${WIN_GIT_BASH}\" --login -i"
-}
-# ssh_win — SSH into windows แล้วเปิด Git Bash (interactive)
-ssh_win() {
-  ssh -t -p "${NODE_WIN_PORT:-22}" "${NODE_WIN_USER}@${NODE_WIN_HOST}" "& '${WIN_GIT_BASH}' --login -i"
+  local shell="gb"
+  if [[ "${1:-}" =~ ^(pw|gb)$ ]]; then
+    shell="$1"
+    shift
+  fi
+
+  local -a ssh_opts=(-o ConnectTimeout=5 -t)
+  [[ -f "${KEY_NODE}" ]] && ssh_opts+=(-i "${KEY_NODE}")
+
+  case "$shell" in
+    pw)
+      local cmd="pwsh"
+      [[ $# -gt 0 ]] && cmd="pwsh -Command \"$*\"" || cmd="pwsh -NoExit"
+      _ssh_node "${NODE_WIN_USER}" "${NODE_WIN_HOST}" "${NODE_WIN_PORT}" "${ssh_opts[@]}" -- "$cmd"
+      ;;
+    gb)
+      local cmd="& '${WIN_GIT_BASH}' --login -i"
+      [[ $# -gt 0 ]] && cmd="& '${WIN_GIT_BASH}' -c $(printf '%q' "$*")"
+      _ssh_node "${NODE_WIN_USER}" "${NODE_WIN_HOST}" "${NODE_WIN_PORT}" "${ssh_opts[@]}" -- "$cmd"
+      ;;
+    *)
+      echo "Unknown shell: $shell"
+      ;;
+  esac
 }
 
-# wsl — SSH into WSL from another machine
+mm() {
+  local -a ssh_opts=(-o ConnectTimeout=5 -o BatchMode=yes)
+  [[ -f "${KEY_NODE}" ]] && ssh_opts+=(-i "${KEY_NODE}")
+  _ssh_node "${NODE_MUMU_USER}" "${NODE_MUMU_HOST}" "${NODE_MUMU_PORT}" "${ssh_opts[@]}" -- "$@"
+}
+
+tm() {
+  local -a ssh_opts=(-o ConnectTimeout=5 -o BatchMode=yes)
+  [[ -f "${KEY_NODE}" ]] && ssh_opts+=(-i "${KEY_NODE}")
+  _ssh_node "${NODE_TERMUX_USER}" "${NODE_TERMUX_HOST}" "${NODE_TERMUX_PORT}" "${ssh_opts[@]}" -- "$@"
+}
+
+ax() {
+  local -a ssh_opts=(-o ConnectTimeout=5 -o BatchMode=yes)
+  [[ -f "${KEY_NODE}" ]] && ssh_opts+=(-i "${KEY_NODE}")
+  _ssh_node "${NODE_ACODEX_USER}" "${NODE_ACODEX_HOST}" "${NODE_ACODEX_PORT}" "${ssh_opts[@]}" -- bash "$@"
+}
+
+
 wsl() {
-  _ssh_node "${NODE_WSL_USER}" "${NODE_WSL_HOST}" "${NODE_WSL_PORT}" \
-    -i "${HOME}/.ssh/id_ed25519_wsl" -- "$@"
-}
-# ssh_wsl — alias (backward compat)
-ssh_wsl() { wsl "$@"; }
-
-# tac — REMOVED (uses non-existent ACODE_* vars). If needed, use:
-#   _ssh_node "$ACODE_USER" "$ACODE_HOST" "$ACODE_PORT" -- "$@"
-
-# mumu-debug — Run MUMU environment debugger remotely
-# Usage:  mumu-debug [all|env|ssh|micro|zsh|joe|sync]
-#         mumu-debug --fix [micro|zsh|joe|all]
-mumu-debug() {
-    local script="$SSOT/tools/mumu-debug.sh"
-    if [[ ! -f "$script" ]]; then
-        printf "%s\n" "$(c 196 b 'x') mumu-debug.sh not found at $script" >&2
-        return 1
-    fi
-    # Run locally if on MUMU, otherwise SSH and execute remotely
-    if [[ "${JOE_ENV:-}" == "MUMU" ]]; then
-        bash "$script" "$@"
-    else
-        local ssh_opts=(-p "${NODE_MUMU_PORT}" -o ConnectTimeout=8 -o BatchMode=yes)
-        [[ -f "${HOME}/.ssh/id_ed25519_mumu" ]] && ssh_opts+=(-i "${HOME}/.ssh/id_ed25519_mumu")
-        # Copy script to remote + execute via stdin (escape-safe)
-        # ส่ง args เป็น positional args (ไม่ใช้ $*) กัน injection
-        cat "$script" | ssh "${ssh_opts[@]}" "${NODE_MUMU_USER}@${NODE_MUMU_HOST}" \
-            "bash -s -- $(printf '%q ' "$@")" 2>/dev/null
-    fi
+  local -a ssh_opts=(-o ConnectTimeout=5 -o BatchMode=yes)
+  [[ -f "${KEY_NODE}" ]] && ssh_opts+=(-i "${KEY_NODE}")
+  _ssh_node "${NODE_WSL_USER}" "${NODE_WSL_HOST}" "${NODE_WSL_PORT}" "${ssh_opts[@]}" -- "$@"
 }
 
-# micro-fix — Quick fix for micro freeze on Termux/MUMU
-# Usage:  micro-fix [file]
-#   Sets TERM=xterm-256color and launches micro safely
-#   Use --nano to force nano as fallback
-micro-fix() {
-    local use_nano=0 file=""
-    for arg in "$@"; do
-        case "$arg" in
-            --nano) use_nano=1 ;;
-            *) file="$arg" ;;
-        esac
-    done
 
-    # Kill any orphaned micro processes first
-    pkill -9 micro 2>/dev/null
-
-    # Set correct TERM for Termux/MUMU environments
-    export TERM=xterm-256color
-    export COLORTERM=truecolor
-
-    if (( use_nano )); then
-        # Force nano as fallback
-        nano "${file:-}"
-    else
-        # Exit alternate screen buffer first (prevents black screen hang)
-        printf '\e[?1049l' 2>/dev/null
-        if [[ -n "$file" ]]; then
-            micro "$file"
-        else
-            micro
-        fi
-    fi
-}
 
 # ============================================================
 # Windows PowerShell helpers (shared with ssh-config.sh)
@@ -184,11 +140,12 @@ micro-fix() {
 if ! declare -F ps_remote >/dev/null 2>&1; then
   # Resolve SSOT path robustly — $SSOT may not be set if 3worlds.sh was
   # sourced standalone (e.g. during testing).
-  local _ssh_cfg="${SSOT:-$(dirname "${BASH_SOURCE[0]}")}/core/ssh-config.sh"
+  _ssh_cfg="${SSOT:-$(dirname "${BASH_SOURCE[0]}")}/core/ssh-config.sh"
   [[ -f "$_ssh_cfg" ]] || _ssh_cfg="/home/usercivenz/bashscripts/core/ssh-config.sh"
   if [[ -f "$_ssh_cfg" ]]; then
     source "$_ssh_cfg"
   fi
+  unset _ssh_cfg
 fi
 
 # twpws — SSH into Windows PowerShell (default shell) for interactive use

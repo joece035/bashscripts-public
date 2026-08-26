@@ -312,6 +312,84 @@ rc2() {
 }
 
 # ============================================================
+# RANDOM CHARACTER COLOR (V3 — random color per character, no adjacent duplicates)
+# ============================================================
+_rc_char_render() {
+    [[ -n "${ZSH_VERSION:-}" ]] && emulate -L sh
+    local palette_str="$1"; shift
+    local -a palette=($palette_str)
+
+    local input_style=""
+    if [[ $# -gt 1 && "$1" =~ ^[bdiu]{1,4}$ ]]; then
+        input_style="$1"
+        shift 1
+    elif [[ $# -eq 1 && "$1" =~ ^[bdiu]{1,4}$ ]]; then
+        input_style="$1"
+        shift 1
+    fi
+
+    local style="" i char
+    for (( i=0; i<${#input_style}; i++ )); do
+        char="${input_style:$i:1}"
+        case "$char" in
+            b) style+="$(_b)" ;; d) style+="$(_d)" ;;
+            i) style+="$(_i)" ;; u) style+="$(_u)" ;;
+        esac
+    done
+
+    local targets=()
+    if [[ $# -gt 0 ]]; then
+        targets=("${@}")
+    else
+        targets=("No text provided")
+    fi
+
+    local last_color=""
+    for text in "${targets[@]}"; do
+        local length="${#text}"
+        local result=""
+        for (( i=0; i<length; i++ )); do
+            local ch="${text:i:1}"
+            if [[ "$ch" == " " ]]; then
+                result+=" "
+                continue
+            fi
+            local avail=() c
+            for c in "${palette[@]}"; do
+                [[ "$c" != "$last_color" ]] && avail+=("$c")
+            done
+            [[ ${#avail[@]} -eq 0 ]] && avail=("${palette[@]}")
+            local rand_idx=$(( RANDOM % ${#avail[@]} ))
+            local chosen="${avail[$rand_idx]}"
+            last_color="$chosen"
+            result+="${style}$(_c "$chosen")${ch}"
+        done
+        echo -e "${result}$(_r)"
+    done
+}
+
+# rcc — Random Color per Character (Vibrant rainbow, 12 colors)
+rcc() {
+    local palette="45 82 190 196 208 201 39 226 129 48 203 141"
+    _rc_char_render "$palette" "$@"
+}
+
+# rcc1 — Pastel/earthy per character (12 colors)
+rcc1() {
+    local palette="167 173 136 71 68 105 132 178 150 139 174 180"
+    _rc_char_render "$palette" "$@"
+}
+
+# rcc2 — Bold/neon per character (10 colors)
+rcc2() {
+    local palette="21 10 196 200 225 27 202 123 229 205"
+    _rc_char_render "$palette" "$@"
+}
+
+# Alias
+rc_char() { rcc "$@"; }
+
+# ============================================================
 # COLOR COMPARISON (V2 — visual picker)
 # ============================================================
 color_comparison() {
@@ -326,7 +404,7 @@ alias cmp='color_comparison'
 color_comparison2() {
     local colors=("$@")
     for color_ in "${colors[@]}"; do
-        local b=$(color "$color_" b "█████████████████████████")
+        local b=$(rcc b "█████████████████████████")
         printf "∎%s%s%s∎\n" "$b" "$b" "$b"
     done
 }

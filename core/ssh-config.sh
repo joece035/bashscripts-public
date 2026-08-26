@@ -78,8 +78,9 @@ ssh_() {
         t|tm|termux|TERMUX)         ssh termux    "$@" ;;
         w|tw|window|win|WINDOW)     ssh window    "$@" ;;
         gb|gitbash|GITBASH|g)       ssh window    "& '${WIN_GIT_BASH}' --login -i" "$@" ;;
-        mm|mumu|MUMU|m)               ssh mumu      "$@" ;;
+        mm|mumu|MUMU|m)             ssh mumu      "$@" ;;
         wsl|WSL|WSL2)               ssh wsl       "$@" ;;
+        ax|a|ACODEX|A)              ssh -p 8021 root@termux "bash" "$@" ;;
         *) cn r b "usage ssh_ <host>"; return 1 ;;
     esac     
 

@@ -210,10 +210,10 @@ export NODE_MUMU_ST_KEY="zMGe2P6CmaSoczYLvPtXLgTQaRL4vE6C"
 export NODE_MUMU_ST_ID="PQP2YQT-GQXIJGV-BHOTC4Y-PXWVL2C-EMJIRZP-J6QI7RP-VXJ7GF7-WUYSZQ6"
 export NODE_MUMU_ST_URL="http://${NODE_MUMU_HOST}:${NODE_MUMU_ST_PORT}"
 
-# --- Debian (proot inside Termux) ---
-export NODE_DEBIAN_HOST="${NODE_DEBIAN_HOST:-debian}"
-export NODE_DEBIAN_USER="${NODE_DEBIAN_USER:-root}"
-export NODE_DEBIAN_PORT="${NODE_DEBIAN_PORT:-22}"
+# --- ACODEX (proot inside Termux) ---
+export NODE_ACODEX_HOST="${NODE_ACODEX_HOST:-termux}"
+export NODE_ACODEX_USER="${NODE_ACODEX_USER:-root}"
+export NODE_ACODEX_PORT="${NODE_ACODEX_PORT:-8021}"
 
 # ============================================================
 # COMPATIBILITY LAYER — Phase 1
@@ -258,10 +258,10 @@ export ST_KEY_MUMU="$NODE_MUMU_ST_KEY"
 export ST_PORT_MUMU="$NODE_MUMU_ST_PORT"
 export URL_MUMU="${NODE_MUMU_ST_URL}/"
 
-# Debian compat
-export DEBIAN_IP="${NODE_DEBIAN_HOST:-$NODE_DEBIAN_IP}"
-export DEBIAN_USER="$NODE_DEBIAN_USER"
-export DEBIAN_PORT="$NODE_DEBIAN_PORT"
+# ACODEX compat
+export ACODEX_IP="${NODE_ACODEX_HOST:-$NODE_ACODEX_IP}"
+export ACODEX_USER="$NODE_ACODEX_USER"
+export ACODEX_PORT="$NODE_ACODEX_PORT"
 
 # ============================================================
 # EXPORTS COMPLETE — Ready for use in aliases and functions
@@ -415,3 +415,6 @@ zsh_setup(){
 
 
 
+
+# ssh host window 's port
+export NODE_WIN_PORT="22"
