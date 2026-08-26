@@ -1,0 +1,21 @@
+# Syncthing ignore rules for ~/bashscripts (SSOT)
+# Purpose: prevent cross-device conflict markers on files owned by WSL
+
+# ── 1. Git internal — WSL is sole git user, others just mirror ──
+.git
+.git/**
+
+# ── 2. Backup/temp files ──
+*.bak
+*.tmp
+*.swp
+.DS_Store
+
+# ── 3. Conflict markers (safety net — Syncthing creates these, we ignore them) ──
+*.sync-conflict-*
+
+# ── 4. Local-only caches ──
+.cache
+node_modules
+__pycache__
+*.pyc
