@@ -431,3 +431,24 @@ c256_() {
 }
 
 
+Rcc() {
+    # 1. เช็คว่ามี style ส่งเข้ามาหรือไม่
+    # ถ้าตัวแรกว่างเปล่า หรือมีแค่ 1 parameter ให้มองว่าเป็น text ทั้งหมด
+    local style=""
+    local text=""
+
+    if [[ $# -eq 1 ]]; then
+        text="$1"
+    else
+        style="$1"
+        shift # เลื่อน $1 (style) ออกไป เพื่อให้ $@ เหลือแค่ text ทั้งหมด
+        text="$*"
+    fi
+
+    # 2. วน loop อ่านทีละ 1 ตัวอักษร (นับรวมช่องว่างด้วย)
+    local i char
+    for (( i=0; i<${#text}; i++ )); do
+        char="${text:i:1}"
+        rc "$style" "$char"
+    done
+}

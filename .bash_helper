@@ -10,25 +10,27 @@ _check() {
     local item=""
     shift 3
 
-    if declare -p "$tar_input" 2>/dev/null | grep -E -q '(declare|typeset).*-[^=]*[aA]'; then
-        local -a items=()
-
-        if [ -n "$ZSH_VERSION" ]; then
+    if [ -n "$ZSH_VERSION" ]; then
+        if [[ "${(tP)tar_input}" == *array* || "${(tP)tar_input}" == *association* ]]; then
             setopt LOCAL_OPTIONS
             unsetopt KSH_ARRAYS 2>/dev/null
-            items=("${(@P)tar_input}")
-        else
-            local -n ref="$tar_input"
-            items=("${ref[@]}")
+            for item in "${(@P)tar_input}"; do
+                test "$type" "$item" && "$cmd" "$item" "$@"
+            done
+            return 0
         fi
-
-        for item in "${items[@]}"; do
-            test "$type" "$item" && "$cmd" "$item" "$@"
-        done
     else
-        test "$type" "$tar_input" && "$cmd" "$tar_input" "$@"
-    fi    
-}       
+        if [[ "$(declare -p "$tar_input" 2>/dev/null)" =~ ^declare\ -[aA] ]]; then
+            local -n ref="$tar_input"
+            for item in "${ref[@]}"; do
+                test "$type" "$item" && "$cmd" "$item" "$@"
+            done
+            return 0
+        fi
+    fi
+
+    test "$type" "$tar_input" && "$cmd" "$tar_input" "$@"
+}
 #-- helper for  functin, alias unbinding
 unbind(){
     local mode=""
@@ -143,5 +145,3 @@ csh(){
         
     esac    
 }
-
-

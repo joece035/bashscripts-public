@@ -12,7 +12,7 @@ export COLORTERM="truecolor"
 # -- Shell Options (Prevent glob errors & duplicate fpath) ------
 setopt NO_NOMATCH 2>/dev/null || true
 setopt NULL_GLOB 2>/dev/null || true
-typeset -U fpath path PATH 2>/dev/null || true
+typeset -g -U fpath path PATH 2>/dev/null || true
 
 # -- Path Setup ------------------------------------------------
 export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$HOME/.local/bin:$PATH"

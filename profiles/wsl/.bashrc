@@ -81,4 +81,4 @@ export PATH="$HOME/.local/bin:$PATH"
 export TERM=xterm-256color
 
 source -- $HOME/.local/share/blesh/ble.sh
-stty sane
+[ -t 0 ] && stty sane 2>/dev/null || true

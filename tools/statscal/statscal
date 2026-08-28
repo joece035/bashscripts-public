@@ -1,0 +1,6 @@
+#!/bin/bash
+# ============================================================
+# STATSCAL — Win Rate Statistics Calculator & History Engine
+# ============================================================
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec python3 "$DIR/statscal.py" "$@"

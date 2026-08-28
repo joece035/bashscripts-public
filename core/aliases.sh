@@ -157,3 +157,6 @@ alias envm='bash "$SSOT/tools/env-manager.sh"'
 alias envmgr='bash "$SSOT/tools/env-manager.sh"'
 
 
+
+alias statscal='python3 "$SSOT/tools/statscal/statscal.py"'
+alias wr='python3 "$SSOT/tools/statscal/statscal.py"'

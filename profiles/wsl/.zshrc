@@ -1,8 +1,17 @@
 # ================================================================
-# ~/.zshrc - JOE SSOT ZSH Config (WSL)
-# SSOT: ~/bashscripts/profiles/wsl/.zshrc
-# Linked to: ~/.zshrc
+# $HOME/.zshrc - JOE SSOT ZSH Config (WSL)
+# SSOT: $HOME/bashscripts/profiles/wsl/.zshrc
+# Linked to: $HOME/.zshrc
 # ================================================================
+
+# -- Reset any bash-emulation options if re-sourcing in the same session --
+unsetopt KSH_ARRAYS SH_WORD_SPLIT 2>/dev/null || true
+
+# -- Path Setup (Must be BEFORE any tools/helpers run) ----------
+export PATH="$HOME/.local/bin:$HOME/.local/lib/openclaw/bin:$HOME/.opencode/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
+export SSOT="$HOME/bashscripts"
+export MY_DEVICE="${WSL:-WSL}"
+
 [[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
 
 # -- Terminal type (micro/TUI needs this) -----------------------
@@ -12,7 +21,7 @@ export COLORTERM="truecolor"
 # -- Shell Options (Prevent glob errors & duplicate fpath) ------
 setopt NO_NOMATCH 2>/dev/null || true
 setopt NULL_GLOB 2>/dev/null || true
-typeset -U fpath path PATH 2>/dev/null || true
+typeset -g -U fpath path PATH 2>/dev/null || true
 
 # -- Powerlevel10k instant prompt (quiet output warning) -------
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
@@ -22,14 +31,11 @@ fi
 
 # -- NVM (Node Version Manager - MUST come BEFORE .env) --------
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+_check -f "$NVM_DIR/nvm.sh" "source" 
 nvm use default >/dev/null 2>&1 || true
 
-# -- Path Setup ------------------------------------------------
-[ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
-export PATH="$HOME/.local/bin:$HOME/.local/lib/openclaw/bin:$HOME/.opencode/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
-export SSOT="$HOME/bashscripts"
-export MY_DEVICE="${WSL:-WSL}"
+# -- Local Env -------------------------------------------------
+_check -f "$HOME/.local/bin/env" "source"
 
 # -- Oh My Zsh Flags -------------------------------------------
 export DISABLE_LS_COLORS="true"
@@ -55,18 +61,17 @@ if [[ -z "${_OMZ_SOURCED:-}" ]]; then
     [[ -f "$ZSH/oh-my-zsh.sh" ]] && source "$ZSH/oh-my-zsh.sh"
 fi
 
-# -- ZSH/Bash compat layer (BEFORE joe.sh) ---------------------
-[[ -f "$HOME/.env" ]] && source "$HOME/.env"
+# -- ZSH/Bash compat layer & SSOT entry point ------------------
 SSOT="${SSOT:-$HOME/bashscripts}"
-[[ -f "$SSOT/.zsh-bash-compat.sh" ]] && source "$SSOT/.zsh-bash-compat.sh"
-[[ -f "$HOME/.bash_aliases" ]] && source "$HOME/.bash_aliases"
+source_files=(
+    "$HOME/.env"
+    "$SSOT/.zsh-bash-compat.sh"
+    "$HOME/.bash_aliases"
+    "$SSOT/joe.sh"
+    "$HOME/.p10k.zsh"
+)
+_check -f "source_files" "source" 2>/dev/null
 
-# -- JOE SSOT single entry point --------------------------------
-# joe.sh: JOE_ENV detection -> 00-env.sh -> 01-colors.sh -> functions
-[[ -f "$SSOT/joe.sh" ]] && source "$SSOT/joe.sh"
-
-# -- Powerlevel10k config --------------------------------------
-[[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
 typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
 
 # -- Safe UP/DOWN keybindings ----------------------------------
@@ -98,7 +103,8 @@ GITSTATUS_LOG_LEVEL=DEBUG
 alias ktmux="tmux kill-server"
 
 # OpenClaw Completion
-[ -f "$HOME/.openclaw-2/completions/openclaw.bash" ] && source "$HOME/.openclaw-2/completions/openclaw.bash" 2>/dev/null || true
+export openclaw_bash_path="$HOME/.openclaw-2/completions/openclaw.bash"
+_check -f "$openclaw_bash_path" "source" 2>/dev/null
 
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
@@ -133,5 +139,5 @@ micro() {
     return $ret
 }
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
+# To customize prompt, run `p10k configure` or edit $HOME/.p10k.zsh.
+[[ ! -f $HOME/.p10k.zsh ]] || source $HOME/.p10k.zsh

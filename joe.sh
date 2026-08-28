@@ -178,7 +178,7 @@ ssot_load(){
         for sf in "${source_files[@]}"; do
             if [[ -f "$sf" ]]; then
                 local f_name=""
-                f_name=$(basename "$sf")            
+                f_name="${sf##*/}"            
                 basen_files+=("$f_name")
             fi
         done
