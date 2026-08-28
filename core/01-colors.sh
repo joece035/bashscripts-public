@@ -430,6 +430,20 @@ c256_() {
     done
 }
 
+# --error
+_er(){
+ cn lr b "$@ ⛔"
+}
+
+ # --successfully
+_sc(){
+ 	cn lg b "$@ ✅"
+ }
+
+ # --explain
+ _ep(){
+ 	c 45 b "$@ "
+ }
 
 Rcc() {
     # 1. เช็คว่ามี style ส่งเข้ามาหรือไม่
