@@ -82,6 +82,7 @@ export pfwin="${SSOT}/profiles/git-bash"
 # ============================================================
 # SupperBoom env
 # ============================================================
+
 export ssboom="${WIN_PATH}c/Users/User/Documents/mumusharedfolder/Screenshots"
 export vdoboom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
 export bk_vdoboom="${WIN_PATH}h/boom/VideoRecords"

@@ -42,79 +42,271 @@ rename_multi(){
     done
 }
 
+# `fpid()` v2
+
 fpid() {
-    # 1. เช็คว่าใส่ Port มาหรือไม่
+    # ============================================================
+    # fpid <port> [process_pattern]
+    #
+    # Example:
+    #   fpid 9119
+    #   fpid 9119 node
+    #   fpid 9119 hermes
+    #   fpid 8080 "python.*server"
+    # ============================================================
+
     local port="${1:-}"
+    local proc_pattern="${2:-}"
+
+    # ------------------------------------------------------------
+    # 1. Validate
+    # ------------------------------------------------------------
     if [ -z "$port" ]; then
-        cn y bi "Usage: fpid <port>" ; return 1
+        cn y bi "Usage: fpid <port> [process_pattern]"
+        return 1
     fi
 
     local pid=""
-    local os_type="$(uname -s 2>/dev/null)"
+    local os_type
+    os_type="$(uname -s 2>/dev/null)"
+
     local use_sudo=""
 
-    # --- 2. ค้นหา PID ตามสภาพแวดล้อม ---
+    # ------------------------------------------------------------
+    # 2. Sudo only when actually useful
+    # ------------------------------------------------------------
+    if [ -z "$TERMUX_VERSION" ] \
+        && [ "$(id -u)" -ne 0 ] \
+        && command -v sudo &>/dev/null
+    then
+        use_sudo="sudo"
+    fi
+
+    # ============================================================
+    # 3. Find PID by PORT
+    # ============================================================
+
+    # ------------------------------------------------------------
+    # Windows / Git Bash
+    # ------------------------------------------------------------
     if [[ "$os_type" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
-        # ฝั่ง Windows / Git Bash
-        pid=$(netstat.exe -ano | grep LISTENING | grep ":$port " | awk '{print $5}' | sort -u | xargs)
+
+        pid=$(
+            netstat.exe -ano 2>/dev/null |
+            grep -E "LISTENING.*:${port}[[:space:]]" |
+            awk '{print $5}' |
+            sort -u |
+            xargs
+        )
+
+    # ------------------------------------------------------------
+    # Linux / WSL / Termux
+    # ------------------------------------------------------------
     else
-        # ฝั่ง Linux / WSL / Termux
-        if [ -z "$TERMUX_VERSION" ] && [ "$(id -u)" -ne 0 ] && command -v sudo &>/dev/null; then
-            use_sudo="sudo"
-        fi
 
+        # ---- Method 1: lsof ------------------------------------
         if command -v lsof &>/dev/null; then
-            pid=$($use_sudo lsof -ti:"$port" 2>/dev/null | sort -u | xargs)
-        elif command -v ss &>/dev/null; then
-            pid=$($use_sudo ss -tulpn "sport = :$port" 2>/dev/null | grep -oP 'pid=\K\d+' | sort -u | xargs)
-        elif command -v netstat &>/dev/null; then
-            pid=$($use_sudo netstat -tulpn 2>/dev/null | grep ":$port " | grep -oP '\d+(?=/) | sort -u | xargs')
+            pid=$(
+                $use_sudo lsof -ti:"$port" 2>/dev/null |
+                sort -u |
+                xargs
+            )
+        fi
+
+        # ---- Method 2: ss --------------------------------------
+        if [ -z "$pid" ] && command -v ss &>/dev/null; then
+            pid=$(
+                $use_sudo ss -ltnp "sport = :$port" 2>/dev/null |
+                grep -oP 'pid=\K[0-9]+' |
+                sort -u |
+                xargs
+            )
+        fi
+
+        # ---- Method 3: netstat --------------------------------
+        if [ -z "$pid" ] && command -v netstat &>/dev/null; then
+            pid=$(
+                $use_sudo netstat -tulpn 2>/dev/null |
+                grep -E ":${port}[[:space:]]" |
+                grep -oP '[0-9]+(?=/)' |
+                sort -u |
+                xargs
+            )
         fi
     fi
 
-    # --- 3. เช็คว่าเจอ PID หรือไม่ ---
-    if [ -z "$pid" ]; then
-        cn r bi "No process is running on port $port" ; return 1
+    # ============================================================
+    # 4. Termux fallback
+    #
+    # Android may allow us to see the port but not the PID.
+    # If user supplied a process pattern, search process table.
+    # ============================================================
+
+    if [ -z "$pid" ] \
+        && [ -n "$proc_pattern" ] \
+        && [ -n "$TERMUX_VERSION" ]
+    then
+
+        if command -v pgrep &>/dev/null; then
+            pid=$(
+                pgrep -f "$proc_pattern" 2>/dev/null |
+                sort -u |
+                xargs
+            )
+        fi
+
+        # pgrep fallback
+        if [ -z "$pid" ]; then
+            pid=$(
+                ps -ef 2>/dev/null |
+                grep -E "$proc_pattern" |
+                grep -v grep |
+                awk '{print $2}' |
+                sort -u |
+                xargs
+            )
+        fi
     fi
 
-    # --- 4. ถามยืนยันเพื่อ Kill Process ---
-    cn 87 b "Found process running on port $port: (PID: $pid)"
-    read -p "Do you want to kill process $pid? (y/n): " answer
+    # ============================================================
+    # 5. Generic process-pattern fallback
+    # ============================================================
 
-    if [[ "$answer" =~ ^[Yy]$ ]]; then
-        if [[ "$os_type" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
-            # Windows: ดึงชื่อไฟล์ .exe (เช่น syncthing.exe) จาก PID
-            local exe_name
-            exe_name=$(tasklist.exe //FI "PID eq $pid" //FO CSV 2>/dev/null | awk -F'","' 'NR==2{print $1}' | tr -d '"')
+    if [ -z "$pid" ] && [ -n "$proc_pattern" ]; then
+
+        if command -v pgrep &>/dev/null; then
+            pid=$(
+                pgrep -f "$proc_pattern" 2>/dev/null |
+                sort -u |
+                xargs
+            )
+        fi
+
+        if [ -z "$pid" ]; then
+            pid=$(
+                ps -ef 2>/dev/null |
+                grep -E "$proc_pattern" |
+                grep -v grep |
+                awk '{print $2}' |
+                sort -u |
+                xargs
+            )
+        fi
+    fi
+
+    # ============================================================
+    # 6. Nothing found
+    # ============================================================
+
+    if [ -z "$pid" ]; then
+
+        if [ -n "$proc_pattern" ]; then
+            cn r bi "No process found for port $port / pattern '$proc_pattern'"
+        else
+            cn r bi "No PID found for port $port"
+            cn y "Tip: Termux may block socket → PID mapping."
+            cn y "Try: fpid $port <process_name>"
+        fi
+
+        return 1
+    fi
+
+    # ============================================================
+    # 7. Display
+    # ============================================================
+
+    cn 87 b "Found process on port $port"
+
+    local p
+    local proc_name
+
+    for p in $pid; do
+
+        proc_name=""
+
+        proc_name=$(ps -p "$p" -o comm= 2>/dev/null | xargs)
+
+        if [ -z "$proc_name" ]; then
+            proc_name=$(cat "/proc/$p/comm" 2>/dev/null | xargs)
+        fi
+
+        printf "  PID: %-8s CMD: %s\n" "$p" "${proc_name:-unknown}"
+    done
+
+    # ============================================================
+    # 8. Confirm kill
+    # ============================================================
+
+    read -r -p "Do you want to kill process $pid? (y/n): " answer
+
+    if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+        cn y b "Process $pid not killed."
+        return 0
+    fi
+
+    # ============================================================
+    # 9. Kill
+    # ============================================================
+
+    # ------------------------------------------------------------
+    # Windows
+    # ------------------------------------------------------------
+    if [[ "$os_type" =~ ^(MINGW|MSYS|CYGWIN) ]]; then
+
+        local exe_name=""
+
+        # Only safe for a single PID
+        if [[ "$pid" != *" "* ]]; then
+
+            exe_name=$(
+                tasklist.exe //FI "PID eq $pid" //FO CSV 2>/dev/null |
+                awk -F'","' 'NR==2{print $1}' |
+                tr -d '"'
+            )
 
             if [ -n "$exe_name" ]; then
-                # สั่ง //IM เพื่อ kill ทุก Process ที่ชื่อตรงกัน (ตัวแม่+ตัวลูก) และใส่ //T กวาดทั้ง Tree
-                taskkill.exe //F //IM "$exe_name" //T 2>/dev/null && cn 10 b "Killed all instances of '$exe_name'."
-            else
-                # Fallback สั่ง Tree kill ผ่าน PID
-                taskkill.exe //F //T //PID $pid 2>/dev/null && cn 10 b "Process $pid killed."
-            fi
-        else
-            # Linux / Termux / WSL: พยายามดึงชื่อเพื่อ pkill กวาดล้างทั้งตระกูล
-            local first_pid
-            first_pid=$(echo "$pid" | awk '{print $1}')
-            
-            local proc_name=""
-            proc_name=$(ps -p "$first_pid" -o comm= 2>/dev/null | xargs)
-            [ -z "$proc_name" ] && proc_name=$(cat "/proc/$first_pid/comm" 2>/dev/null)
 
-            if [ -n "$proc_name" ] && command -v pkill &>/dev/null; then
-                $use_sudo pkill -9 -f "$proc_name" 2>/dev/null
-                cn 10 b "Killed all processes associated with '$proc_name'."
+                taskkill.exe //F //IM "$exe_name" //T 2>/dev/null &&
+                    cn 10 b "Killed all instances of '$exe_name'."
+
             else
-                $use_sudo kill -9 $pid 2>/dev/null
-                cn 10 b "Process $pid killed."
+
+                taskkill.exe //F //T //PID "$pid" 2>/dev/null &&
+                    cn 10 b "Process $pid killed."
+
             fi
+
+        else
+
+            # Multiple PIDs
+            local p
+
+            for p in $pid; do
+                taskkill.exe //F //PID "$p" 2>/dev/null
+            done
+
+            cn 10 b "Killed processes: $pid"
         fi
+
+    # ------------------------------------------------------------
+    # Linux / WSL / Termux
+    # ------------------------------------------------------------
     else
-        cn y b "Process $pid not killed."
+
+        local p
+
+        for p in $pid; do
+
+            if kill -9 "$p" 2>/dev/null; then
+                cn 10 b "Killed PID $p."
+            else
+                cn r b "Failed to kill PID $p."
+            fi
+
+        done
     fi
 }
+
 
 # --video pattern 
 f_video(){
@@ -150,7 +342,7 @@ f_video(){
 }
 
 
-fnex(){
+find_exec(){
     local target pattern files count move_dir copy_dir
     target="${1:-$PWD}"
     pattern="${2:-*.sh}"
@@ -177,7 +369,7 @@ fnex(){
             for file in "${rm_files[@]}"; do
                 [[ -f "$file" ]] && cn y bi "$file" && rm -f "$file" || cn r bi "$file not found"
             done
-            cn lg b "Files deleted successfully"
+            cn lg b "$count files done"
         else
             cn y b "Files not deleted."
         fi
@@ -185,18 +377,19 @@ fnex(){
         cn 45 b "Enter the directory to move the files to: "
         read -r move_dir
         if [[ ! -d "$move_dir" ]]; then
-            local rm_files=($files)
             mkdir -p "$move_dir" 
-            for file in "${rm_files[@]}"; do
-                if [[ -f "$file" ]]; then
-                    mv "$file" "$move_dir" && cn y bi "Moved: $file"
-                fi
-            done
-        else
+        fi    
+        local rm_files=($files)
+        for file in "${rm_files[@]}"; do
             if [[ -f "$file" ]]; then
-                mv "$file" "$move_dir" && cn y bi "Moved: $file"
+                mv "$file" "$move_dir"/$(basename "$file") && 
+                printf "%s %s >>> %s\n" \
+                    "done move" \
+                    "$(cn ora bi "$(basename "$file")")" \
+                    "$(cn lg bi "$move_dir"/$(basename "$file"))"
             fi
-        fi
+        done
+        cn lg b "$count files done"
     elif [[ "$answer" == "cp" ]]; then
         cn 45 b "Enter the directory to copy the files to: "
         read -r copy_dir
@@ -239,5 +432,26 @@ sh_(){
     mkdir -p "$(dirname "$target")"  
     touch "$target" && perm "$target" && cn y bi "✅ ไฟล์ .sh ถูกสร้างเรียบร้อยที่: $target"
 }
-
+# ============================================================
+# SupperBoom env function (moved from 00-env.sh)
+# ============================================================
+_db(){
+   local base_c="${WIN_PATH}c/Users/User/Documents/mumusharedfolder"
+   local base_z="${WIN_PATH}z/MuMuSharedFolder"
+   local base_backup="${WIN_PATH}h/boom"
+   local base_hb="${WIN_PATH}h/MuMuSharedFolder"
+   
+   
+   case $1 in
+      css)         printf "%s\n" "${base_c}/Screenshots" ;;
+      cvdo)        printf "%s\n" "${base_c}/VideoRecords" ;;
+      hbk_ss)      printf "%s\n" "${base_hb}/Screenshots" ;;
+      hbk_vdo)     printf "%s\n" "${base_hb}/VideoRecords" ;;
+      bk_ss)       printf "%s\n" "${base_backup}/Screenshots" ;;
+      bk_vdo)      printf "%s\n" "${base_backup}/VideoRecords" ;;
+      zss)         printf "%s\n" "${base_z}/Screenshots" ;;
+      zvdo)        printf "%s\n" "${base_z}/VideoRecords" ;;
+      *)           printf "%s/%s\n" "$base_dir" "$1" ;;
+   esac
+}
  

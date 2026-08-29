@@ -83,6 +83,7 @@ re_name() {
         -iname "*_TMP" -o \
         -iname "*_Tmp" -o \
         -iname "*_ * " \
+        -iname "* *" \
     \) -print0 | while IFS= read -r -d '' file; do
         local dir_path="$(dirname "$file")"
         local filename="$(basename "$file")"
@@ -101,8 +102,8 @@ re_name() {
     cn 10 b "Done!"
 }
 mv_(){
-    local s="/f/Users/JoEz/Videos/clips"
-    local d="/f/Users/JoEz/Videos/HunterxHunter"
+    local s="$bk_ss"
+    local d="$hbk_ss"
     local count=$(find "$s" -type f -name 'HUNTER*' -print0 | wc -l)
     local file2=( "$s"/HUNTER* )
     mkdir -p $d
@@ -118,8 +119,8 @@ mv_(){
   c gr "" "ย้ายไฟล์แล้วทั้งหมด" ; c 10 b "$count" ; cn gr "" "files"
 }
 move_() {
-    local src="${1:-$boom}"
-    local dest="${2:-$bk_boom/$(date +%Y%m%d)}"
+    local src="${1:-$bk_ss}"
+    local dest="${2:-$hbk_ss/$(date +%Y%m%d)}"
     local count=$(find "$src" -type f \( \
         -iname "* *.mp4" -o \
         -iname "* *.3gp" -o \
@@ -136,7 +137,8 @@ move_() {
         -iname "* *_tmp" -o \
         -iname "* *_TMP" -o \
         -iname "* *_Tmp" -o \
-        -iname "*_*" \
+        -iname "*.PNG" -o \
+        -iname "*.png" \
     \) | wc -l)
 
     # 1. แปลง Path รูปแบบ Windows (F:\...) ให้เป็น WSL (/mnt/f/...) อัตโนมัติ
@@ -176,7 +178,9 @@ move_() {
         -iname "*_tmp" -o \
         -iname "*_TMP" -o \
         -iname "*_Tmp" -o \
-        -iname "*_*" \
+        -iname "*_*" -o \
+        -iname "*.png" -o \
+        -iname "*.PNG" \
     \))
 
     # 5. สร้างโฟลเดอร์ปลายทางถ้ายังไม่มี
