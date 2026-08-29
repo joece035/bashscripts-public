@@ -1,6 +1,10 @@
 # $HOME/.bashrc: executed by bash(1) for non-login shells.
-
-[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
+if [[ -x "$HOME/bashscripts/.bash_helper" ]]; then
+    source "$HOME/bashscripts/.bash_helper"
+elif [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
+    chmod +x "$HOME/bashscripts/.bash_helper"
+    source "$HOME/bashscripts/.bash_helper"
+fi
 # ── 1. CORE BASH CONFIG ──
 HISTCONTROL=ignoreboth
 shopt -s histappend

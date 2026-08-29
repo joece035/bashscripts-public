@@ -1,5 +1,9 @@
 #!/bin/bash
-
+if ! command -v _color_render >/dev/null 2>&1; then
+    if [ -f "$HOME/bashscripts/core/01-colors.sh" ]; then
+        source "$HOME/bashscripts/core/01-colors.sh" 2>/dev/null
+    fi
+fi
 # ==========================================
 # 1. นิยามฟังก์ชัน _check() (เวอร์ชัน Cross-Shell)
 # ==========================================
@@ -136,12 +140,67 @@ guard() {
         return 1
     fi
 }
-csh(){
-    [[ -z "$1" ]]&& c 198 "b" "SHELL : ";cn ora b "$_SHELL"
 
-    case $1 in
-        b|bash) chsh -s bash && cn 10 b 'switched to bash' ;;
-        z|zsh) chsh -s zsh && cn 10 b 'switched to zsh' ;;
-        
-    esac    
+sws(){
+    local shell_type=$1
+    # ── ตั้ง chsh command ตาม environment (array เพื่อรองรับ zsh no-split) ───
+    local -a exec_cmd
+    if [[ "$JOE_ENV" == "WSL" ]]; then
+        exec_cmd=(sudo chsh)
+    else
+        exec_cmd=(chsh)   # Termux / native Linux ไม่ต้อง sudo
+    fi
+
+    # ── helper: หา path ของ shell ──────────────────────────────
+    _find_shell(){
+        local sh="$1"
+        local p; p="$(command -v "$sh" 2>/dev/null)"
+        [[ -z "$p" ]] && { cn red b "$sh not found"; return 1; }
+        echo "$p"
+    }
+
+    # ── helper: switch ทั้ง login-shell + instant session ───────
+    _do_switch(){
+        local target_shell="$1"
+        local target_cmd; target_cmd="$(_find_shell "$target_shell")" || return 1
+
+        # 1) เปลี่ยน login shell (มีผลรอบหน้า)
+        "${exec_cmd[@]}" -s "$target_cmd" || { cn red b "chsh failed"; return 1; }
+
+        # 2) อัปเดต $_SHELL ใน env ทันที
+        export _SHELL="$target_shell"
+        export SHELL="$target_cmd"
+
+        cn 10 b "switched to $target_shell"
+        cn 226 b "↳ reloading session now..."
+
+        # 3) Instant switch — แทนที่ process ปัจจุบันด้วย shell ใหม่
+        exec "$target_cmd" -l
+    }
+
+    # ── No-arg: interactive toggle ──────────────────────────────
+    if [[ "$#" -eq 0 ]]; then
+        c 198 "b" "SHELL : "; cn ora b "$_SHELL"
+        local target_shell confirm
+
+        if [[ "$_SHELL" == "bash" ]]; then
+            read -p "$(_ep "SWITCH TO ZSH  (y/n): ")" confirm
+            target_shell="zsh"
+        elif [[ "$_SHELL" == "zsh" ]]; then
+            read "confirm?$(_ep "SWITCH TO BASH (y/n): ")"
+            target_shell="bash"
+        else
+            cn red b "Unknown shell: $_SHELL"; return 1
+        fi
+
+        [[ "$confirm" =~ ^[Yy]$ ]] && _do_switch "$target_shell"
+        return
+    fi
+
+    # ── Direct arg: sws b / sws z ──────────────────────────────
+    case $shell_type in
+        b|bash) _do_switch bash ;;
+        z|zsh)  _do_switch zsh  ;;
+        *)      cn red b "Usage: sws [b|bash|z|zsh]" ;;
+    esac
 }

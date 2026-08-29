@@ -1,4 +1,4 @@
-#!/bin/bash
+# /bin/bash
 
 replace_w() {
     local old_name=${1:-}
@@ -15,7 +15,7 @@ replace_w() {
     # ครอบเครื่องหมายคำพูดซ้อนสไตล์นี้ปลอดภัยที่สุดครับ
     find "$target" -type f -exec sed -i "s/""$old_name""/""$new_name""/g" {} +
 
-    echo "✨ All done!"
+    echo "✨ All done "
 }
 
 rename_multi(){
@@ -132,13 +132,23 @@ fnex(){
     
     #แสดง
     cn 45 b "$files"
-    cn 10 b "$count files found!"
+    cn 10 b "$count files found "
     read -p "what do you want to do with these files? (rm/mv/cp/exit) : " answer
 
     if [[ "$answer" == "rm" ]]; then
-        find "$target" -type f -name "${pattern}" 2>/dev/null | xargs -p rm -v
+        read -p "Are you sure you want to delete these files? (y/n): " confirm
+        if [[ "$confirm" =~ ^[Yy]$ ]]; then
+            local rm_files=($files)
+            for file in "${rm_files[@]}"; do
+                [[ -f "$file" ]] && cn y bi "$file" && rm -f "$file" || cn r bi "$file not found"
+            done
+            cn lg b "Files deleted successfully"
+        else
+            cn y b "Files not deleted."
+        fi
     elif [[ "$answer" == "mv" ]]; then
         read -p "Enter the directory to move the files to: " move_dir
+        [[ -d "$move_dir" ]] || { cn r bi "Directory not found: $move_dir"; return 1; }
         find "$target" -type f -name "${pattern}" 2>/dev/null | xargs -p mv -v -t "${move_dir:-}"
     elif [[ "$answer" == "cp" ]]; then
         read -p "Enter the directory to copy the files to: " copy_dir
@@ -148,28 +158,6 @@ fnex(){
     fi      
 }
 
-_clean_(){
-
-echo "=== เริ่มต้นทำความสะอาดระบบ ==="
-
-# 1. ลบไฟล์แคชการติดตั้งโปรแกรมของ APT (.deb ที่โหลดมาเก็บไว้)
-echo "[1/4] ล้างแคช APT Package..."
-sudo apt-get clean
-
-# 2. ถอดถอนแพ็กเกจ/ความสัมพันธ์ที่ไม่ได้ใช้งานแล้ว (Unused dependencies)
-echo "[2/4] ลบโปรแกรมขยะที่ไม่ได้ใช้..."
-sudo apt-get autoremove -y
-
-# 3. ล้าง User Cache ของผู้ใช้ปัจจุบัน (เช่น แคชเบราว์เซอร์, แอปพลิเคชัน)
-echo "[3/4] ล้าง User Cache..."
-rm -rf ~/.cache/*
-
-# 4. ลบไฟล์ Temp ที่ค้างในระบบ
-echo "[4/4] ล้างไฟล์ชั่วคราว (/tmp)..."
-sudo rm -rf /tmp/*
-
-echo "=== ทำความสะอาดเรียบร้อยแล้ว! ==="
-}
 new() {
     local is_dir=0
     case ${1:--d} in

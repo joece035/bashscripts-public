@@ -156,7 +156,6 @@ ssot_load(){
     local SHOW_LOAD="${1:-""}"
     local source_files=(
         "$SSOT/bootstrap/00-env.sh"
-        "$SSOT/core/01-colors.sh"
         "$SSOT/core/ssh-config.sh"
         "$SSOT/core/3worlds.sh"
         "$SSOT/core/aliases.sh"

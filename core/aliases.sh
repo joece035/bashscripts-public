@@ -95,8 +95,8 @@ unbinding(){
 
 
   case "$_SHELL" in 
-        zsh) unbinding -a g ;; #>/dev/null 2>&1 || true ;;
-        bash) unbinding -a ll ;; #>/dev/null 2>&1 || true ;;  
+        zsh) unbinding -a g >/dev/null 2>&1 || true ;;
+        bash) unbinding -a ll >/dev/null 2>&1 || true ;;  
   esac
 
 

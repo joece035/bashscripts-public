@@ -12,7 +12,14 @@ export PATH="$HOME/.local/bin:$HOME/.local/lib/openclaw/bin:$HOME/.opencode/bin:
 export SSOT="$HOME/bashscripts"
 export MY_DEVICE="${WSL:-WSL}"
 
-[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
+# -- Initialize color engine (must come before any tools that use it) --
+# Check if .bash_helper is executable and source it
+if [[ -x "$HOME/bashscripts/.bash_helper" ]]; then
+    source "$HOME/bashscripts/.bash_helper"
+elif [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
+    chmod +x "$HOME/bashscripts/.bash_helper"
+    source "$HOME/bashscripts/.bash_helper"
+fi
 
 # -- Terminal type (micro/TUI needs this) -----------------------
 export TERM="${TERM:-xterm-256color}"
@@ -24,7 +31,7 @@ setopt NULL_GLOB 2>/dev/null || true
 typeset -g -U fpath path PATH 2>/dev/null || true
 
 # -- Powerlevel10k instant prompt (quiet output warning) -------
-typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+typeset -g POWERLEVEL9K_INSTANT_PROMPT=off
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
     source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
@@ -72,7 +79,7 @@ source_files=(
 )
 _check -f "source_files" "source" 2>/dev/null
 
-typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
+
 
 # -- Safe UP/DOWN keybindings ----------------------------------
 if ! autoload +X -U up-line-or-beginning-search 2>/dev/null; then
