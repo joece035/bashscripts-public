@@ -116,16 +116,50 @@ fpid() {
     fi
 }
 
+# --video pattern 
+f_video(){
+    local target="${1:-$bk_boom}"
+    local files=() v
+    mapfile -t files < <(find "$target" -type f \( \
+        -iname "*.mp4" -o \
+        -iname "*.3gp" -o \
+        -iname "*.flv" -o \
+        -iname "*.avi" -o \
+        -iname "*.mov" -o \
+        -iname "*.mkv" -o \
+        -iname "*.wmv" -o \
+        -iname "*.FLV" -o \
+        -iname "*.AVI" -o \
+        -iname "*.MOV" -o \
+        -iname "*.MKV" -o \
+        -iname "*.WMV" -o \
+        -iname "*_tmp" -o \
+        -iname "*_TMP" -o \
+        -iname "*_Tmp" -o \
+        -iname "*_*" \
+    \))
+    if [[ -z "${files[@]}" ]]; then
+        cn r bi "No files found"
+        return 1
+    fi
+    for v in "${files[@]}"; do
+        rc b "${v}"
+    done
+    cn gr d "found  $(cn 198 b "${#files[@]}")"
+    
+}
+
+
 fnex(){
     local target pattern files count move_dir copy_dir
     target="${1:-$PWD}"
     pattern="${2:-*.sh}"
-    count="$(find "$target" -type f -name "${pattern}" 2>/dev/null | wc -l)"
+    count="$(find "$target" -type f -iname "${pattern}" 2>/dev/null | wc -l)"
 
     
 
     #เช็คว่ามีไฟล์
-    files="$(find "$target" -type f -name "${pattern}" 2>/dev/null | sort -u)"
+    files="$(find "$target" -type f -iname "${pattern}" 2>/dev/null | sort -u)"
     if [[ -z "$files" ]]; then
         cn r bi "No files found matching pattern "${pattern}" in directory "$target""; return 1
     fi
@@ -136,7 +170,8 @@ fnex(){
     read -p "what do you want to do with these files? (rm/mv/cp/exit) : " answer
 
     if [[ "$answer" == "rm" ]]; then
-        read -p "Are you sure you want to delete these files? (y/n): " confirm
+        cn 45 b "Are you sure you want to delete these files? (y/n): "
+        read -r confirm
         if [[ "$confirm" =~ ^[Yy]$ ]]; then
             local rm_files=($files)
             for file in "${rm_files[@]}"; do
@@ -147,12 +182,31 @@ fnex(){
             cn y b "Files not deleted."
         fi
     elif [[ "$answer" == "mv" ]]; then
-        read -p "Enter the directory to move the files to: " move_dir
-        [[ -d "$move_dir" ]] || { cn r bi "Directory not found: $move_dir"; return 1; }
-        find "$target" -type f -name "${pattern}" 2>/dev/null | xargs -p mv -v -t "${move_dir:-}"
+        cn 45 b "Enter the directory to move the files to: "
+        read -r move_dir
+        if [[ ! -d "$move_dir" ]]; then
+            local rm_files=($files)
+            mkdir -p "$move_dir" 
+            for file in "${rm_files[@]}"; do
+                if [[ -f "$file" ]]; then
+                    mv "$file" "$move_dir" && cn y bi "Moved: $file"
+                fi
+            done
+        else
+            if [[ -f "$file" ]]; then
+                mv "$file" "$move_dir" && cn y bi "Moved: $file"
+            fi
+        fi
     elif [[ "$answer" == "cp" ]]; then
-        read -p "Enter the directory to copy the files to: " copy_dir
-        find "$target" -type f -name "${pattern}" 2>/dev/null | xargs -p cp -v -t "$copy_dir"
+        cn 45 b "Enter the directory to copy the files to: "
+        read -r copy_dir
+        if [[ -d "$copy_dir" ]] ; then
+          find "$target" -type f  -iname "${pattern}" 2>/dev/null | xargs -p cp -v -t "$copy_dir"
+        else
+          cn r bi "Directory not found: $copy_dir"
+          return 1
+        fi
+        find "$target" -type f  -iname "${pattern}" 2>/dev/null | xargs -p cp -v -t "$copy_dir"
     else
         cn y b "Invalid input."
     fi      

@@ -17,7 +17,7 @@ array_excample(){
    done
 }
 
-rename_sp() {
+re_name() {
     local target_dir="${1:-.}"
     local count=$(find "$target_dir" -type f \( \
         -iname "* *.mp4" -o \

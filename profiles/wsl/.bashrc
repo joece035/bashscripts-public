@@ -1,10 +1,10 @@
 # $HOME/.bashrc: executed by bash(1) for non-login shells.
-if [[ -x "$HOME/bashscripts/.bash_helper" ]]; then
-    source "$HOME/bashscripts/.bash_helper"
-elif [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
-    chmod +x "$HOME/bashscripts/.bash_helper"
-    source "$HOME/bashscripts/.bash_helper"
+# Load helper functions early so core functions (like _color_render)
+# are available during the .env loading phase
+if [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
+    source "$HOME/bashscripts/.bash_helper" 2>/dev/null
 fi
+    
 # ── 1. CORE BASH CONFIG ──
 HISTCONTROL=ignoreboth
 shopt -s histappend

@@ -330,9 +330,10 @@ e(){
 #alias ssot='cd $SSOT'
 #
  auto_write_file() {
+    
     local HEAD_NAME=${1:-"FUNCTION"}
     local FILE_PATH=${2:-"$(fn 08-nexus.sh)"}
-    local width=50
+    local width=""
     local TEXT=${3:-"TYPE SOMETHING"}
 
     # ถ้าไม่มี $3 ให้อ่านจาก stdin (รองรับ heredoc สำหรับข้อความหลายบรรทัด/มีตัวแปร)

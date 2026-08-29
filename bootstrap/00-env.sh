@@ -72,16 +72,20 @@ export alpha=${ALPHA_DIR}
 export storage="/storage/emulated/0/" # sdcrd
 export ais_fiber="880-563-6522"
 export ais_phone="0814764210"
-export boom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
-export bk_boom="${WIN_PATH}h/boom"
+
 export _SHELL="${_SHELL:-${SHELL##*/}}"
 export _USER="${USER:-${USERNAME:-$(whoami 2>/dev/null)}}"
 export pftermux="${SSOT}/profiles/termux"
 export ptwsl="${SSOT}/profiles/wsl"
 export pfmumu="${SSOT}/profiles/mumu"
 export pfwin="${SSOT}/profiles/git-bash"
-
-
+# ============================================================
+# SupperBoom env
+# ============================================================
+export ssboom="${WIN_PATH}c/Users/User/Documents/mumusharedfolder/Screenshots"
+export vdoboom="${WIN_PATH}c/Users/User/Documents/MuMuSharedFolder/VideoRecords"
+export bk_vdoboom="${WIN_PATH}h/boom/VideoRecords"
+export bk_ssboom="${WIN_PATH}h/boom/Screenshots"
 # ============================================================
 # Dynamic env switching
 # ============================================================
