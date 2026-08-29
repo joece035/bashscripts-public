@@ -1,4 +1,5 @@
 #!/bin/bash
+# -- source color module which is live isolated from joe.sh
 if ! command -v _color_render >/dev/null 2>&1; then
     if [ -f "$HOME/bashscripts/core/01-colors.sh" ]; then
         source "$HOME/bashscripts/core/01-colors.sh" 2>/dev/null
@@ -36,7 +37,7 @@ _check() {
     test "$type" "$tar_input" && "$cmd" "$tar_input" "$@"
 }
 #-- helper for  functin, alias unbinding
-unbind(){
+unbinding(){
     local mode=""
     local target=""
 
@@ -66,7 +67,7 @@ unbind(){
             [ "$tt" = "function" ] && has_func=1
             ;;
         *)
-            echo "unknown JOE_ENV: $JOE_ENV"; return 1
+            c 198 b "unknown JOE_ENV: $JOE_ENV"; return 1
             ;;
     esac
 
@@ -76,40 +77,40 @@ unbind(){
         a)
             if (( has_alias )); then
                 unalias "$target" 2>/dev/null && removed=1
-                echo "done unalias"; echo "  $target"
+                c 45 b "done unalias"; cn 10 b "  $target"
             else
-                echo "⚠ '$target' has no alias"; return 1
+                cn 190 b "⚠ '$target' has no alias"; return 1
             fi
             ;;
         f)
             if (( has_func )); then
                 unset -f "$target" 2>/dev/null && removed=1
-                echo "done unfunction"; echo "  $target"
+                c 45 b "done unfunction"; cn 10 b "  $target"
             else
-                echo "⚠ '$target' has no function"; return 1
+                cn 190 b "⚠ '$target' has no function"; return 1
             fi
             ;;
         af)
             if (( has_alias )); then
                 unalias "$target" 2>/dev/null && removed=1
-                echo "done unalias"; echo "  $target"
+                c 45 b "done unalias"; cn 10 b "  $target"
             fi
             if (( has_func )); then
                 unset -f "$target" 2>/dev/null && removed=1
-                echo "done unfunction"; echo "  $target"
+                c 45 b "done unfunction"; cn 10 b "  $target"
             fi
-            (( removed )) || { echo "⚠ '$target' is not an alias/function"; return 1; }
+            (( removed )) || { c 198 b "⚠ '$target' is not an alias/function"; return 1; }
             ;;
         *)
             # default: ลบตัวที่เจอตัวแรก
             if (( has_alias )); then
                 unalias "$target" 2>/dev/null && removed=1
-                echo "done unalias"; echo "  $target"
+                c 45 b "done unalias"; cn 10 b "  $target"
             elif (( has_func )); then
                 unset -f "$target" 2>/dev/null && removed=1
-                echo "done unfunction"; echo "  $target"
+                c 45 b "done unfunction"; cn 10 b "  $target"
             else
-                echo "⚠ '$target' is not an alias/function"; return 1
+                c 198 b "⚠ '$target' is not an alias/function"; return 1
             fi
             ;;
     esac
