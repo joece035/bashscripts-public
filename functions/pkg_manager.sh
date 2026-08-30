@@ -129,3 +129,6 @@ pkg_manager() {
         return 1
     fi
 }
+pkg_(){
+    pkg_manager "$@" || return 1
+}
