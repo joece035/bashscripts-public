@@ -342,7 +342,7 @@ f_video(){
 }
 
 
-find_exec(){
+fexec(){
     local target pattern files count move_dir copy_dir
     target="${1:-$PWD}"
     pattern="${2:-*.sh}"

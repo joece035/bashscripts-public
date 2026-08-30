@@ -211,6 +211,7 @@ pp() {
     AI_PROFILE="${2:-"mom"}"
     if [[ -n "${ZSH_VERSION:-}" ]]; then
         source "$HOME/.zshrc"
+        unbinding -a g 2>/dev/null
     else
         source "$HOME/.bashrc"
     fi
