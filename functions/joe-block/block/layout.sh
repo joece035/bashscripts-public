@@ -30,8 +30,10 @@ fi
 # ============================================================
 _blk_parse_row() {
     local row="$1"
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     # Cross-shell split on '|' via _split_pipe() helper (utils.sh).
     # Keeps the rest of the engine shell-agnostic.
+    local -a parts=()
     _split_pipe parts "$row"
     local n=${#parts[@]}
 
@@ -81,6 +83,7 @@ _blk_parse_row() {
 #   Writes: _LAYOUT[label_w]  _LAYOUT[value_w]
 # ============================================================
 _blk_scan() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local rows=("$@")
     local max_l=0 max_v=0
     local row w
@@ -114,6 +117,7 @@ _blk_scan() {
 # ============================================================
 _blk_build_layout() {
     local offset="${1:-0}"
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
 
     _blk_init   # ensure TERM_WIDTH is cached
 

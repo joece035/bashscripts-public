@@ -68,4 +68,10 @@ draw_() {
 }
 alias d_='draw_'
 
+printf "%s" "
+
+"
+
+
+
 

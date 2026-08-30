@@ -26,13 +26,9 @@ _blk_init() {
 }
 
 # ============================================================
-# _blk_repeat_char <char> <count>
-#   Prints <char> repeated <count> times (no newline)
-# ============================================================
-# ============================================================
 # _pvar <varname> <format> [args...] — Cross-shell printf -v
 #   bash: printf -v (fast, no subshell)
-#   zsh:  eval + printf (compatible fallback)
+#   zsh:  printf -v supported in modern zsh
 # ============================================================
 _pvar() {
     local _var="$1"; shift
@@ -63,7 +59,7 @@ _split_pipe() {
         IFS='|' read -ra _out <<< "$_str"
     else
         # zsh: split with (s:|:) and assign to the global array
-        # (zsh arrays are auto-global unless declared `local -a` in fn)
+        setopt LOCAL_OPTIONS KSH_ARRAYS
         eval "${_arr_name}=(\"\${(@s:|:)_str}\")"
     fi
 }

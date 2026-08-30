@@ -419,6 +419,27 @@ _st_fetch() {
   fi
 }
 
+syncthing_check_all(){
+  # Call _st_fetch once per node → strip ANSI/emoji, extract status after ":"
+  # _st_fetch output format: "🔄  NAME<pad>:    STATUS 🟢\n"
+  _st_fetch_status() {
+    local raw
+    raw=$(_st_fetch "$@")
+    # strip ANSI, take everything after the first ":"
+    printf '%s' "$raw" | sed 's/\x1b\[[0-9;]*m//g; s/.*://' | tr -d '\n' | xargs
+  }
+
+  local ROWS=(
+    "🔄|TERMUX|$(_st_fetch_status "TERMUX" "${NODE_TERMUX_ST_URL}" "${NODE_TERMUX_ST_KEY}")|"
+    "🔄|WSL|$(_st_fetch_status "WSL"    "${NODE_WSL_ST_URL}"    "${NODE_WSL_ST_KEY}"   )|"
+    "🔄|WIN|$(_st_fetch_status "WIN"    "${NODE_WIN_ST_URL}"    "${NODE_WIN_ST_KEY}"   )|"
+    "🔄|MUMU|$(_st_fetch_status "MUMU"   "${NODE_MUMU_ST_URL}"  "${NODE_MUMU_ST_KEY}"  )|"
+  )
+  dashboard_array "${ROWS[@]}"
+}
+
+
+
 # _st_autostart <display_name> <st_url> <api_key> <st_port>
 #   → Check Syncthing; if offline, auto-start it.
 #   GIT-BASH: Windows Scheduled Task "Syncthing" (boot-trigger, SYSTEM account)
@@ -532,20 +553,19 @@ syncthing_status_() {
   local close5; close5=$(printf " %s%s%s%2s\n" "${spr5}" "${sr5}" "${em5}" "")
   local ct5; ct5="$(cn gr b " ${open5}$(cn w b "${close5}")")"
   printf '%s\n' "${ct5}"   # ใช้ printf แทน echo -e (กัน double-escape)
+
+
 }
 
 # check_syncthing — full mesh status panel (all 3 nodes)
 check_syncthing() {
-  c 51 b "▬▬▬▬▬▬▬▬▬▬▬▬ Syncthing Mesh Status ▬▬▬▬▬▬▬▬▬▬▬▬"
-  printf ' Node Console : %s\n' "$(c 141 b "$JOE_ENV")"
-  c 51 b "-----------------------------------------------"
 
   _st_fetch "TERMUX"  "${NODE_TERMUX_ST_URL}" "${NODE_TERMUX_ST_KEY}"
   _st_fetch "WSL    " "${NODE_WSL_ST_URL}"    "${NODE_WSL_ST_KEY}"
   _st_fetch "WIN"     "${NODE_WIN_ST_URL}"    "${NODE_WIN_ST_KEY}"
   _st_fetch "MUMU"    "${NODE_MUMU_ST_URL}"   "${NODE_MUMU_ST_KEY}"
 
-  c 51 b "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+  
 }
 
 alias stck='check_syncthing'

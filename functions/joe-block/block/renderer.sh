@@ -17,6 +17,7 @@
 #   Sets local vars: hr_l hr_r hm_l hm_r  based on FRAME_RANDOM
 # ============================================================
 _get_frame_chars() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     # Outputs 4 vars: hr_l hr_r hm_l hm_r  based on FRAME_RANDOM
     if [[ "${_THEME[frame_random]:-no}" == "yes" ]]; then
         hr_l="${_THEME[cc_hrc]}"
@@ -50,6 +51,7 @@ _get_frame_chars() {
 #   Prints top border. Uses _LAYOUT[block_w], _LAYOUT[indent], _THEME
 # ============================================================
 render_border_top() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local w="${_LAYOUT[block_w]}"
     local indent="${_LAYOUT[indent]}"
     local pad; _pvar pad '%*s' "$indent" ''
@@ -78,10 +80,12 @@ render_border_top() {
     fi
     echo -e "${pad}${border}"
 }
+
 # ============================================================
 # render_border_bot
 # ============================================================
 render_border_bot() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local w="${_LAYOUT[block_w]}"
     local indent="${_LAYOUT[indent]}"
     local pad; _pvar pad '%*s' "$indent" ''
@@ -118,6 +122,7 @@ render_border_bot() {
 #   Prints mid-separator line (between rows)
 # ============================================================
 render_mid() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local indent="${_LAYOUT[indent]}"
     local w="${_LAYOUT[block_w]}"
     local pad; _pvar pad '%*s' "$indent" ''
@@ -156,6 +161,7 @@ render_mid() {
 #   Assembles string incrementally — no long format string.
 # ============================================================
 render_row() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local eml="$1" label="$2" value="$3" emr="$4"
     local label_w="${_LAYOUT[label_w]}"
     local value_w="${_LAYOUT[value_w]}"
@@ -223,7 +229,6 @@ render_row() {
     row+="$_tmp"
 
     echo -e "${pad}${hr_l}${row}${hr_r}"
-    
 }
 
 # ============================================================
@@ -232,6 +237,7 @@ render_row() {
 # ============================================================
 render_title() {
     [[ $- != *i* ]] && return 0   # only in interactive shell
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local title
     case "${JOE_ENV:-}" in
         TERMUX)   title="$(rc b "🔴🟠🟡🟢🔵🟢🟡🟠🔴🔹🚀 Joe's TERMUX📲↘🔹")" ;;

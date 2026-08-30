@@ -123,9 +123,11 @@ guard() {
     for target in "$@"; do
         # 1. ถ้าเป็นโฟลเดอร์ ให้ค้นหาไฟล์ *.sh ในโฟลเดอร์ย่อยทั้งหมด (Recursive)
         if [ -d "$target" ]; then
-            # ใช้ find ค้นหาไฟล์ -type f ที่ชื่อลงท้ายด้วย .sh
             while IFS= read -r file; do
-                [ -f "$file" ] && source "$file" && ((loaded_count++))
+                if [ -f "$file" ]; then
+                    source "$file"
+                    ((loaded_count++))
+                fi
             done < <(find "$target" -type f -name "*.sh" 2>/dev/null | sort)
 
         # 2. ถ้าเป็นไฟล์ธรรมดา ให้ source ได้เลย

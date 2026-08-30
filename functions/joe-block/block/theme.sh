@@ -71,14 +71,18 @@ fi
 _load_theme() {
     local style="${1:-default}"
     local offset="${2:-}"
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
 
     # -- Source colors first (needed by _apply_color_to)
-    if [[ -z "${RESET:-}" ]]; then
-        [[ -f "${_BLOCK_ROOT}/01-colors.sh" ]] && source "${_BLOCK_ROOT}/01-colors.sh" && shopt -s expand_aliases 2>/dev/null
+    # Guard: check if color() function is loaded (cross-shell typeset -f)
+    if ! typeset -f color &>/dev/null; then
+        local _colors_root="${_BLOCK_ROOT:-${SSOT:-$HOME/bashscripts}}"
+        [[ -f "${_colors_root}/core/01-colors.sh" ]] && source "${_colors_root}/core/01-colors.sh"
+        [[ -n "${BASH_VERSION:-}" ]] && shopt -s expand_aliases 2>/dev/null
     fi
 
     # -- Source function tools (needed by bc_() and tp() used in _style_* OFFSET calc)
-    if ! declare -f bc_ &>/dev/null; then
+    if ! typeset -f bc_ &>/dev/null; then
         [[ -f "${_BLOCK_ROOT}/functions/00.1-function-tools.sh" ]] && source "${_BLOCK_ROOT}/functions/00.1-function-tools.sh" 2>/dev/null
     fi
 
@@ -144,14 +148,14 @@ _load_theme() {
 # _apply_color_to <config> <text>
 #   Safe color helper — no eval.
 #   config format: "<colorname> <style>"  e.g. 'gr ""' or 'w bi'
-#   NOTE (V3 01-colors.sh compat): block_style.sh authors use
-#     `set_ MID_LINE_C 'gr ""'`  to mean "gray, no style".
-#     The literal 2-char string `""` must be normalized to empty
-#     BEFORE calling color(), otherwise _color_render's
-#     `[[ "$2" == "" ]]` check fails and the literal `""` gets
-#     rendered as text (extra "" line in output).
 # ============================================================
 _apply_color_to() {
+    # Ensure color engine is loaded
+    if ! typeset -f color &>/dev/null; then
+        local _colors_root="${_BLOCK_ROOT:-${SSOT:-$HOME/bashscripts}}"
+        [[ -f "${_colors_root}/core/01-colors.sh" ]] && source "${_colors_root}/core/01-colors.sh"
+    fi
+
     local config="${1:-gr}"
     local text="$2"
     local clr sty
@@ -159,8 +163,11 @@ _apply_color_to() {
     sty="${config#* }"
     [[ "$sty" == "$clr" ]] && sty=''
     sty="${sty//\'/}"
-    sty="${sty//\"/}"          # <-- V3 fix: strip literal double-quotes
-    [[ -z "$sty" ]] && sty=''  # <-- V3 fix: ensure truly empty (0 chars)
+    sty="${sty//\"/}"
+    # Strip any extra spaces around style (e.g. 'bi ' -> 'bi')
+    sty="${sty## }"
+    sty="${sty%% }"
+    [[ -z "$sty" ]] && sty=''
     color "$clr" "$sty" "$text"
 }
 

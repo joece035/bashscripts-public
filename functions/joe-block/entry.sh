@@ -57,6 +57,7 @@ _blk_source_modules
 #   Pipeline: scan → layout → theme (already loaded) → render
 # ============================================================
 dashboard() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local ROWS=()
     local line
     while IFS= read -r line; do
@@ -65,15 +66,15 @@ dashboard() {
     done
     [[ ${#ROWS[@]} -eq 0 ]] && return 0
 
+    # Ensure theme is loaded even if called standalone
+    [[ -z "${_THEME[border_char]:-}" ]] && _load_theme "default"
+
     # Layout pass
     _blk_scan "${ROWS[@]}"
     _blk_build_layout "${_THEME[offset]:-0}"
 
     # Sync MD_SEP_ from theme into _LAYOUT (renderer uses _LAYOUT[sep])
     _LAYOUT[sep]="${_THEME[mid_sep]:- : }"
-
-    # -- Debug: show offset flow ( uncomment to debug )
-    # echo "DEBUG: _THEME[offset]='${_THEME[offset]:-UNSET}'" >&2
 
     # -- Guard: จอเล็กเกินไป ไม่ render
     (( ${_LAYOUT[block_w]:-0} == 0 )) && return 0
@@ -146,6 +147,7 @@ m() {
 #     s|shuffle      — Fisher-Yates deck, no repeat until full loop
 # ============================================================
 m_random() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local mode="${1:-pure}"
     local styles=("a" "b" "c" "default")
 
@@ -180,6 +182,7 @@ m_random() {
 #     step   = columns per frame       (default 3)
 # ============================================================
 m_animate() {
+    [[ -n "${ZSH_VERSION:-}" ]] && setopt LOCAL_OPTIONS KSH_ARRAYS
     local speed="${1:-0.05}"
     local cycles="${2:-3}"
     local step="${3:-3}"
@@ -188,7 +191,11 @@ m_animate() {
     local term_w="${TERM_WIDTH:-80}"
 
     local -a blk_lines=()
-    mapfile -t blk_lines < <(m 2>/dev/null)
+    if [[ -n "${BASH_VERSION:-}" ]]; then
+        mapfile -t blk_lines < <(m 2>/dev/null)
+    else
+        blk_lines=("${(@f)$(m 2>/dev/null)}")
+    fi
 
     while (( ${#blk_lines[@]} > 0 )) && [[ -z "${blk_lines[-1]}" ]]; do
         unset 'blk_lines[-1]'

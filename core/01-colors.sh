@@ -131,7 +131,7 @@ rainbow_palette() {
 
     # ต่อสีรุ้งทีละตัวอักษร (style ติดหน้าแต่ละตัว — กัน reset ระหว่างทาง)
     for (( i=0; i<length; i++ )); do
-        local char="${text:i:1}"
+        local char="${text:$i:1}"
         local color_code="${palette[$(( i % palette_size ))]}"
         result+="${st}$(_c "$color_code")${char}"
     done
@@ -349,7 +349,7 @@ _rc_char_render() {
         local length="${#text}"
         local result=""
         for (( i=0; i<length; i++ )); do
-            local ch="${text:i:1}"
+            local ch="${text:$i:1}"
             if [[ "$ch" == " " ]]; then
                 result+=" "
                 continue
