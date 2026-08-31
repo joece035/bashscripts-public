@@ -29,21 +29,21 @@ unbinding(){
 
     # ตรวจ binding type ตาม shell
     local has_alias=0 has_func=0
-    case "$JOE_ENV" in
-        TERMUX|MUMU)
+    case "${_SHELL}" in
+        zsh)
             local wt
             wt=$(whence -w "$target" 2>/dev/null | cut -d" " -f2)
             [ "$wt" = "alias" ]    && has_alias=1
             [ "$wt" = "function" ] && has_func=1
             ;;
-        WSL|GIT_BASH)
+        bash)
             local tt
             tt=$(type -t "$target" 2>/dev/null)
             [ "$tt" = "alias" ]    && has_alias=1
             [ "$tt" = "function" ] && has_func=1
             ;;
         *)
-            c 198 b "unknown JOE_ENV: $JOE_ENV"; return 1
+            c 198 b "unknown SHELL: $_SHELL"; return 1
             ;;
     esac
 
@@ -96,15 +96,15 @@ unbinding_all (){
     local target="${1:-}";
     [ -z "$target" ] && return 0;
     local binding_type;
-    case "$JOE_ENV" in
-        TERMUX | MUMU)
+    case "${_SHELL}" in
+        zsh)
             binding_type=$(whence -w "$target" 2> /dev/null | cut -d" " -f2)
         ;;
-        WSL | GIT_BASH)
+        bash)
             binding_type=$(type -t "$target" 2> /dev/null)
         ;;
         *)
-            c 198 b "unknown JOE_ENV: $JOE_ENV";
+            c 198 b "unknown SHELL: $_SHELL";
             return 1
         ;;
     esac;

@@ -237,7 +237,8 @@ fpid() {
     # 8. Confirm kill
     # ============================================================
 
-    read -r -p "Do you want to kill process $pid? (y/n): " answer
+    printf "Do you want to kill process %s? (y/n): " "$pid"
+    read -r answer
 
     if [[ ! "$answer" =~ ^[Yy]$ ]]; then
         cn y b "Process $pid not killed."

@@ -207,3 +207,33 @@ sws(){
         *)      cn red b "Usage: sws [b|bash|z|zsh]" ;;
     esac
 }
+cshell() {
+    local active_shell="${_SHELL:-}"
+    if [[ -z "$active_shell" ]]; then
+        if [[ -n "${ZSH_VERSION:-}" ]]; then
+            active_shell="zsh"
+        else
+            active_shell="bash"
+        fi
+    fi
+
+    if [[ "$#" -eq 0 ]]; then
+        cn ora b "$active_shell"
+        return 0
+    fi
+
+    local mode="${1:-}"
+    local zsh_cmd="${2:-}"
+    local bash_cmd="${3:-}"
+
+    case "$mode" in
+        -d|--detect)
+            if [[ "$active_shell" == "zsh" ]]; then
+                eval "$zsh_cmd"
+            else    
+                eval "$bash_cmd"
+            fi
+            ;;
+    esac
+}
+

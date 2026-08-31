@@ -12,7 +12,7 @@
     #   wtf -g -l N <pat>    Mode 3 + limit N results per category
     #   wtf -g -v -l N <pat> Mode 3 + both (flags MUST come before pattern)
     # ══════════════════════════════════════════════════════════════
-
+    
     local opt_g=0 opt_v=0 opt_l=0 limit=0
     local OPTIND=1
 
@@ -23,12 +23,12 @@
             v) opt_v=1 ;;
             l) opt_l=1
                if ! [[ "$OPTARG" =~ ^[0-9]+$ ]]; then
-                   color r b "❌ -l ต้องตามด้วยตัวเลข เช่น: wtf -g -l 10 pattern"
+                   cn r b "❌ -l ต้องตามด้วยตัวเลข เช่น: wtf -g -l 10 pattern"
                    return 1
                fi
                limit="$OPTARG" ;;
-            :) color r b "❌ -$OPTARG ต้องมีค่าตาม เช่น: -l 10"; return 1 ;;
-            \?) color r b "❌ flag ไม่รู้จัก: -$OPTARG  (ใช้ได้: -g -v -l N)"; return 1 ;;
+            :) cn r b "❌ -$OPTARG ต้องมีค่าตาม เช่น: -l 10"; return 1 ;;
+            \?) cn r b "❌ flag ไม่รู้จัก: -$OPTARG  (ใช้ได้: -g -v -l N)"; return 1 ;;
         esac
     done
     shift $(( OPTIND - 1 ))
@@ -40,12 +40,12 @@
     if (( opt_g )); then
         local pattern="${1:-}"
         if [[ -z "$pattern" ]]; then
-            color r b "❌ ต้องระบุ pattern: wtf -g [-v] [-l N] <pattern>"
+            cn r b "❌ ต้องระบุ pattern: wtf -g [-v] [-l N] <pattern>"
             return 1
         fi
 
         # helper: พิมพ์รายการด้วยสีจาก SSOT พร้อมตัดตาม limit
-        #   $1 = label (หัวข้อหมวด), $2 = color code (r/g/c/m/gr/...), $3.. = items
+        #   $1 = label (หัวข้อหมวด), $2 = cn code (r/g/c/m/gr/...), $3.. = items
         _wtf_limit() {
             local label="$1"; local item_color="$2"; shift 2
             local -a items=("$@")
@@ -54,22 +54,22 @@
             if (( opt_l && limit > 0 && total > limit )); then
                 shown=("${items[@]:0:$limit}")
                 local remaining=$(( total - limit ))
-                color gr "" "   ...และอีก $remaining รายการ (เพิ่ม -l N เพื่อดูเพิ่ม)"
+                cn gr "" "   ...และอีก $remaining รายการ (เพิ่ม -l N เพื่อดูเพิ่ม)"
             fi
             if (( ${#shown[@]} > 0 )); then
-                color y b "$label"
+                cn y b "$label"
                 local item
                 for item in "${shown[@]}"; do
-                    color "$item_color" "" "   $item"
+                    cn "$item_color" "" "   $item"
                 done
             fi
         }
 
-        color c "" "▬▬▬▬▬▬▬▬▬▬▬▬ wtf -g '$pattern' ▬▬▬▬▬▬▬▬▬▬▬▬"
+        cn c "" "▬▬▬▬▬▬▬▬▬▬▬▬ wtf -g '$pattern' ▬▬▬▬▬▬▬▬▬▬▬▬"
 
         # ── Functions ──
         local -a fn_results=()
-        if [[ "$JOE_ENV" == "TERMUX" ]]; then
+        if [[ "${_SHELL}" == "zsh" ]]; then
             # zsh: ${(ok)functions} ให้ชื่อฟังก์ชันทั้งหมด
             while IFS= read -r fn; do
                 fn_results+=( "$fn" )
@@ -84,7 +84,7 @@
 
         # ── Aliases ──
         local -a alias_results=()
-        if [[ "$JOE_ENV" == "TERMUX" ]]; then
+        if [[ "${_SHELL}" == "zsh" ]]; then
             while IFS= read -r al; do
                 alias_results+=( "$al" )
             done < <( alias 2>/dev/null | grep -i "$pattern" | cut -d'=' -f1 | sed 's/alias //' )
@@ -99,7 +99,7 @@
         local -a var_results=()
         local vval
         while IFS= read -r vname; do
-            if [[ "$JOE_ENV" == "TERMUX" ]]; then
+            if [[ "${_SHELL}" == "zsh" ]]; then
                 vval="${(P)vname}"      # zsh indirect expansion
             else
                 eval 'vval="${!vname}"'  # bash indirect (eval hides from zsh)
@@ -112,7 +112,7 @@
 
         # ── Commands (PATH) ──
         local -a cmd_results=()
-        if [[ "$JOE_ENV" == "TERMUX" ]]; then
+        if [[ "${_SHELL}" == "zsh" ]]; then
             # zsh: whence -pm ดีกว่า compgen
             while IFS= read -r cmd; do
                 cmd_results+=( "$cmd" )
@@ -124,23 +124,23 @@
         fi
         _wtf_limit "📦 Commands" gr "${cmd_results[@]}"
 
-        color c "" "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
+        cn c "" "▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
 
         # ── Learn Mode footer (-v) ──
         if (( opt_v )); then
-            color gr "" "━━━━━━━━━━━━━━ 📖 Learn Mode ━━━━━━━━━━━━━━"
-            if [[ "$JOE_ENV" == "TERMUX" ]]; then
-                color gr "" "# Functions : print -l \${(ok)functions} | grep -i '$pattern'"
-                color gr "" "# Aliases   : alias | grep -i '$pattern'"
-                color gr "" "# Variables : env | grep -i '$pattern'"
-                color gr "" "# Commands  : whence -pm '*${pattern}*'"
+            cn gr "" "━━━━━━━━━━━━━━ 📖 Learn Mode ━━━━━━━━━━━━━━"
+            if [[ "${_SHELL}" == "zsh" ]]; then
+                cn gr "" "# Functions : print -l \${(ok)functions} | grep -i '$pattern'"
+                cn gr "" "# Aliases   : alias | grep -i '$pattern'"
+                cn gr "" "# Variables : env | grep -i '$pattern'"
+                cn gr "" "# Commands  : whence -pm '*${pattern}*'"
             else
-                color gr "" "# Functions : compgen -A function | grep -i '$pattern'"
-                color gr "" "# Aliases   : compgen -A alias | grep -i '$pattern'"
-                color gr "" "# Variables : env | grep -i '$pattern'"
-                color gr "" "# Commands  : compgen -c | grep -i '$pattern' | sort -u"
+                cn gr "" "# Functions : compgen -A function | grep -i '$pattern'"
+                cn gr "" "# Aliases   : compgen -A alias | grep -i '$pattern'"
+                cn gr "" "# Variables : env | grep -i '$pattern'"
+                cn gr "" "# Commands  : compgen -c | grep -i '$pattern' | sort -u"
             fi
-            color gr "" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+            cn gr "" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
         fi
         return 0
     fi
@@ -162,17 +162,17 @@
         fi
 
         if [[ ! "$varname" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]]; then
-            color r b "❌ '$varname' ไม่ใช่ชื่อตัวแปรที่ถูกต้อง"
+            cn r b "❌ '$varname' ไม่ใช่ชื่อตัวแปรที่ถูกต้อง"
             return 1
         fi
 
         if [[ ! -v "$varname" ]]; then
-            color r b "❌ ตัวแปร '$varname' ยังไม่ถูก set"
+            cn r b "❌ ตัวแปร '$varname' ยังไม่ถูก set"
             return 1
         fi
 
         local value
-        if [[ "$JOE_ENV" == "TERMUX" ]]; then
+        if [[ "${_SHELL}" == "zsh" ]]; then
             value="${(P)varname}"   # zsh indirect expansion
         else
             # eval+single-quote: ซ่อน ${!varname} จาก zsh history expansion
@@ -180,10 +180,10 @@
         fi
 
         if (( want_len )); then
-            color lg b "\${#$varname} = ${#value}"
+            cn lg b "\${#$varname} = ${#value}"
         else
-            color lg b "$varname = $value"
-            color lg n "length: ${#value}"
+            cn lg b "$varname = $value"
+            cn lg n "length: ${#value}"
         fi
         return 0
     fi
@@ -192,14 +192,14 @@
     # MODE 2: Command / alias / function inspection
     # ─────────────────────────────────────────────────────────────
     if [[ -z "$1" ]]; then
-        color r b "❌ กรุณาระบุคำสั่ง, alias หรือตัวแปร เช่น: wtf test_wtf หรือ wtf '\$VAR'"
+        cn r b "❌ กรุณาระบุคำสั่ง, alias หรือตัวแปร เช่น: wtf test_wtf หรือ wtf '\$VAR'"
         return 1
     fi
 
     local target="$1"
     local alias_def
 
-    if [[ "$JOE_ENV" == "TERMUX" ]]; then
+    if [[ "${_SHELL}" == "zsh" ]]; then
         # ฝั่ง Zsh (Termux)
         if [ "$(whence -w "$1" 2>/dev/null)" = "$1: alias" ]; then
             alias_def=$(alias "$1" 2>/dev/null)
@@ -216,7 +216,7 @@
         local type_info
         type_info="$(type -a "$1" 2>/dev/null | grep -E '^[^[:space:]]+ is ')"
         if [[ -z "$type_info" ]]; then
-            color r b "❌ '$1' ไม่พบในระบบ (not found)"
+            cn r b "❌ '$1' ไม่พบในระบบ (not found)"
             return 1
         fi
 
@@ -256,7 +256,7 @@
     local func_def
     func_def="$(declare -f "$target" 2>/dev/null)"
     if [[ -n "$func_def" ]]; then
-        color lg b "$func_def"
+        cn lg b "$func_def"
     fi
 }
 

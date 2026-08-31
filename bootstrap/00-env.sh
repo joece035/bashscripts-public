@@ -73,7 +73,13 @@ export storage="/storage/emulated/0/" # sdcrd
 export ais_fiber="880-563-6522"
 export ais_phone="0814764210"
 
-export _SHELL="${_SHELL:-${SHELL##*/}}"
+if [[ -n "${ZSH_VERSION:-}" ]]; then
+    export _SHELL="zsh"
+elif [[ -n "${BASH_VERSION:-}" ]]; then
+    export _SHELL="bash"
+else
+    export _SHELL="${_SHELL:-${SHELL##*/}}"
+fi
 export _USER="${USER:-${USERNAME:-$(whoami 2>/dev/null)}}"
 export pftermux="${SSOT}/profiles/termux"
 export ptwsl="${SSOT}/profiles/wsl"
