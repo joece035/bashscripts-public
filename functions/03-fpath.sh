@@ -37,18 +37,7 @@ cdc() {
 #--------------------------------------#
 
 #----symbolic link----#
-slink_() {
-    # สลับไฟล์จริง(src)กับไฟล์ที่สร้างลิงก์ไปหา(tar) แล้วค่อยสร้างลิงก์ใหม่
-    # กรณีไฟล์จริงอยู่บน termux ต้องการ link ไป sd card
-    local src="${1:?SELECT SOURCE}" #-- file จริงๆ
-    local tar="${2:?SELECT TARGET}" #-- link ที่จะทำ
-    cp -r "${src}" "${tar}" &&   #-- คัดลอกเนื้อหาไปใส่ไฟล์ปลายทางก่อน
-    mv "${src}" "${src}.bk" &&  #-- backup file จริง
-    ln -s "${tar}" "${src}" &&     #-- สร้าง symbolic link
-    echo "done symbolic link $tar --> $src"
-    rm -rf "${src}.bk"            #-- ลบไฟล์สำรอง
-    # -- ไฟล์จริงจะย้ายไปอยู่ใน sd card และสร้าง link มาแทนที่ตัวเอง
-}
+
 
 # ==============================================================================
 # Universal Helper: ensure <command> [package]
