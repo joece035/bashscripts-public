@@ -455,4 +455,116 @@ _db(){
       *)           printf "%s/%s\n" "$base_dir" "$1" ;;
    esac
 }
- 
+
+# ============================================================
+# Boom env function (moved from 00-env.sh)
+# ============================================================
+_() {
+   local base_c="${WIN_PATH}c/Users/User/Documents/mumusharedfolder"
+   local base_z="${WIN_PATH}z/MuMuSharedFolder"
+   local base_backup="${WIN_PATH}h/boom"
+   local base_hb="${WIN_PATH}h/MuMuSharedFolder"
+  
+   case $1 in
+      css)         printf "%s\n" "${base_c}/Screenshots" ;;
+      cvdo)        printf "%s\n" "${base_c}/VideoRecords" ;;
+      hss)         printf "%s\n" "${base_hb}/Screenshots" ;;
+      hvdo)        printf "%s\n" "${base_hb}/VideoRecords" ;;
+      bss)         printf "%s\n" "${base_backup}/Screenshots" ;;
+      bvdo)        printf "%s\n" "${base_backup}/VideoRecords" ;;
+      zss)         printf "%s\n" "${base_z}/Screenshots" ;;
+      zvdo)        printf "%s\n" "${base_z}/VideoRecords" ;;
+      -h|--help)   echo -e "${banner}" ;;
+      *)           echo -e "${banner}" ;;     
+   esac
+}
+
+
+
+n_(){
+   local border="$(cn 92 b "$(draw_ '▬' '83')")"
+   local head="$(cn 208 b "Current System Information")"
+   local banner=""
+
+      banner+="${border}\n"
+      banner+="$(printf " %*s$head%*s\n" "25" ' ' "25" ' ')\n"
+      banner+="${border}\n"
+      banner+="$(cn 250 d "Current Directory")         : $(cn lcr '' "${PWD}")\n"
+      banner+="$(cn 250 d "Home Directory")            : $(cn lcr '' "${HOME}")\n"
+      banner+="$(cn 250 d "Current User")              : $(cn lcr '' "${USER}")\n"
+      banner+="$(cn 250 d "Current Shell")             : $(cn lcr '' "${SHELL}")\n"
+      banner+="$(cn 250 d "Current Kernel")            : $(cn lcr '' "$(uname -r)")\n"
+      banner+="$(cn 250 d "Current Architecture")      : $(cn lcr '' "$(uname -m)")\n"
+      banner+="$(cn 250 d "Current OS")                : $(cn lcr '' "$(uname -o)")\n"
+      banner+="$(cn 250 d "Current OS Version")        : $(cn lcr '' "$(uname -v)")\n"
+      banner+="$(cn 250 d "Current OS Platform")       : $(cn lcr '' "$(uname -s)")\n"
+      banner+="$(cn 250 d "Current OS Kernel Version") : $(cn lcr '' "$(uname -r)")\n"
+      banner+="${border}\n"
+
+   } 
+
+   # ============================================================
+# Banner / Info Card Template (Reusable)
+# ============================================================
+bn_2() {
+   # --- 1. Config & Defaults (ปรับแต่งผ่านตัวแปรก่อนเรียกได้) ---
+   local title="${BN_TITLE:-Current System Information}"
+   local title_c="${BN_TITLE_COLOR:-208}"      # ส้ม
+   local title_s="${BN_TITLE_STYLE:-b}"        # bold
+
+   local border_ch="${BN_BORDER_CHAR:-▬}"
+   local border_c="${BN_BORDER_COLOR:-92}"     # ม่วง/น้ำเงิน
+   local border_s="${BN_BORDER_STYLE:-b}"
+   local border_len="${BN_BORDER_LEN:-80}"
+
+   local label_c="${BN_LABEL_COLOR:-250}"      # เทาสว่าง
+   local label_s="${BN_LABEL_STYLE:-d}"        # dim
+   local val_c="${BN_VAL_COLOR:-lcr}"          # light color / dynamic
+   local val_s="${BN_VAL_STYLE:-}"
+   local sep="${BN_SEP:- : }"
+
+   # --- 2. สร้าง Border & Header ---
+   local border_raw
+   border_raw="$(draw_ "$border_ch" "$border_len")"
+   local border
+   border="$(c "$border_c" "$border_s" "$border_raw")"
+
+   # คำนวณการจัดกึ่งกลาง Title
+   local title_plain="$title"
+   local title_len=${#title_plain}
+   local pad_left=$(( (border_len - title_len) / 2 ))
+   (( pad_left < 0 )) && pad_left=0
+
+   # พิมพ์หัวตาราง
+   printf "%s\n" "$border"
+   if [[ -n "$title" ]]; then
+      printf "%*s%s\n" "$pad_left" "" "$(c "$title_c" "$title_s" "$title")"
+      printf "%s\n" "$border"
+   fi
+
+   # --- 3. คำนวณความกว้าง Label อัตโนมัติ (Auto-Padding) ---
+   local max_label_len=0
+   local item
+   for item in "$@"; do
+      local lbl="${item%%|*}"
+      (( ${#lbl} > max_label_len )) && max_label_len=${#lbl}
+   done
+
+   # --- 4. Render แต่ละ Row ---
+   for item in "$@"; do
+      local lbl="${item%%|*}"
+      local val="${item#*|}"
+
+      # Padding Label ให้ชิดซ้ายและเท่ากันทุกแถว
+      local padded_lbl
+      printf -v padded_lbl "%-*s" "$max_label_len" "$lbl"
+
+      # ประกอบร่างแต่ละส่วนด้วยสีแยกกัน
+      c "$label_c" "$label_s" "$padded_lbl"
+      printf "%s" "$sep"
+      cn "$val_c" "$val_s" "$val"
+   done
+
+   # พิมพ์ปิดท้าย
+   printf "%s\n" "$border"
+}
