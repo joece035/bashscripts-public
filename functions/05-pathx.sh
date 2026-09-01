@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+
+
+
 pathx() {
     local input_path
     local target_format="wsl" # Default target format
@@ -80,6 +84,9 @@ pathx() {
 WSL_DISTRO="Ubuntu"   # ← แก้ตรงนี้ถ้าเปลี่ยน distro
 
 p() {
+  if ! command -v cb_read >/dev/null 2>&1; then
+    _check -f "$SSOT/core/ssh_toolkit.sh" "source" 2>/dev/null && echo "done source toolkit"
+  fi
   local raw converted drive rest distro
 
   # 1. Input: $1 หรือ clipboard

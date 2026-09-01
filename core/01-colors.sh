@@ -65,7 +65,7 @@ _color_render() {
             printf "${style}$(_c "$input_color")%s$(_r)${eol}" "$text"
         else
             # Short-name path (V2 vars)
-            echo -e "${color_}${style}${text}$(_r)${eol}"
+            printf "%b" "${color_}${style}${text}$(_r)${eol}"
         fi
     done
 }

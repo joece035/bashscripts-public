@@ -30,6 +30,18 @@ fn(){
         return 1
     fi
 }
+# -- superboom loader
+_(){
+    if command -v n_ > /dev/null 2>&1 ; then
+        _ "$@"
+    else
+        _check -f "$SSOT/lessons/superboom.sh" "source" 2>/dev/null && 
+        cn 10 b 'loading script is done ' && 
+        _ "$@"
+
+    fi
+}
+
 
 
 
