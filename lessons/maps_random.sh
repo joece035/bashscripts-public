@@ -1,12 +1,12 @@
 #!/bin/bash
 maps=("SKY" "FIRE" "WATER" "WIND")
 
-random_map1() {
+rdm_1() {
     # รับค่าจาก Argument หรือใช้ค่า Default ถ้าไม่ได้ระบุ
     
     local -a maps=("${@}")
     if (( ${#maps[@]} == 0 )); then
-        maps=("Dust II" "Inferno" "Mirage" "Nuke" "Overpass" "Ancient" "Anubis")
+        maps=("${maps[@]}")
     fi
 
     local n=${#maps[@]}
@@ -26,7 +26,7 @@ random_map1() {
     done
 }
 
-random_map2() {
+rdm_2() {
     local -a maps=("${@}")
     if (( ${#maps[@]} == 0 )); then
         maps=("Dust II" "Inferno" "Mirage" "Nuke" "Overpass" "Ancient" "Anubis")
@@ -35,4 +35,45 @@ random_map2() {
     while IFS= read -r m; do
         cn 10 b "🎯 $m"
     done < <(shuf -e "${maps[@]}")
+}
+
+rdm_i() {
+    local -a maps=("${@}")
+    if (( ${#maps[@]} == 0 )); then
+        maps=("SKY" "FIRE" "WIND" "WATER")
+    fi
+
+    # Shuffle ก่อน
+    local n=${#maps[@]} i j tmp
+    for (( i = n - 1; i > 0; i-- )); do
+        j=$(( RANDOM % (i + 1) ))
+        tmp="${maps[i]}"; maps[i]="${maps[j]}"; maps[j]="$tmp"
+    done
+
+    local count=1
+    for m in "${maps[@]}"; do
+        read -rp "Press [Enter] to pick map ($count/$n)..."
+        cn 208 b "👉 [$count/$n] Map: $m"
+        ((count++))
+    done
+    cn 82 b "✨ All maps have been picked!"
+}
+rdm(){
+
+    local mode=${1:-"rdm_i"}
+    shift
+    case $mode in 
+    1) 
+        rdm_1 "$@"
+        ;;
+    2) 
+        rdm_2 "$@"
+        ;;
+    i) 
+        rdm_i "$@"
+        ;;
+    *) 
+        echo "Invalid mode"
+        ;;
+    esac
 }
