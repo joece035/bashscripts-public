@@ -436,25 +436,6 @@ sh_(){
 # ============================================================
 # SupperBoom env function (moved from 00-env.sh)
 # ============================================================
-_db(){
-   local base_c="${WIN_PATH}c/Users/User/Documents/mumusharedfolder"
-   local base_z="${WIN_PATH}z/MuMuSharedFolder"
-   local base_backup="${WIN_PATH}h/boom"
-   local base_hb="${WIN_PATH}h/MuMuSharedFolder"
-   
-   
-   case $1 in
-      css)         printf "%s\n" "${base_c}/Screenshots" ;;
-      cvdo)        printf "%s\n" "${base_c}/VideoRecords" ;;
-      hbk_ss)      printf "%s\n" "${base_hb}/Screenshots" ;;
-      hbk_vdo)     printf "%s\n" "${base_hb}/VideoRecords" ;;
-      bk_ss)       printf "%s\n" "${base_backup}/Screenshots" ;;
-      bk_vdo)      printf "%s\n" "${base_backup}/VideoRecords" ;;
-      zss)         printf "%s\n" "${base_z}/Screenshots" ;;
-      zvdo)        printf "%s\n" "${base_z}/VideoRecords" ;;
-      *)           printf "%s/%s\n" "$base_dir" "$1" ;;
-   esac
-}
 
 # ============================================================
 # Boom env function (moved from 00-env.sh)
@@ -492,12 +473,17 @@ _() {
 
 
 n_(){
-   local border="$(cn 92 b "$(draw_ '▬' '83')")"
-   local head="$(cn 208 b "Current System Information")"
+	 local border_len=83 term_w
+	 term_w=$(tput cols)
+	 ((border_len > term_w)) && border_len=$term_w
+   local border="$(cn 92 b "$(draw_ '▬' "$border_len")")"
+	 local text="Current System Information"
+   local head="$(cn 208 b "$text")"
    local banner=""
+	 local pad_=$(((border_len - ${#text})/2))
 
       banner+="${border}\n"
-      banner+="$(printf " %*s$head%*s\n" "25" ' ' "25" ' ')\n"
+      banner+="$(printf " %*s$head%*s\n" "$pad_" ' ' "$pad_" ' ')\n"
       banner+="${border}\n"
       banner+="$(cn 250 d "Current Directory")         : $(cn lcr '' "${PWD}")\n"
       banner+="$(cn 250 d "Home Directory")            : $(cn lcr '' "${HOME}")\n"
@@ -510,6 +496,9 @@ n_(){
       banner+="$(cn 250 d "Current OS Platform")       : $(cn lcr '' "$(uname -s)")\n"
       banner+="$(cn 250 d "Current OS Kernel Version") : $(cn lcr '' "$(uname -r)")\n"
       banner+="${border}\n"
+
+			echo -e "$banner"
+			echo "$banner"
 
    } 
 
@@ -537,11 +526,13 @@ bn_2() {
    local sep="${BN_SEP:- : }"
 
    # --- 2. สร้าง Border & Header ---
-   local border_raw
+	 local term_w="$(tput cols)"
+   local border_raw=""
+	 (( border_len > term_w )) && border_len="$term_w "
    border_raw="$(draw_ "$border_ch" "$border_len")"
    local border
    border="$(c "$border_c" "$border_s" "$border_raw")"
-
+	 
    # คำนวณการจัดกึ่งกลาง Title
    local title_len=${#title}
    local pad_left=$(( (border_len - title_len) / 2 ))
@@ -556,7 +547,8 @@ bn_2() {
 
    # --- 3. คำนวณความกว้าง Label อัตโนมัติ ---
    local max_label_len=0
-   local item
+   local item 
+	 
    for item in "$@"; do
       local lbl="${item%%|*}"
       (( ${#lbl} > max_label_len )) && max_label_len=${#lbl}
@@ -566,6 +558,7 @@ bn_2() {
    for item in "$@"; do
       local lbl="${item%%|*}"
       local val="${item#*|}"
+			
 
       # Padding Label ให้ตรงกันทั้ง Bash และ Zsh
       local padded_lbl
