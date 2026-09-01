@@ -72,7 +72,6 @@ ssh_kadd(){
 }
 #-- all device environment variable from 00-env.sh
 
-
 # Helper สำหรับสั่ง Remote Command หรือ SSH เข้าเครื่องต่างๆ
 ssh_() {
   local tar="$1"

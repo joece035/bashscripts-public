@@ -464,7 +464,17 @@ _() {
    local base_z="${WIN_PATH}z/MuMuSharedFolder"
    local base_backup="${WIN_PATH}h/boom"
    local base_hb="${WIN_PATH}h/MuMuSharedFolder"
-  
+   list_=(
+      "css|${base_c}/Screenshots         # -- screen short"
+      "cvdo|${base_c}/VideoRecords       # -- video record"
+      "hss|${base_hb}/Screenshots        # -- backup screen short"
+      "hvdo|${base_hb}/VideoRecords      # -- backup video record"
+      "bss|${base_backup}/Screenshots    # -- new backup screen short"
+      "bvdo|${base_backup}/VideoRecords  # -- new backup video record"
+      "zss|${base_z}/Screenshots         # -- drive z screen short"
+      "zvdo|${base_z}/VideoRecords       # -- drive z video record"
+      "h|--help                          # -- help menu"
+      ) 
    case $1 in
       css)         printf "%s\n" "${base_c}/Screenshots" ;;
       cvdo)        printf "%s\n" "${base_c}/VideoRecords" ;;
@@ -474,8 +484,8 @@ _() {
       bvdo)        printf "%s\n" "${base_backup}/VideoRecords" ;;
       zss)         printf "%s\n" "${base_z}/Screenshots" ;;
       zvdo)        printf "%s\n" "${base_z}/VideoRecords" ;;
-      -h|--help)   echo -e "${banner}" ;;
-      *)           echo -e "${banner}" ;;     
+      -h|--help)   bn_2 "${list_[@]}" ;;
+      *)           bn_2 "${list_[@]}" ;;
    esac
 }
 
@@ -506,9 +516,12 @@ n_(){
    # ============================================================
 # Banner / Info Card Template (Reusable)
 # ============================================================
+# ============================================================
+# Banner / Info Card Template (Reusable)
+# ============================================================
 bn_2() {
-   # --- 1. Config & Defaults (ปรับแต่งผ่านตัวแปรก่อนเรียกได้) ---
-   local title="${BN_TITLE:-Current System Information}"
+   # --- 1. Config & Defaults ---
+   local title="${BN_TITLE:-Shortcuts folders}"
    local title_c="${BN_TITLE_COLOR:-208}"      # ส้ม
    local title_s="${BN_TITLE_STYLE:-b}"        # bold
 
@@ -530,8 +543,7 @@ bn_2() {
    border="$(c "$border_c" "$border_s" "$border_raw")"
 
    # คำนวณการจัดกึ่งกลาง Title
-   local title_plain="$title"
-   local title_len=${#title_plain}
+   local title_len=${#title}
    local pad_left=$(( (border_len - title_len) / 2 ))
    (( pad_left < 0 )) && pad_left=0
 
@@ -542,7 +554,7 @@ bn_2() {
       printf "%s\n" "$border"
    fi
 
-   # --- 3. คำนวณความกว้าง Label อัตโนมัติ (Auto-Padding) ---
+   # --- 3. คำนวณความกว้าง Label อัตโนมัติ ---
    local max_label_len=0
    local item
    for item in "$@"; do
@@ -550,16 +562,15 @@ bn_2() {
       (( ${#lbl} > max_label_len )) && max_label_len=${#lbl}
    done
 
-   # --- 4. Render แต่ละ Row ---
+   # --- 4. Render แต่ละ Row (แก้จุด printf -v แล้ว) ---
    for item in "$@"; do
       local lbl="${item%%|*}"
       local val="${item#*|}"
 
-      # Padding Label ให้ชิดซ้ายและเท่ากันทุกแถว
+      # Padding Label ให้ตรงกันทั้ง Bash และ Zsh
       local padded_lbl
-      printf -v padded_lbl "%-*s" "$max_label_len" "$lbl"
+      padded_lbl="$(printf "%-*s" "$max_label_len" "$lbl")"
 
-      # ประกอบร่างแต่ละส่วนด้วยสีแยกกัน
       c "$label_c" "$label_s" "$padded_lbl"
       printf "%s" "$sep"
       cn "$val_c" "$val_s" "$val"
@@ -568,3 +579,6 @@ bn_2() {
    # พิมพ์ปิดท้าย
    printf "%s\n" "$border"
 }
+
+
+

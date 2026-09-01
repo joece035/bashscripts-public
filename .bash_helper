@@ -143,7 +143,7 @@ guard() {
         return 1
     fi
 }
-
+# -- shell switch
 sws(){
     local shell_type=$1
     # ── ตั้ง chsh command ตาม environment (array เพื่อรองรับ zsh no-split) ───
@@ -207,6 +207,7 @@ sws(){
         *)      cn red b "Usage: sws [b|bash|z|zsh]" ;;
     esac
 }
+# -- shell detection
 cshell() {
     local active_shell="${_SHELL:-}"
     if [[ -z "$active_shell" ]]; then
