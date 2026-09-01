@@ -445,7 +445,7 @@ _() {
    local base_z="${WIN_PATH}z/MuMuSharedFolder"
    local base_backup="${WIN_PATH}h/boom"
    local base_hb="${WIN_PATH}h/MuMuSharedFolder"
-   list_=(
+   local list_=(
       "css|${base_c}/Screenshots         # -- screen short"
       "cvdo|${base_c}/VideoRecords       # -- video record"
       "hss|${base_hb}/Screenshots        # -- backup screen short"
@@ -525,10 +525,12 @@ bn_2() {
    local val_s="${BN_VAL_STYLE:-}"
    local sep="${BN_SEP:- : }"
 
+   local item lbl val padded_lbl
+
    # --- 2. สร้าง Border & Header ---
-	 local term_w="$(tput cols)"
+   local term_w="$(tput cols)"
    local border_raw=""
-	 (( border_len > term_w )) && border_len="$term_w "
+   (( border_len > term_w )) && border_len="$term_w"
    border_raw="$(draw_ "$border_ch" "$border_len")"
    local border
    border="$(c "$border_c" "$border_s" "$border_raw")"
@@ -547,21 +549,18 @@ bn_2() {
 
    # --- 3. คำนวณความกว้าง Label อัตโนมัติ ---
    local max_label_len=0
-   local item 
 	 
    for item in "$@"; do
-      local lbl="${item%%|*}"
+      lbl="${item%%|*}"
       (( ${#lbl} > max_label_len )) && max_label_len=${#lbl}
    done
 
-   # --- 4. Render แต่ละ Row (แก้จุด printf -v แล้ว) ---
+   # --- 4. Render แต่ละ Row ---
    for item in "$@"; do
-      local lbl="${item%%|*}"
-      local val="${item#*|}"
-			
+      lbl="${item%%|*}"
+      val="${item#*|}"
 
       # Padding Label ให้ตรงกันทั้ง Bash และ Zsh
-      local padded_lbl
       padded_lbl="$(printf "%-*s" "$max_label_len" "$lbl")"
 
       c "$label_c" "$label_s" "$padded_lbl"
