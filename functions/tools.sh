@@ -501,10 +501,14 @@ perm(){
     local target="${1:-$(cb_read)}"
     chmod +x "$target" && c 10 bi "ให้สิทธิ์รันไฟล์  ";c 45 b "$(basename "$target")  ";cn 10 bi "เรียบร้อย" 
 }
-_g(){
-    bsc &&
+pu(){
+		bsc &&
     git add -A &&
-    git commit -m "$@" 
+	if [[ -z "$1" ]]; then
+    git commit -m "$(date)" 
+	else
+		git commit -m "$@"
+	fi	
     git pull && 
     cn 10 b "DONE PULL" 
 }

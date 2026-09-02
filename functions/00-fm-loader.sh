@@ -20,8 +20,7 @@ fm_(){
 }
 
 fn(){
-
-    if command -v _check  > /dev/null 2>&1 ; then
+				if
         _check -f "$SSOT/tools/files_manage.sh" "source" && 
         cn 10 b 'loading script is done ' && 
         fn "$@"

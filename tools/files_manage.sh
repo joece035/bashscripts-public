@@ -85,7 +85,6 @@ _fm_node_vars() {
       _FM_PROTO="rsync"
       _FM_TAG="OPPO"
       ;;
-      ;;
     *)
       cn 196 b "fm: unknown node '${node}'"
       cn 252   "  nodes: termux | wsl | win | mumu | oppo"
