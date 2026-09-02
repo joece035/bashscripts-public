@@ -5,11 +5,12 @@
 # ============================================================
 # Boom env function (moved from 00-env.sh)
 # ============================================================
+
 _() {
 
     # ให้ render.sh รันก่อน
     if ! command -v bn_2 &> /dev/null; then
-        _check -f "$SSOT/lessons/auto_table/render.sh" "source" && cn 10 bi "loading render.sh is done" || return 1
+        _check -f "$SSOT/lessons/auto_table/render.sh" "source" || return 1
     fi
    local base_c="${WIN_PATH}c/Users/User/Documents/mumusharedfolder"
    local base_z="${WIN_PATH}z/MuMuSharedFolder"
@@ -35,8 +36,8 @@ _() {
       bvdo)        printf "%s\n" "${base_backup}/VideoRecords" ;;
       zss)         printf "%s\n" "${base_z}/Screenshots" ;;
       zvdo)        printf "%s\n" "${base_z}/VideoRecords" ;;
-      -h|--help)   bn_2 "${list_[@]}" ;;
-      *)           bn_2 "${list_[@]}" ;;
+      -h|--help)  ( bn_2 "${list_[@]}") ;;
+      *)          ( bn_3 "${list_[@]}") ;;
    esac
 }
 

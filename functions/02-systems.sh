@@ -227,16 +227,15 @@ alias tmnal='terminal_theme'
 
 
 
-set_(){
-
-printf -v "$1" '%s' "$2"
-
+set_() {
+    eval "$1=\"\$2\""
 }
+
 draw_() {
     local char="$1"
     local count="$2"
-    # ใช้ Bash string substitution แทน sed (ปลอดภัยกว่ากับ escape sequences)
-    printf -v space_ '%*s' "$count" ''
+    local space_
+    space_="$(printf '%*s' "$count" '')"
     printf '%s' "${space_// /$char}"
 }
 
