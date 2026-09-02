@@ -6,7 +6,7 @@
 # Transport: uses _rsync_to / _rsync_from / _rsync_to_delete
 #            (defined in core/3worlds.sh)
 #
-# Nodes supported: termux | wsl | win | mumu | debian
+# Nodes supported: termux | wsl | win | mumu | OPPO
 #
 # Public API (frozen signatures):
 #   fm_send  <node> <local_src>   [remote_dst]  - push  local -> remote
@@ -75,19 +75,20 @@ _fm_node_vars() {
       _FM_USER="${NODE_MUMU_USER}"
       _FM_HOST="${NODE_MUMU_HOST}"
       _FM_PORT="${NODE_MUMU_PORT}"
-      _FM_PROTO="scp"
+      _FM_PROTO="rsync"
       _FM_TAG="MUMU"
       ;;
-    d|deb|debian|DEBIAN)
-      _FM_USER="${NODE_DEBIAN_USER:-root}"
-      _FM_HOST="${NODE_DEBIAN_HOST:-debian}"
-      _FM_PORT="${NODE_DEBIAN_PORT:-22}"
+    o|op|oppo|OPPO)
+      _FM_USER="${NODE_OPPO_USER}"
+      _FM_HOST="${NODE_OPPO_HOST}"
+      _FM_PORT="${NODE_OPPO_PORT}"
       _FM_PROTO="rsync"
-      _FM_TAG="DEBIAN"
+      _FM_TAG="OPPO"
+      ;;
       ;;
     *)
       cn 196 b "fm: unknown node '${node}'"
-      cn 252   "  nodes: termux | wsl | win | mumu | debian"
+      cn 252   "  nodes: termux | wsl | win | mumu | oppo"
       return 1
       ;;
   esac
@@ -260,7 +261,7 @@ fm_check() {
 
   if [[ "$node" == "all" ]]; then
     cn 226 b "-- Connectivity Check --"
-    for n in termux wsl win mumu debian; do
+    for n in termux wsl win mumu oppo; do
       _fm_ping_one "$n"
     done
   else
@@ -279,7 +280,7 @@ fm_info() {
   printf "  %-8s %-20s %-20s %-6s %s\n" "WSL"    "${NODE_WSL_HOST:-?}"    "${NODE_WSL_USER:-?}"    "${NODE_WSL_PORT:-?}"    "rsync"
   printf "  %-8s %-20s %-20s %-6s %s\n" "WIN"    "${NODE_WIN_HOST:-?}"    "${NODE_WIN_USER:-?}"    "${NODE_WIN_PORT:-22}"   "scp"
   printf "  %-8s %-20s %-20s %-6s %s\n" "MUMU"   "${NODE_MUMU_HOST:-?}"   "${NODE_MUMU_USER:-?}"   "${NODE_MUMU_PORT:-?}"   "scp"
-  printf "  %-8s %-20s %-20s %-6s %s\n" "DEBIAN" "${NODE_DEBIAN_HOST:-?}" "${NODE_DEBIAN_USER:-?}" "${NODE_DEBIAN_PORT:-?}" "rsync"
+  printf "  %-8s %-20s %-20s %-6s %s\n" "OPPO" "${NODE_OPPO_HOST:-?}" "${NODE_OPPO_USER:-?}" "${NODE_OPPO_PORT:-?}" "rsync"
   printf "  %.0s-" {1..60}; echo
   cn 252 "  Source: \$SSOT/bootstrap/00-env.sh"
 }
@@ -353,7 +354,7 @@ _fm_help() {
   printf "    %-14s %s\n"  "wsl    | w"        "\$NODE_WSL_*    (rsync)"
   printf "    %-14s %s\n"  "win    | window"   "\$NODE_WIN_*    (scp)"
   printf "    %-14s %s\n"  "mumu   | mm | m"   "\$NODE_MUMU_*   (scp)"
-  printf "    %-14s %s\n"  "debian | deb | d"  "\$NODE_DEBIAN_* (rsync)"
+  printf "    %-14s %s\n"  "oppo | op | o"  "\$NODE_OPPO_* (rsync)"
   echo ""
   cn 245  "  Vars sourced from: \$SSOT/bootstrap/00-env.sh"
 }

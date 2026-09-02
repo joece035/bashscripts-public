@@ -1,6 +1,7 @@
 #!/bin/bash
 
 n_(){
+
 	 local border_len=83 term_w
 	 term_w=$(tput cols)
 	 ((border_len > term_w)) && border_len=$term_w
