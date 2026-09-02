@@ -175,3 +175,4 @@ bn_3() {
     printf "%s\n" "$border"
     bn_2_=yes
 }
+

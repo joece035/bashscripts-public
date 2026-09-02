@@ -82,7 +82,7 @@ _fm_node_vars() {
       _FM_USER="${NODE_OPPO_USER}"
       _FM_HOST="${NODE_OPPO_HOST}"
       _FM_PORT="${NODE_OPPO_PORT}"
-      _FM_PROTO="rsync"
+      _FM_PROTO="scp"
       _FM_TAG="OPPO"
       ;;
     *)

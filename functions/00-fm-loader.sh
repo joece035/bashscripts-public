@@ -19,16 +19,6 @@ fm_(){
 
 }
 
-fn(){
-				if
-        _check -f "$SSOT/tools/files_manage.sh" "source" && 
-        cn 10 b 'loading script is done ' && 
-        fn "$@"
-    else
-        cn 198 b "not found _check"
-        return 1
-    fi
-}
 
 
 
