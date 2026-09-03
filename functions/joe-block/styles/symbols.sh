@@ -25,6 +25,7 @@ symbols_() {
     type+="•  ⁕  ‣  ⁴  ∏  ∐\n"
 
     printf '%b\n' "$type"
+
 }
 new_symbol() {
 echo '──────────────

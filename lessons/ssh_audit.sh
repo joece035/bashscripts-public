@@ -35,7 +35,7 @@ create_file(){
          echo "Created $HOME/.ssh/authorized_keys"
     fi
 
-    if [grep -q "OPPO" $HOME/.local/bin/env 2>/dev/null; then
+    if grep -q "OPPO" $HOME/.local/bin/env 2>/dev/null; then
         echo "JOE_ENV already configured in $SHELL_RC"
     else
         cat > "$HOME/.local/bin/env" << "EOF"

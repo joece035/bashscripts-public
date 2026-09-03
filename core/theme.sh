@@ -20,7 +20,7 @@ _git_prompt() {
         fi
     fi
 }
-local git_len=" 🌿 ${branch}*"
+
 
 # 3. ฟังก์ชันเช็คสถานะคำสั่งล่าสุด (Exit Code Status)
 _exit_status() {
@@ -45,11 +45,11 @@ _set_prompt() {
     if [ $exit_code -eq 0 ]; then
         last_status_c="lg"
         last_status_s="b"
-        last_status_raw="SUCCESS 🟢"
+        last_status_raw="◆◆◆◆◆"
     else
-        last_status_c="9"
+        last_status_c="1"
         last_status_s="b"
-        last_status_raw="FAILED 🔴"
+        last_status_raw="◆◆◆◆◆"
     fi
     last_status="$(c "$last_status_c" "$last_status_s" "$last_status_raw")"
     # -- environment / current shell
@@ -77,13 +77,13 @@ _set_prompt() {
     local BN_BORDER_STYLE="b"
     local lens=$(( last_status_len + 1 + env_tag_len + 1 + user_host_len + 1 + current_dir_len + 1 + git_info_len ))
     (( lens > term_w )) && lens=$(( term_w ))
-    local borde=$(cn "${BN_BORDER_COLOR}" "${BN_BORDER_STYLE}" "$(d_ "${BN_BORDER_CHAR}" "$lens")")
+    local borde=$(cn "${BN_BORDER_COLOR}" "${BN_BORDER_STYLE}" "$(draw_ "${BN_BORDER_CHAR}" "$lens")")
     # กำหนดค่า PS1 สำหรับ Bash
     local PS1_ 
     PS1_="${borde}\n"
     PS1_+="${last_status} ${env_tag} ${user_host} in ${current_dir}${git_info}\n"
     PS1_+="${borde}\n"
-    PS1_+="${arrow}⬜◽ "
+    PS1_+="${arrow}-◆"
     
 
     PS1=$PS1_

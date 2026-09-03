@@ -3,7 +3,7 @@
 # JOE_ENV Bootstrap Script
 # ============================================================
 # Usage: git clone <repo> && cd JOE_ENV && ./bootstrap/setup.sh
-NEW_DEVICE=${1:?please input your device name} 
+NEW_DEVICE="${1:-${JOE_ENV:-WSL}}" 
 
 # This script:
 # 1. Detects your environment (Termux/WSL/Git Bash)
@@ -99,7 +99,6 @@ fi
 shell_setup(){
     
     local pf=""
-    local JOE_
 
         case "$JOE_ENV" in
                 TERMUX)

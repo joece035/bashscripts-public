@@ -32,12 +32,13 @@ n_(){
 # Banner / Info Card Template (Reusable)
 # ============================================================
 
-bn_3() {
+# bn_3: Dynamic Auto-Width Table (ความกว้างพอดีตามเนื้อหา)
+bn_2() {
     # --- 0. Config & Defaults ---
-    if ! command -v config_def &> /dev/null; then
+    if ! command -v config_rc &> /dev/null; then
         _check -f "$SSOT/lessons/auto_table/config.sh" "source" || return 1
     fi
-    config_def
+    config_rc
 
     local title="${BN_TITLE:-Shortcuts folders}"
     local title_c="${BN_TITLE_COLOR:-208}"
@@ -83,7 +84,11 @@ bn_3() {
     # --- 3. สร้าง Border & Header ---
     local border_raw="$(draw_ "$border_ch" "$border_len")"
     local border
-    border="$(c "$border_c" "$border_s" "$border_raw")"
+    if [[ -n "$COLOR_MODE" && "$COLOR_MODE" == "yes" ]]; then
+        border="$(rc "$border_s" "$border_raw")"
+    else
+        border="$(cn "$border_c" "$border_s" "$border_raw")"
+    fi
 
     # คำนวณการจัดกึ่งกลาง Title
     local pad_left=$(( (border_len - title_len) / 2 ))
@@ -111,6 +116,7 @@ bn_3() {
     bn_3_=yes
 }
 
+# bn_2: Fixed Width Table (ความกว้างมาตรฐาน 80 ตัวอักษร)
 bn_3() {
     # --- 0. Config & Defaults ---
     if ! command -v config_def &> /dev/null; then
@@ -175,4 +181,3 @@ bn_3() {
     printf "%s\n" "$border"
     bn_2_=yes
 }
-

@@ -82,19 +82,23 @@ esac
         export msync="$MAIN_SYNC_DIR"
         export htm="/data/data/com.termux/files/home"
         export OP_DIR="${HOME}"
-        
+        export SSH_MUMU_PORT=8020
+        export SSH_TERMUX_PORT=8022
+        export SSH_WSL_PORT=22
+        export SSH_WIN_PORT=22
+
+
+
+
 # ── Step 1.5: CRLF SELF-HEAL (กันไฟล์ CRLF ทำ bash พัง) ──
 # Syncthing sync ข้ามเครื่อง (WSL ↔ Termux/Acode-X ↔ Win ↔ MuMu)
 # ถ้าเครื่องไหนแก้ไฟล์แล้วบันทึกเป็น CRLF (Windows/Acode-X) bash จะ
 # syntax error ทันที — ตรงนี้แปลงกลับเป็น LF ให้อัตโนมัติก่อน source
 # หมายเหตุ: ถ้า joe.sh ตัวเองเป็น CRLF จะ parse ไม่ผ่านมาถึงตรงนี้
 # → ต้องมี guard ใน .bashrc ด้วย (ดู .bashrc section 6)
-export SSH_MUMU_PORT=8020
-export SSH_TERMUX_PORT=8022
-export SSH_WSL_PORT=22
-export SSH_WIN_PORT=22
+crlf(){
 
-if [[ "$JOE_ENV" != "GIT-BASH" ]] && command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
+ if [[ "$JOE_ENV" != "GIT-BASH" ]] && command -v grep >/dev/null 2>&1 && command -v sed >/dev/null 2>&1; then
     _crlf_files="$(grep -rlU $'\r' "$SSOT" --include="*.sh" 2>/dev/null)"
     if [[ -n "$_crlf_files" ]]; then
         _crlf_count=0
@@ -107,33 +111,26 @@ if [[ "$JOE_ENV" != "GIT-BASH" ]] && command -v grep >/dev/null 2>&1 && command 
         # problem and prints a multi-line warning to the user.
         echo "⚠️  CRLF auto-fixed: ${_crlf_count} file(s) → LF (มาจากเครื่องอื่น/Windows)" >&2
     fi
-fi
+ fi
+}
 
-# ── Step 2: Source all modules using SCRIP S_PATH ──
+# ── Auto start sshd & ssh-agent ──
 
 
 # Auto-start sshd if not running (guarded for git-bash which lacks pgrep)
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
 # Auto-start ssh-agent if not running (needed for tm/tw key auth)
-if [[ -z "${SSH_AUTH_SOCK:-}" ]] || ! ssh-add -l &>/dev/null; then
-    eval "$(ssh-agent -s)" >/dev/null 2>&1
-    # Guard: only add key if it exists (backup removed id_ed25519 during SSH restructure)
-    if [[ -f "$HOME/.ssh/id_ed25519" ]]; then
-        ssh-add ~/.ssh/id_ed25519 2>/dev/null
-    else
-        command -v cn &>/dev/null && cn 198 b "⚠️  ~/.ssh/id_ed25519 not found — SSH key auth may not work" >&2 || echo "⚠️  ~/.ssh/id_ed25519 not found — SSH key auth may not work" >&2
-    fi
-fi
 
-# Auto-start sshd guarded by JOE_ENV
-if [[ "$JOE_ENV" == "WSL" ]]; then
+auto_start_ssh(){
+  # Auto-start sshd guarded by JOE_ENV
+ if [[ "$JOE_ENV" == "WSL" ]]; then
     # WSL: ใช้ service ssh
     if ! service ssh status >/dev/null 2>&1; then
         sudo service ssh start >/dev/null 2>&1 && { command -v cn &>/dev/null && cn 10 b "SSH Service (WSL) started successfully." >&2; } || { command -v cn &>/dev/null && cn 9 b "Failed to start SSH Service." >&2; }
     else
         command -v cn &>/dev/null && cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
     fi
-elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
+ elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     # Termux / MuMu: ใช้ sshd binary ตรงๆ
     # NOTE: Termux ใหม่ rename process เป็น "sshd-session" ไม่ใช่ "sshd"
     # → pgrep -x sshd ใช้ไม่ได้ ต้อง check จาก port ที่ bind อยู่จริงแทน
@@ -142,8 +139,8 @@ elif [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     else
         command -v cn &>/dev/null && cn 10 bi "ssh activated port : ${SSH_PORT}" >&2
     fi
-fi
-
+ fi
+}
 
 
 
@@ -231,7 +228,8 @@ alias re="pp"
 # Required by Powerlevel10k instant prompt (sourced first in .zshrc):
 # p10k is strict — ANY stdout during zsh init invalidates the
 # instant prompt and prints a multi-line warning to the user.
-
+ {
+    unbinding -a g    
     ssot_load ${LOAD_LIST:-}
     pf ${AI_PROFILE:-mom}
     case "$JOE_ENV" in 
@@ -239,6 +237,10 @@ alias re="pp"
     esac
     unset LOAD_LIST
     unset AI_PROFILE
+
+ } >/dev/null 2>&1
+
+
 {
     if [[ "$JOE_ENV" != "GIT-BASH" ]]; then
         if ! command -v pgrep >/dev/null 2>&1; then
