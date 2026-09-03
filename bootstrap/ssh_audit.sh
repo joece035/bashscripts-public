@@ -474,6 +474,14 @@ fix_all() {
     log_info "Backup created: $backup_config"
 
     # เตรียมเนื้อหา Block SSOT Mesh (ดึงค่าจากตัวแปร SSOT ทั้งหมด ไม่ Hardcode)
+    # Pre-define crypto strings เป็น local vars ก่อน เพื่อกัน CRLF/line-wrap ตัดบรรทัดยาว
+    local _kex _hka _pka _ciphers _macs
+    _kex="curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521"
+    _hka="ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-256,ssh-rsa,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521"
+    _pka="ssh-ed25519,rsa-sha2-512,rsa-sha2-256,ssh-rsa"
+    _ciphers="chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes256-gcm@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr"
+    _macs="hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256"
+
     local mesh_block
     mesh_block=$(cat <<EOF
 # >>> JOE_SSOT_MESH_START >>>
@@ -483,11 +491,11 @@ fix_all() {
 
 # Global Modern Cryptography Settings
 Host *
-    KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group14-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521
-    HostKeyAlgorithms ssh-ed25519,ssh-ed25519-cert-v01@openssh.com,rsa-sha2-512,rsa-sha2-256,ssh-rsa,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521
-    PubkeyAcceptedAlgorithms ssh-ed25519,rsa-sha2-512,rsa-sha2-256,ssh-rsa
-    Ciphers chacha20-poly1305@openssh.com,aes128-gcm@openssh.com,aes256-gcm@openssh.com,aes128-ctr,aes192-ctr,aes256-ct
-    MACs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com,hmac-sha2-512,hmac-sha2-256
+    KexAlgorithms ${_kex}
+    HostKeyAlgorithms ${_hka}
+    PubkeyAcceptedAlgorithms ${_pka}
+    Ciphers ${_ciphers}
+    MACs ${_macs}
 
 Host wsl
     HostName ${NODE_WSL_HOST}

@@ -20,14 +20,15 @@ _git_prompt() {
         fi
     fi
 }
+local git_len=" 🌿 ${branch}*"
 
 # 3. ฟังก์ชันเช็คสถานะคำสั่งล่าสุด (Exit Code Status)
 _exit_status() {
     local exit_code=$?
     if [ $exit_code -eq 0 ]; then
-        c 10 b "success ^!!    "
+        c lg b "SUCCESS 🟢"
     else
-        c 9 b "failed !!    "
+        c 9 b "FAILED 🔴"
     fi
 }
 
@@ -39,15 +40,54 @@ _exit_status() {
 # c()/cn() output text + escape — use them for plain text segments; use
 # _c/_b/_r directly for PS1 where bash will re-interpret \u, \w, etc.
 _set_prompt() {
-    local last_status="$(_exit_status)" # ต้องเก็บค่าก่อนคำสั่งอื่นจะทำงาน
-    local env_tag="\[$(_c 141)\]\[${JOE_ENV:-$MY_DEVICE}\]\[$(_r)\]"
-    local user_host="\[$(_c 51)\]\u\[$(_r)\]@\[$(_c 244)\]\h\[$(_r)\]"
+    local last_status_c last_status_s last_status_raw last_status 
+    local exit_code=$?
+    if [ $exit_code -eq 0 ]; then
+        last_status_c="lg"
+        last_status_s="b"
+        last_status_raw="SUCCESS 🟢"
+    else
+        last_status_c="9"
+        last_status_s="b"
+        last_status_raw="FAILED 🔴"
+    fi
+    last_status="$(c "$last_status_c" "$last_status_s" "$last_status_raw")"
+    # -- environment / current shell
+    local env_tag_label="$(c 198 b "${JOE_ENV:-$MY_DEVICE}")"
+    local shell_tag_label="$(c ora b "${_SHELL:-}")"
+    local env_tag=$(printf "< %s : %s >" "${env_tag_label}" "${shell_tag_label}")
+    # -- USER@HOST
+    local user_="$(c 51 b "$(id -un)")"
+    local host_="$(c 226 b "$NODE_HOST")"
+    
+    local user_host=$(printf "${user_} @ ${host_}")
     local current_dir="\[$(_c 226)\]\w\[$(_r)\]"
     local git_info="$(_git_prompt)"
     local arrow="\[$(_b)\]──>\[$(_r)\]"
 
+    # -- dynamic border
+    local term_w=$(tput cols)
+    local last_status_len=$(( ${#last_status_raw} ))
+    local env_tag_len=$(( ${#JOE_ENV} + 3 + ${#_SHELL} + 4 ))
+    local user_host_len=$(( ${#_USER} + 3 + ${#NODE_HOST} ))
+    local current_dir_len=$(( ${#PWD} ))
+    local git_info_len=$(( ${#git_len} ))
+    local BN_BORDER_CHAR="-"
+    local BN_BORDER_COLOR="lm"
+    local BN_BORDER_STYLE="b"
+    local lens=$(( last_status_len + 1 + env_tag_len + 1 + user_host_len + 1 + current_dir_len + 1 + git_info_len ))
+    (( lens > term_w )) && lens=$(( term_w ))
+    local borde=$(cn "${BN_BORDER_COLOR}" "${BN_BORDER_STYLE}" "$(d_ "${BN_BORDER_CHAR}" "$lens")")
     # กำหนดค่า PS1 สำหรับ Bash
-    PS1="\n${last_status} ${env_tag} ${user_host} in ${current_dir}${git_info}\n${arrow} "
+    local PS1_ 
+    PS1_="${borde}\n"
+    PS1_+="${last_status} ${env_tag} ${user_host} in ${current_dir}${git_info}\n"
+    PS1_+="${borde}\n"
+    PS1_+="${arrow}⬜◽ "
+    
+
+    PS1=$PS1_
+
 }
 
 # สั่งให้ Bash รันฟังก์ชันนี้ทุกครั้งก่อนแสดง Prompt
