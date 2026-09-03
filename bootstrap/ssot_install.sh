@@ -48,10 +48,12 @@ if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
     fi
 fi
 
-# ── [3] INSTALL CORE PACKAGES (Batch) ──
-echo "📦 Installing core prerequisites..."
+# ── [3] UPDATE & INSTALL CORE PACKAGES (Batch) ──
+echo "📦 Updating repositories & installing core packages..."
 if command -v pkg >/dev/null 2>&1; then
-    pkg install -y git openssh ncurses-utils curl micro
+    # Fix shared library mismatch (openssl / libcurl / git-remote-https)
+    pkg update -y && pkg upgrade -y
+    pkg install -y git openssh ncurses-utils curl micro openssl
 elif command -v apt-get >/dev/null 2>&1; then
     if command -v sudo >/dev/null 2>&1; then
         sudo apt-get update -qq && sudo apt-get install -y git openssh-client ncurses-bin curl
