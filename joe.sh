@@ -214,7 +214,7 @@ pp() {
     else
         source "$HOME/.bashrc"
     fi
-    cn 46 b "✓ Config reloaded!"
+    #cn 46 b "✓ Config reloaded!"
 }
 alias re="pp"
 

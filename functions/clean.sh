@@ -119,8 +119,8 @@ mv_(){
   c gr "" "ย้ายไฟล์แล้วทั้งหมด" ; c 10 b "$count" ; cn gr "" "files"
 }
 move_() {
-    local src="${1:-$bk_ss}"
-    local dest="${2:-$hbk_ss/$(date +%Y%m%d)}"
+    local src="${1:-$(_ css)}"
+    local dest="${2:-$(_ bss)}"
     local count=$(find "$src" -type f \( \
         -iname "* *.mp4" -o \
         -iname "* *.3gp" -o \
@@ -157,7 +157,7 @@ move_() {
     fi
 
     # 3. เคลียร์ช่องว่างในชื่อไฟล์ก่อน
-    rename_sp "$src"
+    re_name "$src"
 
     # 4. ค้นหาไฟล์วิดีโอทั้งหมด
     local files=()

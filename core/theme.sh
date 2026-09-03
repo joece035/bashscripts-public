@@ -61,29 +61,43 @@ _set_prompt() {
     local host_="$(c 226 b "$NODE_HOST")"
     
     local user_host=$(printf "${user_} @ ${host_}")
-    local current_dir="\[$(_c 226)\]\w\[$(_r)\]"
+    local current_dir="\[$(_c 242)\]\w\[$(_r)\]"
     local git_info="$(_git_prompt)"
     local arrow="\[$(_b)\]──>\[$(_r)\]"
 
     # -- dynamic border
+    local RC_="ืyes"   # yes or no (just for testing)
+    local RC_2="no"
     local term_w=$(tput cols)
     local last_status_len=$(( ${#last_status_raw} ))
     local env_tag_len=$(( ${#JOE_ENV} + 3 + ${#_SHELL} + 4 ))
     local user_host_len=$(( ${#_USER} + 3 + ${#NODE_HOST} ))
     local current_dir_len=$(( ${#PWD} ))
     local git_info_len=$(( ${#git_len} ))
-    local BN_BORDER_CHAR="-"
+
+    local BN_BORDER_CHAR="┈"    #┈ ┈ ━
     local BN_BORDER_COLOR="lm"
     local BN_BORDER_STYLE="b"
+   
+
+
+
+
     local lens=$(( last_status_len + 1 + env_tag_len + 1 + user_host_len + 1 + current_dir_len + 1 + git_info_len ))
     (( lens > term_w )) && lens=$(( term_w ))
-    local borde=$(cn "${BN_BORDER_COLOR}" "${BN_BORDER_STYLE}" "$(draw_ "${BN_BORDER_CHAR}" "$lens")")
-    # กำหนดค่า PS1 สำหรับ Bash
+    (( lens <= term_w && lens <= 80)) && lens=80
+
+    if [[ -n "$RC_" && "$RC_" == "yes" ]]; then
+        local borde=$(rc "${BN_BORDER_STYLE}" "$(draw_ "${BN_BORDER_CHAR}" "$lens")")
+    else
+        local borde=$(cn "${BN_BORDER_COLOR}" "${BN_BORDER_STYLE}" "$(draw_ "${BN_BORDER_CHAR}" "$lens")")
+    fi
+
     local PS1_ 
     PS1_="${borde}\n"
     PS1_+="${last_status} ${env_tag} ${user_host} in ${current_dir}${git_info}\n"
     PS1_+="${borde}\n"
-    PS1_+="${arrow}-◆"
+    PS1_+=" ❯-❤️-> "
     
 
     PS1=$PS1_
