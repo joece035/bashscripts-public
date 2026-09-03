@@ -1,335 +1,131 @@
-# 🚀 JOE_ENV — Personal Command Center
+# 🚀 JOE_ENV — Personal Command Center (Public)
 
-> Cross-platform bash/zsh ecosystem for **Termux**, **WSL**, and **Git Bash**.
-> Single entry point → auto-detect environment → load everything.
+> Cross-platform bash/zsh ecosystem for **WSL**, **Termux (Android)**, **MuMuPlayer**, and **Git Bash**.
+> Single entry point → auto-detect environment → load SSOT modules.
 
 ---
 
-## Quick Start
+## ⚡ Quick Start (No Auth Required)
+
+คุณสามารถโคลน Repository นี้บนเครื่องใหม่ใดๆ ได้ทันทีโดยไม่ต้องใช้ SSH Key หรือ Login:
 
 ```bash
-# 1. Clone
-git clone git@github.com:joece035/bashscripts.git
-cd bashscripts
+# 1. Clone via HTTPS (Public - No auth needed)
+git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
+cd ~/bashscripts
 
-# 2. Install (auto-detects Termux/WSL/Git Bash)
+# 2. ตั้งค่าไฟล์ Environment & Secrets
+cp .env.example .env
+chmod 600 .env
+# (แก้ไขค่าคีย์ใน .env ตามต้องการ หรือปล่อยว่างไว้สำหรับฟังก์ชันพื้นฐาน)
+
+# 3. รันตัวติดตั้ง (ตรวจจับ Termux / WSL / Git Bash อัตโนมัติ)
 ./bootstrap/setup.sh
 
-# 3. Reload shell
+# 4. Reload Shell
 source ~/.bashrc   # WSL / Git Bash
-source ~/.zshrc    # Termux
+source ~/.zshrc    # Termux / ZSH
 ```
 
 ---
 
-## Architecture
+## 🏗️ Architecture & SSOT (Single Source of Truth)
 
-### Directory Structure
+โครงสร้างไดเรกทอรีและโมดูลปัจจุบันตามสถาปัตยกรรม SSOT:
 
 ```
 bashscripts/
+├── joe.sh                    ← 🎯 MAIN ENTRY POINT (รัน ssot_load() เพื่อโหลดทุกอย่าง)
 │
-├── joe.sh                    ← 🎯 MAIN ENTRY POINT (source this)
+├── .env.example              ← Template ตัวแปรแวดล้อม (Public)
+├── .env                      ← Private Secrets (Local only, ห้าม commit)
+├── .bash_helper              ← ตัวช่วยเช็คความถูกต้องของการโหลดไฟล์
 │
 ├── bootstrap/
-│   ├── 00-env.sh             ← Environment variables (SSOT)
-│   └── setup.sh              ← Installer script
+│   ├── 00-env.sh             ← SSOT Environment Variables & Paths (อ่าน .env)
+│   └── setup.sh              ← สคริปต์ติดตั้งสำหรับเครื่องใหม่
 │
 ├── core/
-│   ├── 01-colors.sh          ← Color engine V3 (c/cn/color/ctab/hline/rc)
-│   ├── 02-aliases.sh         ← All shell aliases
-│   ├── 3worlds.sh            ← SSH/transfer (tm/tw/wsl/push/pull)
-│   ├── profiles.sh           ← AI profile switching (ai_profile/pf)
-│   ├── theme.sh              ← Prompt customization (PROMPT_COMMAND)
-│   └── .zsh-bash-compat.sh   ← Zsh/Bash compatibility layer
+│   ├── 01-colors.sh          ← Color Engine V3 (c/cn/color/ctab/hline/rc)
+│   ├── aliases.sh            ← Alias คำสั่งหลัก (cls/h/reload/merge/ฯลฯ)
+│   ├── bash-manager.sh       ← File Manager CLI (fm/xfm)
+│   ├── ssh-config.sh         ← SSH Keygen / Auth Helpers (cb_copy/ssh_kgen)
+│   ├── ensure.sh             ← Dependency & Package auto-installer
+│   ├── 3worlds.sh            ← Multi-world SSH & sync (tm/tw/wsl/push/pull)
+│   ├── profiles.sh           ← จัดการ Profile AI (pf joe | pf mom)
+│   └── theme.sh              ← Dynamic Shell Prompt & Border Engine
 │
-├── functions/
-│   ├── 00-fm-loader.sh       ← File manager bootstrapper
-│   ├── 00.1-function-tools.sh← Shared helpers (mth/math/backup)
-│   ├── 02-systems.sh         ← System utils (kp/fpk/gpc/adb/scrcpy)
-│   ├── 03-fpath.sh           ← Path functions (fn/ep/hop/sd/cdc)
-│   ├── 04-openclaw.sh        ← OpenClaw integration
-│   ├── 05-pathx.sh           ← Path explorer
-│   ├── 05-project.sh         ← Project runners (opdb/opall/tsc)
-│   ├── 07-wtf.sh             ← Diagnostic tool
-│   ├── 08-nexus.sh           ← Nexus utilities
-│   ├── 09-all_block_status.sh← Block status dashboard
-│   ├── 10-ai.sh              ← AI helpers
-│   ├── 11-bash-manager.sh    ← File Manager CLI (fm/xfm)
-│   ├── 12-git.sh             ← Git helpers
-│   └── tools.sh              ← Misc tools
+├── functions/                ← Modular Shell Functions
+│   ├── 00-fm-loader.sh       ← File Manager bootstrapper
+│   ├── 00.1-function-tools.sh← Utility helpers (mth/backup/ฯลฯ)
+│   ├── 02-systems.sh         ← System tools (kp/fpk/adb/scrcpy)
+│   ├── 03-fpath.sh           ← Fast Directory Navigation (fn/ep/hop/sd)
+│   ├── 04-openclaw.sh        ← OpenClaw automation integration
+│   ├── 05-pathx.sh           ← Path & Explorer tools
+│   ├── 05-project.sh         ← Project Runners
+│   ├── 07-wtf.sh             ← System diagnostics
+│   ├── 08-nexus.sh           ← Nexus vault integration
+│   ├── 10-ai.sh              ← AI CLI integration
+│   ├── 12-git.sh             ← Git workflow shortcuts
+│   │
+│   └── joe-block/            ← 📊 Block Engine V4 (Canonical)
+│       ├── entry.sh          ← Entry point (m/dashboard)
+│       ├── styles/           ← Block styles & symbols
+│       └── components/       ← UI components
 │
-├── plugins/
-│   ├── block_engine/         ← Terminal block renderer
-│   │   ├── entry.sh          ← Public API (m/dashboard/dashboard_array)
-│   │   ├── block/            ← Internal modules
-│   │   │   ├── utils.sh      ← Constants, helpers
-│   │   │   ├── layout.sh     ← Layout engine
-│   │   │   ├── theme.sh      ← Theme loader & color compiler
-│   │   │   ├── renderer.sh   ← ASCII renderer
-│   │   │   └── status.sh     ← Status data providers
-│   │   └── styles/           ← Style definitions
-│   │       └── block_style.sh
-│   ├── syncctl/              ← Syncthing ownership controller
-│   │   ├── syncctl           ← CLI entry (sourced by joe.sh)
-│   │   ├── lib/              ← Submodules (api/config/state/lock/etc.)
-│   │   └── tests/            ← Test fixtures
-│   └── hermes/               ← Hermes AI integration
-│       └── hermes.sh
-│
-├── modules/                  ← Optional helper tools
-│   ├── ai_block.sh           ← AI block renderer
-│   ├── color-chart.sh        ← Color chart display
-│   ├── cli-cheatsheet.md     ← CLI cheat sheet
-│   ├── patch_theme.sh        ← Theme patcher
-│   └── wtf.sh                ← Legacy diagnostic
-│
-├── tools/                    ← Standalone executables (run, not source)
+├── tools/                    ← Standalone Executable Tools
+│   ├── syncctl/syncctl       ← 🔄 Syncthing Cluster Controller (Canonical)
 │   ├── safe-edit.sh          ← Pre-commit guard (ANSI/drift check)
-│   ├── ssot-audit.sh         ← SSOT drift detector
-│   ├── merge.sh              ← Tree/merge tools
-│   ├── agent-pre-commit.sh   ← Agent pre-commit hook
-│   ├── mumu-debug.sh         ← MUMU environment debugger (SSH)
-│   ├── install-syncthing-service.sh ← Git-Bash syncthing scheduler
-│   ├── hermes.sh             ← Hermes CLI wrapper
-│   ├── patch_theme.sh        ← Theme patcher
-│   ├── color-chart.sh        ← Color palette display
-│   ├── ai_block.sh           ← AI block helper
-│   ├── files_manage.sh       ← File management helpers
-│   ├── wtf.sh                ← WTF debug tool
-│   └── Fresh_termux_fullsetup_SSOT.sh ← Full Termux setup
+│   ├── ssot-audit.sh         ← SSOT compliance auditor
+│   └── hermes.sh             ← Hermes CLI wrapper
 │
-├── profiles/                 ← Shell profile templates
+├── profiles/                 ← Configuration Templates
+│   ├── wsl/.zshrc / .bashrc
 │   ├── termux/.zshrc
-│   └── git-bash/.bash_profile
+│   ├── oppo/.zshrc
+│   └── git-bash/.bashrc
 │
-├── lessons/                  ← Learning materials (knowledge only)
-│   └── bash-fundamentals.md
-│
-├── AGENT.md                  ← AI agent instructions
-├── DEPENDENCY_MAP.md         ← Dependency analysis
-└── RESTRUCTURE_PLAN.md       ← Migration plan
+├── AGENT.md                  ← AI Agent Architecture & Protocol Rules
+└── DEPENDENCY_MAP.md         ← Module Graph & Dependency Mapping
 ```
 
 ---
 
-## Path Variable System
+## 🧭 ระบบ Path Variables (SSOT System)
 
-JOE_ENV uses a **layered path system** with `JOE_ROOT` as the base:
+| ตัวแปร (Canonical) | ความหมาย | สภาพแวดล้อมที่รองรับ |
+|-------------------|----------|-------------------|
+| `$SSOT`           | Root path ของ repo (`~/bashscripts`) | ทุก Platform |
+| `$SCRIPTS_PATH`   | Alias ชี้ไปที่ `$SSOT` | ทุก Platform |
+| `$COLOR_PATH`     | ชี้ไปที่ `$SSOT/core/01-colors.sh` | ทุก Platform |
+| `$hpc`            | Path ฝั่ง Windows (`/mnt/c/Users/User`) | WSL, Git Bash |
+| `$hwsl`           | Path ฝั่ง WSL | WSL, Git Bash |
 
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `JOE_ROOT` | `$HOME/bashscripts` | Repo root (auto-detected from `joe.sh` location) |
-| `JOE_CORE` | `$JOE_ROOT/core` | Core modules |
-| `JOE_FUNCTIONS` | `$JOE_ROOT/functions` | Function modules |
-| `JOE_PLUGINS` | `$JOE_ROOT/plugins` | Plugin modules |
-| `JOE_TOOLS` | `$JOE_ROOT/tools` | Standalone tools |
-
-**Backward compatibility** (still set for legacy scripts):
-
-| Variable | Alias For |
-|----------|-----------|
-| `SSOT` | `$JOE_ROOT` |
-| `SCRIPTS_PATH` | `$JOE_ROOT` |
-
-### Usage in Scripts
-
-```bash
-# New style (recommended)
-source "$JOE_CORE/01-colors.sh"
-source "$JOE_PLUGINS/block_engine/entry.sh"
-source "$JOE_PLUGINS/syncctl/syncctl"
-
-# Backward compat (still works)
-source "$SSOT/core/01-colors.sh"
-source "$SCRIPTS_PATH/plugins/block_engine/entry.sh"
-```
+*(หมายเหตุ: ตัวแปรเก่า `$JOE_ROOT`, `$JOE_CORE`, `$JOE_PLUGINS` ยังคงมี Fallback รองรับเพื่อ Backward Compatibility)*
 
 ---
 
-## Environment Detection (JOE_ENV)
+## 🌐 การตรวจจับสภาพแวดล้อม (`JOE_ENV`)
 
-`joe.sh` auto-detects your environment on startup:
+`joe.sh` จะระบุสภาพแวดล้อมอัตโนมัติเมื่อเปิดเทอร์มินัล:
 
-| `JOE_ENV` | Platform | Shell | Notes |
-|-----------|----------|-------|-------|
-| `TERMUX` | Android (Termux) | zsh | `/data/data/com.termux` detected |
-| `MUMU` | MuMuPlayer emulator | zsh | Termux on Android emulator |
-| `WSL` | Windows Subsystem for Linux | bash | `microsoft` in `/proc/version` |
-| `GIT-BASH` | Git Bash on Windows | bash | `$OSTYPE == msys/cygwin` |
-
-### Per-Environment Paths
-
-```
-TERMUX/MUMU:                         WSL:
-  $HOME = /data/data/com.termux/...    $HOME = /home/usercivenz
-  SSOT   = $HOME/bashscripts           SSOT   = $HOME/bashscripts
-  hpc    = (not set)                   hpc    = /mnt/c/Users/User
-  hwsl   = (not set)                   hwsl   = $HOME
-
-GIT-BASH:
-  $HOME = /c/Users/User
-  SSOT   = $HOME/bashscripts
-  hpc    = $HOME
-  hwsl   = //wsl.localhost/Ubuntu/home/usercivenz
-```
+| `JOE_ENV` | แพลตฟอร์ม | เชลล์ | รายละเอียด |
+|-----------|-----------|------|------------|
+| `WSL` | Windows Subsystem for Linux | bash / zsh | Linux บน Windows |
+| `TERMUX` | Android (Termux) | zsh | อุปกรณ์พกพา |
+| `MUMU` | MuMuPlayer Emulator | zsh | Android จำลองบน PC |
+| `GIT-BASH`| Git Bash on Windows | bash | Bash บน Windows โดยตรง |
 
 ---
 
-## Boot Sequence
+## 🔐 นโยบายความปลอดภัยและ Secrets (Zero-Leak)
 
-```
-~/.bashrc or ~/.zshrc
-  └─ source joe.sh                    ← ONLY entry point
-       │
-       ├─ Step 0: Detect JOE_ENV      ← TERMUX | MUMU | WSL | GIT-BASH
-       ├─ Step 1: Set SSOT, hpc, hwsl, DASHBOARD_DIR
-       ├─ Step 1.5: CRLF self-heal    ← auto-fix Windows line endings
-       ├─ Step 2: Set JOE_ROOT/JOE_CORE/JOE_PLUGINS/JOE_TOOLS
-       │
-       ├─ Source bootstrap/00-env.sh  ← env vars (HERMES_DIR, NODE_*, etc.)
-       ├─ Source core/01-colors.sh    ← color engine (c/cn/color/ctab/hline)
-       ├─ Auto-start sshd & ssh-agent
-       ├─ Source core/3worlds.sh      ← SSH (tm/tw/wsl/push/pull)
-       ├─ Source core/02-aliases.sh   ← aliases (cls/h/reload/merge/etc.)
-       ├─ Source core/profiles.sh     ← ai_profile/pf
-       ├─ Source core/theme.sh        ← prompt & PROMPT_COMMAND
-       │
-       ├─ Source functions/*.sh       ← ALL function modules (glob)
-       │   └─ plugins/block_engine/entry.sh  ← block engine (m/dashboard)
-       ├─ Source plugins/syncctl/syncctl     ← syncthing controller
-       │
-       └─ Startup tasks              ← syncthing_auto, rc_del
-```
-
-**Critical ordering:**
-- `00-env.sh` must load BEFORE functions (provides `NODE_*`, `ST_KEY_*`, etc.)
-- `01-colors.sh` must load BEFORE anything that prints colors
-- `3worlds.sh` depends on `00-env.sh` (uses `NODE_*` vars)
+- **ห้าม Commit Secrets:** ไฟล์ `.env` ที่เก็บ Token/Key จะถูกบล็อกด้วย `.gitignore` เสมอ
+- **Template พร้อมใช้:** ใช้ `.env.example` เป็นโครงสร้างตั้งต้นสำหรับทุกเครื่องใหม่
+- **Dynamic Load:** `bootstrap/00-env.sh` จะโหลดค่าจาก `.env` ภายในเครื่องแบบ Dynamic หากไม่มีไฟล์ ค่าเริ่มต้นจะเป็นสตริงว่างเพื่อความปลอดภัยสูงสุด
 
 ---
 
-## Key Features
+## 📄 ใบอนุญาต (License)
 
-### 🎨 Color Engine V3 (`core/01-colors.sh`)
-
-```bash
-# Print with color (256-color palette)
-c  202 b "bold orange"          # no newline (concatenable)
-cn 46  b "green bold + newline" # with newline
-
-# Style modifiers: b=bold, d=dim, i=italic, u=underline
-c 196 bi "bold+italic red"
-
-# Table & line helpers
-ctab 4 "label" "value"          # formatted table row
-hline 60                         # horizontal line
-
-# Random palette
-rc  b "random color bold"       # random from palette
-rc1 b "random from palette 1"
-```
-
-**V3 rules:**
-- ❌ NO inline ANSI escapes (`\e[38;5;Nm`) outside `01-colors.sh`
-- ❌ NO legacy color vars (`$RED`, `$GREEN`, `$BOLD`)
-- ✅ Use `c()/cn()/color()` from `01-colors.sh`
-- ✅ Use `$(_b)/$(_d)/$(_i)/$(_u)` for raw escapes
-
-### 🌍 Multi-World SSH (`core/3worlds.sh`)
-
-```bash
-tm          # SSH to Termux
-tw          # SSH to Windows (Git Bash)
-wsl         # SSH to WSL
-push        # Push files to Termux
-update      # Update Termux packages
-cptw file   # Copy file: Windows → Termux
-cpw2t file  # Same as cptw
-```
-
-### 📊 Block Engine (`plugins/block_engine/`)
-
-```bash
-# Render a status block
-m 50                  # style 50, offset 50 columns
-m_random              # random style
-echo "row1\nrow2" | dashboard    # pipe rows
-
-# Status providers
-status_new            # system status block
-op_profile            # OpenClaw profile block
-```
-
-### 🔄 Syncthing Controller (`plugins/syncctl/`)
-
-```bash
-syncctl status        # show cluster status
-syncctl doctor        # diagnose issues
-syncctl handover      # transfer master ownership
-syncctl pause         # pause sync
-syncctl resume        # resume sync
-```
-
----
-
-## SSOT (Single Source of Truth) Architecture
-
-Each domain has ONE canonical file:
-
-| Domain | SSOT File | Owns |
-|--------|-----------|------|
-| Environment | `bootstrap/00-env.sh` | All env vars, paths, keys |
-| Colors | `core/01-colors.sh` | Color engine, palette |
-| SSH/Transfer | `core/3worlds.sh` | `tm/tw/wsl/push` |
-| Aliases | `core/02-aliases.sh` | All aliases |
-| Block Engine | `plugins/block_engine/entry.sh` | `m/dashboard` |
-| Syncthing | `plugins/syncctl/syncctl` | `syncctl` CLI |
-
-**Rule:** Never redefine a variable/function from another SSOT file.
-Reference it instead: `source "$JOE_CORE/01-colors.sh"` then call `cn`.
-
----
-
-## Testing
-
-```bash
-# Test suite removed 2026-08-18 (use bash -n <file> for syntax check instead)
-```
-```
-
----
-
-## Cross-Platform Compatibility
-
-| Feature | Termux | WSL | Git Bash |
-|---------|--------|-----|----------|
-| Shell | zsh | bash | bash |
-| Color Engine | ✅ | ✅ | ✅ |
-| SSH/Tmux | ✅ | ✅ | ⚠️ Limited |
-| Block Engine | ✅ | ✅ | ✅ |
-| Syncthing | ✅ | ✅ | ⚠️ Limited |
-| File Manager | ✅ | ✅ | ✅ |
-| CRLF Auto-fix | ✅ | ✅ | ✅ |
-
----
-
-## Safety Tools
-
-### `safe-edit.sh` — Pre-commit Guard
-```bash
-bash tools/safe-edit.sh <file>    # Check a file
-# Blocks: inline ANSI, V2 color vars, hardcoded IPs/keys
-```
-
-### `ssot-audit.sh` — SSOT Drift Detector
-```bash
-bash tools/ssot-audit.sh          # Audit entire repo
-# Checks: color SSOT, env SSOT, load order, syntax
-```
-
----
-
-## License
-
-Personal project — not for distribution.
+Distributed under the MIT License.

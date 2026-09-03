@@ -18,6 +18,15 @@
 # ============================================================
 
 # ============================================================
+# ── 0. LOCAL SECRETS & OVERRIDES (SSOT) ──
+# Loads private credentials from .env if present. Never commit .env to git!
+if [[ -f "${SSOT:-$HOME/bashscripts}/.env" ]]; then
+    source "${SSOT:-$HOME/bashscripts}/.env"
+elif [[ -f "${SCRIPTS_PATH:-$HOME/bashscripts}/.env" ]]; then
+    source "${SCRIPTS_PATH:-$HOME/bashscripts}/.env"
+fi
+
+# ============================================================
 # 1. WORKSPACE PATHS (Derived from JOE_ENV basics)
 # ============================================================
 
@@ -65,8 +74,8 @@ export dpc="$hpc/Desktop"
 export dtpc="$hpc/Desktop"          # compat alias ของ dpc
 export hmp="${HERMES_DIR:-$HOME/.hermes}"   # AGENT.md: hmp = $HOME/.hermes
 export HERMES_LOG_DIR="${HERMES_DIR}/logs"  # log dir สำหรับ tools/hermes.sh
-export BRAVE_SEARCH_API_KEY="BSAfPRWzAVe_En3GTQ-cZHcy3MXk8hB"  # Replace with your actual API key
-export BRAVE_API_KEY="${BRAVE_SEARCH_API_KEY}"
+export BRAVE_SEARCH_API_KEY="${BRAVE_SEARCH_API_KEY:-}"
+export BRAVE_API_KEY="${BRAVE_API_KEY:-$BRAVE_SEARCH_API_KEY}"
 export ALPHA_DIR="$msync/alpha-workspace"
 export alpha=${ALPHA_DIR}
 export storage="/storage/emulated/0/" # sdcrd
@@ -188,7 +197,7 @@ export NODE_OPPO_USER="u0_a88"
 export NODE_OPPO_HOST="oppo"
 export NODE_OPPO_PORT="8023"
 export NODE_OPPO_ST_PORT="8386"
-export NODE_OPPO_ST_KEY="Pxon3wVF7n4xC6ySS25HH2AsHEpKzkUF"
+export NODE_OPPO_ST_KEY="${NODE_OPPO_ST_KEY:-}"
 export NODE_OPPO_ST_ID="IOA7ARV-TZZATDI-VLSDOUN-JM2QEEK-VZVW37M-NDQLEWJ-4NXZNMJ-WY37HQZ"
 export NODE_OPPO_ST_URL="http://${NODE_OPPO_HOST}:${NODE_OPPO_ST_PORT}"
 
@@ -198,7 +207,7 @@ export NODE_TERMUX_HOST="termux"
 export NODE_TERMUX_USER="u0_a331"
 export NODE_TERMUX_PORT="$SSH_TERMUX_PORT"
 export NODE_TERMUX_ST_PORT="8383"
-export NODE_TERMUX_ST_KEY="f4iNwTC6qU4G9neQpzxwztjt7nyykb2n"
+export NODE_TERMUX_ST_KEY="${NODE_TERMUX_ST_KEY:-}"
 export NODE_TERMUX_ST_ID="OJE25GP-CUVXSOC-A2K47O3-GPIYOW5-UFQI4UM-TQD7FLA-45AKEI2-723DRAR"
 export NODE_TERMUX_ST_URL="http://${NODE_TERMUX_HOST}:${NODE_TERMUX_ST_PORT}"
 
@@ -208,7 +217,7 @@ export NODE_WSL_HOST="wsl"
 export NODE_WSL_USER="usercivenz"
 export NODE_WSL_PORT="$SSH_WSL_PORT"
 export NODE_WSL_ST_PORT="8385"
-export NODE_WSL_ST_KEY="unbStnoVPg2ZUUmNHijRTGJqQsDS65oa"
+export NODE_WSL_ST_KEY="${NODE_WSL_ST_KEY:-}"
 export NODE_WSL_ST_ID="3S42YWK-JLYGQXU-NR37KDQ-7WFSODG-42TZPEX-XLTGR3W-XNK67EL-KUAKHQG"
 export NODE_WSL_ST_URL="http://${NODE_WSL_HOST}:${NODE_WSL_ST_PORT}"
 
@@ -219,7 +228,7 @@ export NODE_WIN_IP="$TAILSCALE_IP_WINDOW"
 export NODE_WIN_HOST="window"
 export NODE_WIN_USER="User"
 export NODE_WIN_ST_PORT="8384"
-export NODE_WIN_ST_KEY="PinvixMM6WotRqvwhAsKGrJpKyfN5dmb"
+export NODE_WIN_ST_KEY="${NODE_WIN_ST_KEY:-}"
 export NODE_WIN_ST_ID="6XHR5KV-7I3RQZ2-TIUVGNW-WRAN42K-HNQYCSZ-PFK7TKX-S5BU7OF-LNGBVAO"
 export NODE_WIN_ST_URL="http://${NODE_WIN_HOST}:${NODE_WIN_ST_PORT}"
 
@@ -229,7 +238,7 @@ export NODE_MUMU_HOST="mumu"
 export NODE_MUMU_USER="u0_a62"
 export NODE_MUMU_PORT="$SSH_MUMU_PORT"
 export NODE_MUMU_ST_PORT="8386"
-export NODE_MUMU_ST_KEY="Pxon3wVF7n4xC6ySS25HH2AsHEpKzkUF"
+export NODE_MUMU_ST_KEY="${NODE_MUMU_ST_KEY:-}"
 export NODE_MUMU_ST_ID="IOA7ARV-TZZATDI-VLSDOUN-JM2QEEK-VZVW37M-NDQLEWJ-4NXZNMJ-WY37HQZ"
 export NODE_MUMU_ST_URL="http://${NODE_MUMU_HOST}:${NODE_MUMU_ST_PORT}"
 
@@ -293,11 +302,11 @@ export ACODEX_PORT="$NODE_ACODEX_PORT"
 
 # --- SHORT CUT FOR JOE-- #
 export nx="$nexus_vault"
-export USDT_BEP20_BITKUB=0x5C7D1Da0862F8865C328c8CDE22B3C1168dA2740
-export SOL_BITKUB=DxX8Z9VhpSVnXqwzyN36qJNtK2dUZEaBh9ExFaP9NM9E
-export SOL_METAMAS=AU7vdRgRbcdcULoiXiQ6AfQpb96MDiFXDyEC2YQAS8Bav
-export BTC_BITKUB=bc1qxy3jf7sf6gymdd2ucf6lrzl2jyc9p8322dldta
-export HOME_ADDRESS='295/3, หมู่ที่​ 2, หมู่บ้าน​ ห้วยหล่อ, ซ.3/1, อำเภอเมืองลำปาง, ต.ชมพู​, จังหวัดลำปาง, 52100'
+export USDT_BEP20_BITKUB="${USDT_BEP20_BITKUB:-}"
+export SOL_BITKUB="${SOL_BITKUB:-}"
+export SOL_METAMAS="${SOL_METAMAS:-}"
+export BTC_BITKUB="${BTC_BITKUB:-}"
+export HOME_ADDRESS="${HOME_ADDRESS:-}"
 
 
 # ============================================================
@@ -305,14 +314,14 @@ export HOME_ADDRESS='295/3, หมู่ที่​ 2, หมู่บ้าน
 # ============================================================
 
 # - lookforward
-export FACEBOOK_PAGE_TOKEN=EAAXHv5Qk9LwBRAf9v9dZCbwDOyj3MaF0JRAfZCmeGawhLPRaHqAkUYJ2ZA1TtImmtZB68daaAz2nZCm7jllQlqktlLuzDvRhIN13iDNYAcsz0Qx120hZBcujZBtFySG5ZCOWjSDYYaFrk04K5qJDBdSQZB95vIKmysuBY6usmxDPUa4Qv0wbJSiJlc85KUfZBoKzdzm3YY
+export FACEBOOK_PAGE_TOKEN="${FACEBOOK_PAGE_TOKEN:-}"
 
-export FACEBOOK_PAGE_ID=898773833311604
+export FACEBOOK_PAGE_ID="${FACEBOOK_PAGE_ID:-}"
 
 # -- Shpee page คัดแต่สิ่งที่คุณคู้ควร
-export SHOPEE_PAGE_TOKEN=EAAWZCSxf8sR8BRPR5y6QFx6OREJbFNVifA9OZAsM9Tluzqk9qDuOa743Y8cJiWckHSLDG8L6rsoKIZCxoMd4qOCw1I1bOIg3C3zwLdnb1AZAGg4H9hE7uj9kreShaDEDmszMyWIgQqRomyMhgDZAcW75CWhnRO87e6XPhQKEsZB3s7Fcvwi8IOLXbXirE7pykGMXR3ZCPmvZBzKEFtFg7pdjPC2vS2XHZBVz3ZA3DUMnoZD
+export SHOPEE_PAGE_TOKEN="${SHOPEE_PAGE_TOKEN:-}"
 
-export SHOPEE_PAGE_ID=875311499006764
+export SHOPEE_PAGE_ID="${SHOPEE_PAGE_ID:-}"
 
 # ── OpenCode Go zen (Joe's preferred AI provider) ──
 # Key pool: แยกตาม profile เพื่อกันปนกันและ track อายุการใช้งาน
@@ -320,13 +329,13 @@ export SHOPEE_PAGE_ID=875311499006764
 #         $OC_BASE_URL         — OpenCode Go API endpoint (shared)
 
 # ของแม่ (mom) — key ใหม่ต่อวันที่ 2026-07-25
-export OC_KEY_MOM="sk-7heYEMJkSh0aU7y9rRJVIl9uMR7zuYQvVtIGMDtYYBQ1LsjUsrqs5RGk3XZz8DlT"
+export OC_KEY_MOM="${OC_KEY_MOM:-}"
 
 # ของพี่โจ (joe) — key เก่า ใช้ได้ปกติ
-export OC_KEY_JOE="sk-Wlrzpk8MeJQ0gdLQ2KMS2HsIchqiQxXO3ZJ2in1qBniPzKHGRgpGkwsz8LDwPcKD"
+export OC_KEY_JOE="${OC_KEY_JOE:-}"
 
 # OpenCode Zen (joe เท่านั้น — ใช้ Claude Sonnet)
-export OC_KEY_ZEN="sk-OARSXUL9bAmKgGlLJx8I5aMdxJpdCQlQFeNJsVhLz9K77sAVfnqukF7Xh5uyKTMx"
+export OC_KEY_ZEN="${OC_KEY_ZEN:-}"
 
 # Shared endpoint
 export OC_BASE_URL="https://opencode.ai/zen/go/v1"

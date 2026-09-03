@@ -26,8 +26,11 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# ── Secrets (defensive — should already be in 00-env.sh which is committed,
-#    but if anyone drops a .env.local or key file here, keep it out) ──
+# ── Secrets (Never commit secrets to git!) ──
+.env
+.env.*
+!.env.example
 *.env.local
 *.pem
 *.key
+*.secret
