@@ -51,7 +51,7 @@ fi
 # ── [3] INSTALL CORE PACKAGES (Batch) ──
 echo "📦 Installing core prerequisites..."
 if command -v pkg >/dev/null 2>&1; then
-    pkg install -y git openssh ncurses-utils curl micro iputils-ping neofetch
+    pkg install -y git openssh ncurses-utils curl micro
 elif command -v apt-get >/dev/null 2>&1; then
     if command -v sudo >/dev/null 2>&1; then
         sudo apt-get update -qq && sudo apt-get install -y git openssh-client ncurses-bin curl
