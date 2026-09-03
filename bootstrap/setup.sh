@@ -40,6 +40,12 @@ echo "🔧 Installing JOE_ENV from: $SSOT"
 # ── Detect Environment ──
 if [[ -f "$HOME/.env" ]]; then
     source $HOME/.env
+elif [[ -d "/data/data/com.termux" ]]; then
+    if getprop ro.product.model 2>/dev/null | grep -qiE '(MuMu|vphone)'; then
+        JOE_ENV="MUMU"
+    else
+        JOE_ENV="TERMUX"
+    fi
 elif grep -qi "microsoft" /proc/version 2>/dev/null; then
     JOE_ENV="WSL"
 elif [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
@@ -98,9 +104,10 @@ fi
 
 shell_setup(){
     
+    local env_=${1:-$JOE_ENV}
     local pf=""
 
-        case "$JOE_ENV" in
+        case "$env_" in
                 TERMUX)
                     if [[ ! -f "$HOME/.bashrc" ]]; then
                          pf="${SSOT}/profiles/termux/.bashrc"
@@ -179,7 +186,7 @@ shell_setup(){
          esac               
 }
 
-shell_setup
+shell_setup "$NEW_DEVICE"
 # ── Summary ──
 echo ""
 echo "═══════════════════════════════════════════════════════════"

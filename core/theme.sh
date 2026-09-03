@@ -66,8 +66,7 @@ _set_prompt() {
     local arrow="\[$(_b)\]──>\[$(_r)\]"
 
     # -- dynamic border
-    local RC_="ืyes"   # yes or no (just for testing)
-    local RC_2="no"
+    RC_="yes"   # yes or no (just for testing)
     local term_w=$(tput cols)
     local last_status_len=$(( ${#last_status_raw} ))
     local env_tag_len=$(( ${#JOE_ENV} + 3 + ${#_SHELL} + 4 ))
@@ -93,8 +92,8 @@ _set_prompt() {
         local borde=$(cn "${BN_BORDER_COLOR}" "${BN_BORDER_STYLE}" "$(draw_ "${BN_BORDER_CHAR}" "$lens")")
     fi
 
-    local PS1_ 
-    PS1_="${borde}\n"
+    local PS1_="" 
+    PS1_+="${borde}\n"
     PS1_+="${last_status} ${env_tag} ${user_host} in ${current_dir}${git_info}\n"
     PS1_+="${borde}\n"
     PS1_+=" ❯-❤️-> "
@@ -122,9 +121,7 @@ draw_() {
 }
 alias d_='draw_'
 
-printf "%s" "
 
-"
 
 
 
