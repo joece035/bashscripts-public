@@ -71,7 +71,7 @@ pkg_install(){
         ncurses-utils 
         curl 
         micro 
-        openssl
+        openssh
     )
     for p in "${pack[@]}"; do
         pkg_manager ${p}
