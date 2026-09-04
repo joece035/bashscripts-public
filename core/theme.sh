@@ -51,7 +51,7 @@ _set_prompt() {
         last_status_s="b"
         last_status_raw="▏▎▍▌▋▊▉█"
     else
-        last_status_c="lr"
+        last_status_c="1"
         last_status_s="b"
         last_status_raw="▏▎▍▌▋▊▉█"
     fi
@@ -70,7 +70,7 @@ _set_prompt() {
     local arrow="\[$(_b)\]──>\[$(_r)\]"
 
     # -- dynamic border
-    local RC_="yes"   # yes or no (just for testing)
+    local RC_="no"   # yes or no (just for testing)
     local term_w=$(tput cols)
     local last_status_len=$(( ${#last_status_raw} ))
     local env_tag_len=$(( ${#JOE_ENV} + 3 + ${#_SHELL} + 4 ))
@@ -80,8 +80,8 @@ _set_prompt() {
     
     # -- border configuration
     local BN_BORDER_CHAR="┈"          # --   ┈ ━  ▨  ▬ ━ ▭ 
-    local BN_BORDER_COLOR="lm"        # --  agument2 = สี จาก cn() ใน 01-colors.sh 
-    local BN_BORDER_STYLE="b"         # --  agument3 = สไตล์ จาก cn() ใน 01-colors.sh  
+    local BN_BORDER_COLOR="235"        # --  agument2 = สี จาก cn() ใน 01-colors.sh 
+    local BN_BORDER_STYLE="d"         # --  agument3 = สไตล์ จาก cn() ใน 01-colors.sh  
     # ───────────────  end border configuration ───────────────
 
     local lens=$(( last_status_len + 1 + env_tag_len + 1 + user_host_len + 1 + current_dir_len + 1 + git_info_len ))
