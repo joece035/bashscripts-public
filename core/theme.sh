@@ -4,7 +4,9 @@
 # ======================================================
 
 # 1. Colors loaded from 01-colors.sh via joe.sh (no redefinition needed)
-
+if ! command -v rc >/dev/null 2>&1; then
+   _check -f "$SSOT/core/random-color.sh"  "source" 2>/dev/null 
+fi
 # 2. ฟังก์ชันตรวจสอบ Git Branch แบบไม่หน่วงเครื่อง (Lightweight Git Status)
 _git_prompt() {
     if command -v git >/dev/null 2>&1; then
@@ -40,6 +42,7 @@ _exit_status() {
 # c()/cn() output text + escape — use them for plain text segments; use
 # _c/_b/_r directly for PS1 where bash will re-interpret \u, \w, etc.
 _set_prompt() {
+
     local last_status_c last_status_s last_status_raw last_status 
     local exit_code=$?
     if [ $exit_code -eq 0 ]; then
@@ -66,32 +69,37 @@ _set_prompt() {
     local arrow="\[$(_b)\]──>\[$(_r)\]"
 
     # -- dynamic border
-    RC_="yes"   # yes or no (just for testing)
+    local RC_="yes"   # yes or no (just for testing)
     local term_w=$(tput cols)
     local last_status_len=$(( ${#last_status_raw} ))
     local env_tag_len=$(( ${#JOE_ENV} + 3 + ${#_SHELL} + 4 ))
     local user_host_len=$(( ${#_USER} + 3 + ${#NODE_HOST} ))
     local current_dir_len=$(( ${#PWD} ))
     local git_info_len=$(( ${#git_len} ))
-
-    local BN_BORDER_CHAR="┈"    #┈ ┈ ━
-    local BN_BORDER_COLOR="lm"
-    local BN_BORDER_STYLE="b"
-   
-
-
-
+    
+    # -- border configuration
+    local BN_BORDER_CHAR="┈"          # --   ┈ ━  ▨  ▬ ━ ▭ 
+    local BN_BORDER_COLOR="lm"        # --  agument2 = สี จาก cn() ใน 01-colors.sh 
+    local BN_BORDER_STYLE="b"         # --  agument3 = สไตล์ จาก cn() ใน 01-colors.sh  
+    # ───────────────  end border configuration ───────────────
 
     local lens=$(( last_status_len + 1 + env_tag_len + 1 + user_host_len + 1 + current_dir_len + 1 + git_info_len ))
-    (( lens > term_w )) && lens=$(( term_w ))
-    (( lens <= term_w && lens <= 80)) && lens=80
 
+    # -- ปรับความยาวเส้นกรอบ อัตโนมัติ
+    (( lens > term_w )) && lens=$term_w
+    (( term_w >= 80 )) && lens=80
+
+    
     if [[ -n "$RC_" && "$RC_" == "yes" ]]; then
+
+    # -- กรอบ prompt แบบ random สี
         local borde=$(rc "${BN_BORDER_STYLE}" "$(draw_ "${BN_BORDER_CHAR}" "$lens")")
     else
+    # -- กรอบ prompt แบบกำหนดสี
         local borde=$(cn "${BN_BORDER_COLOR}" "${BN_BORDER_STYLE}" "$(draw_ "${BN_BORDER_CHAR}" "$lens")")
     fi
-
+    
+    # -- ประกอบร่างเป็น Dynamic PS1 (Prompt)
     local PS1_="" 
     PS1_+="${borde}\n"
     PS1_+="${last_status} ${env_tag} ${user_host} in ${current_dir}${git_info}\n"
@@ -99,7 +107,7 @@ _set_prompt() {
     PS1_+=" ❯-❤️-> "
     
 
-    PS1=$PS1_
+    export PS1=$PS1_
 
 }
 

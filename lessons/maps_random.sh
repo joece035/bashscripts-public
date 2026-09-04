@@ -29,7 +29,7 @@ rdm_1() {
 rdm_2() {
     local -a maps=("${@}")
     if (( ${#maps[@]} == 0 )); then
-        maps=("Dust II" "Inferno" "Mirage" "Nuke" "Overpass" "Ancient" "Anubis")
+       maps=("SKY" "FIRE" "WATER" "WIND")
     fi
 
     while IFS= read -r m; do
@@ -59,6 +59,8 @@ rdm_i() {
     cn 82 b "✨ All maps have been picked!"
 }
 rdm(){
+    
+maps=("SKY" "FIRE" "WATER" "WIND")
 
     local mode=${1:-"rdm_i"}
     shift
