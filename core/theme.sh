@@ -34,6 +34,7 @@ _exit_status() {
     fi
 }
 
+
 # 4. ประกอบร่างเป็น Dynamic PS1 (Prompt)
 # [ Exit Code ] [ ENV ] [ User@Host ] [ Path ] [ Git ]
 # ──>
@@ -43,16 +44,16 @@ _exit_status() {
 # _c/_b/_r directly for PS1 where bash will re-interpret \u, \w, etc.
 _set_prompt() {
 
-    local last_status_c last_status_s last_status_raw last_status 
     local exit_code=$?
+    local last_status_c last_status_s last_status_raw last_status
     if [ $exit_code -eq 0 ]; then
         last_status_c="lg"
         last_status_s="b"
-        last_status_raw="◆◆◆◆◆"
+        last_status_raw="▏▎▍▌▋▊▉█"
     else
-        last_status_c="1"
+        last_status_c="lr"
         last_status_s="b"
-        last_status_raw="◆◆◆◆◆"
+        last_status_raw="▏▎▍▌▋▊▉█"
     fi
     last_status="$(c "$last_status_c" "$last_status_s" "$last_status_raw")"
     # -- environment / current shell
