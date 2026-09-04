@@ -330,5 +330,6 @@ copy(){
   cn 45 b "Copied '$src' to '$tar'";
   cn 206 b ""
 }
+#git remote set-url origin git@github.com:joece035/bashscripts-public.git
 
 
