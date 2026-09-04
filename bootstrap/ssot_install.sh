@@ -77,7 +77,7 @@ pkg_install(){
         pkg_manager ${p}
     done
 }
-pkg_install
+#pkg_install
 # ── [4] CLONE / UPDATE REPO ──
 SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
 SSOT_TARGET="$HOME/bashscripts"
