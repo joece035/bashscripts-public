@@ -26,7 +26,7 @@ export NVM_DIR="$HOME/.nvm"
 nvm use default >/dev/null 2>&1 || true
 
 # ── 4. ENVIRONMENT & PATHS ──
-. "$HOME/.local/bin/env"
+_check -f "$HOME/.local/bin/env" "source"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
 export SSOT="$HOME/bashscripts"

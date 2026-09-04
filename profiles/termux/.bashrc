@@ -26,11 +26,11 @@ export NVM_DIR="$HOME/.nvm"
 nvm use default >/dev/null 2>&1 || true
 
 # ── 4. ENVIRONMENT & PATHS ──
-. "$HOME/.local/bin/env"
+_check -f "$HOME/.local/bin/env" "source"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
 export SSOT="$HOME/bashscripts"
-export MY_DEVICE=${WSL:-$JOE_ENV}
+export MY_DEVICE=${OPPO:-$JOE_ENV}
 [ -f $HOME/.env ] && source $HOME/.env
 
 # ── 5. ALIASES & COMPLETIONS ──
@@ -59,15 +59,6 @@ if [[ $- == *i* && ${BLE_VERSION-} && -z "$BLE_ATTACHED" ]]; then
     ble-attach
 fi
 
-# ── 9. FINAL SETTINGS ──
-
-alias ktmux="tmux kill-server"
-
-# OpenClaw Completion
-[ -f "$HOME/.openclaw-2/completions/openclaw.bash" ] && source "$HOME/.openclaw-2/completions/openclaw.bash"
-
-# opencode
-export PATH=$HOME/.opencode/bin:$PATH
 
 
 # Added by Antigravity CLI installer

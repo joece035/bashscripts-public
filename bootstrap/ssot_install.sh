@@ -6,31 +6,33 @@
 # Usage:
 #   bash bootstrap/ssot_install.sh [ENV_OVERRIDE]
 # ============================================================
-
+source "$HOME/bashscripts/.bash_helper"
+source "$HOME/bashscripts/joe.sh"
 set -eo pipefail
 
 # ── [1] DETECT ENVIRONMENT ──
-_detect_env() {
+_JOE_ENV() {
+    local JOE_ENV_INPUT
     if [[ -n "${1:-}" ]]; then
         echo "$1"
         return
     fi
-    if [[ -d "/data/data/com.termux" ]]; then
-        if getprop ro.product.model 2>/dev/null | grep -qiE '(MuMu|vphone)'; then
-            echo "MUMU"
-        else
-            echo "TERMUX"
+    if [[ -z "$1" ]]; then 
+        if [[ -d "/data/data/com.termux" ]]; then
+            echo "ใส่ os ที่คุณใช้อยู่ TERMUX, MUMU,OPPO ?"  
+            read -r JOE_ENV_INPUT
+            echo $JOE_ENV_INPUT  
+        elif grep -qi microsoft /proc/version 2>/dev/null; then
+            echo "WSL"
+        elif [[ -n "${MSYSTEM:-}" ]] || [[ "${OSTYPE:-}" == "msys" ]]; then
+            echo "GIT-BASH"
+        elif command -v apk  >/dev/null 2>&1; then
+            echo "ACODEX"
         fi
-    elif grep -qi microsoft /proc/version 2>/dev/null; then
-        echo "WSL"
-    elif [[ -n "${MSYSTEM:-}" ]] || [[ "${OSTYPE:-}" == "msys" ]]; then
-        echo "GIT-BASH"
-    else
-        echo "WSL"
     fi
 }
 
-DETECTED_ENV="$(_detect_env "${1:-}")"
+DETECTED_ENV="$(_JOE_ENV "${1:-}")"
 export JOE_ENV="$DETECTED_ENV"
 
 echo ""
@@ -49,19 +51,33 @@ if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
 fi
 
 # ── [3] UPDATE & INSTALL CORE PACKAGES (Batch) ──
-echo "📦 Updating repositories & installing core packages..."
-if command -v pkg >/dev/null 2>&1; then
+#echo "📦 Updating repositories & installing core packages..."
+#if command -v pkg >/dev/null 2>&1; then
     # Fix shared library mismatch (openssl / libcurl / git-remote-https)
-    pkg update -y && pkg upgrade -y
-    pkg install -y git openssh ncurses-utils curl micro openssl
-elif command -v apt-get >/dev/null 2>&1; then
-    if command -v sudo >/dev/null 2>&1; then
-        sudo apt-get update -qq && sudo apt-get install -y git openssh-client ncurses-bin curl
-    else
-        apt-get update -qq && apt-get install -y git openssh-client ncurses-bin curl
-    fi
-fi
+ #   pkg update -y && pkg upgrade -y
+  #  pkg install -y git openssh ncurses-utils curl micro openssl
+#elif command -v apt-get >/dev/null 2>&1; then
+ #   if command -v sudo >/dev/null 2>&1; then
+  #      sudo apt-get update -qq && sudo apt-get install -y git openssh-client ncurses-bin curl
+   # else
+    #    apt-get update -qq && apt-get install -y git openssh-client ncurses-bin curl
+    #fi
+#fi
 
+pkg_install(){{
+    local pack=(
+        git 
+        openssh 
+        ncurses-utils 
+        curl 
+        micro 
+        openssl
+    )
+    for p in "${pack[@]}"; do
+        pkg_manager ${p}
+    done
+}
+pkg_install
 # ── [4] CLONE / UPDATE REPO ──
 SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
 SSOT_TARGET="$HOME/bashscripts"

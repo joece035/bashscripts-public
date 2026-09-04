@@ -181,6 +181,24 @@ shell_setup(){
                              echo "not found $pf"
                          fi
                     fi
+                    ;;
+                ACODEX)
+                    if [[ ! -f "$HOME/.bashrc" ]]; then
+                         pf="${SSOT}/profiles/acodenx/.bashrc"
+                        if [[ -f "$pf" ]]; then
+                            ln -s "$pf" "$HOME/.bashrc" && echo "symlink $pf >>> $HOME/.bashrc done" || echo "FAIL"
+                        else
+                            echo "not found $pf"    
+                        fi
+                    fi     
+                    if [[ ! -f "$HOME/.zshrc" ]]; then
+                         pf="${SSOT}/profiles/acodenx/.zshrc"
+                         if [[ -f "$pf" ]]; then
+                             ln -s "$pf" "$HOME/.zshrc" && echo "symlink $pf >>> $HOME/.zshrc done" || echo "FAIL"
+                         else
+                             echo "not found $pf"
+                         fi
+                    fi
                     ;;    
                 *) echo unknow ;;    
          esac               
