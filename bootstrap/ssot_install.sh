@@ -31,7 +31,7 @@ _JOE_ENV() {
         fi
     fi
 }
-_JOE_ENV
+_JOE_ENV "OPPO"
 DETECTED_ENV="$(_JOE_ENV "${1:-}")"
 export JOE_ENV="$DETECTED_ENV"
 
