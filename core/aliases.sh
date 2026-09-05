@@ -82,3 +82,9 @@ alias envmgr='bash "$SSOT/tools/env-manager.sh"'
 
 alias statscal='python3 "$SSOT/tools/statscal/statscal.py"'
 alias wr='python3 "$SSOT/tools/statscal/statscal.py"'
+
+# ============================================================
+# SSOT SECRET VAULT
+# ============================================================
+alias vault='${SSOT:-$HOME/bashscripts}/tools/ssot-vault.sh'
+alias ssot-vault='${SSOT:-$HOME/bashscripts}/tools/ssot-vault.sh'

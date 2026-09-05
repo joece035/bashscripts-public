@@ -19,8 +19,10 @@
 
 # ============================================================
 # ── 0. LOCAL SECRETS & OVERRIDES (SSOT) ──
-# Loads private credentials from .env if present. Never commit .env to git!
-if [[ -f "${SSOT:-$HOME/bashscripts}/.env" ]]; then
+# Loads private credentials from ~/.env or $SSOT/.env if present. Never commit .env to git!
+if [[ -f "$HOME/.env" ]]; then
+    source "$HOME/.env"
+elif [[ -f "${SSOT:-$HOME/bashscripts}/.env" ]]; then
     source "${SSOT:-$HOME/bashscripts}/.env"
 elif [[ -f "${SCRIPTS_PATH:-$HOME/bashscripts}/.env" ]]; then
     source "${SCRIPTS_PATH:-$HOME/bashscripts}/.env"
@@ -192,60 +194,10 @@ export TAILSCALE_IP_WINDOW=100.69.181.45
 export TAILSCALE_IP_WSL=100.80.195.120
 export TAILSCALE_IP_MUMU=100.100.176.94
 
-# --- oppo ---
-export NODE_OPPO_USER="u0_a88"
-export NODE_OPPO_HOST="oppo"
-export NODE_OPPO_PORT="8023"
-export NODE_OPPO_ST_PORT="8386"
-export NODE_OPPO_ST_KEY="${NODE_OPPO_ST_KEY:-}"
-export NODE_OPPO_ST_ID="IOA7ARV-TZZATDI-VLSDOUN-JM2QEEK-VZVW37M-NDQLEWJ-4NXZNMJ-WY37HQZ"
-export NODE_OPPO_ST_URL="http://${NODE_OPPO_HOST}:${NODE_OPPO_ST_PORT}"
-
-# --- Termux (Android) ---
-export NODE_TERMUX_IP="$TAILSCALE_IP_TERMUX"
-export NODE_TERMUX_HOST="termux"
-export NODE_TERMUX_USER="u0_a331"
-export NODE_TERMUX_PORT="$SSH_TERMUX_PORT"
-export NODE_TERMUX_ST_PORT="8383"
-export NODE_TERMUX_ST_KEY="${NODE_TERMUX_ST_KEY:-}"
-export NODE_TERMUX_ST_ID="OJE25GP-CUVXSOC-A2K47O3-GPIYOW5-UFQI4UM-TQD7FLA-45AKEI2-723DRAR"
-export NODE_TERMUX_ST_URL="http://${NODE_TERMUX_HOST}:${NODE_TERMUX_ST_PORT}"
-
-# --- WSL (Linux) ---
-export NODE_WSL_IP="$TAILSCALE_IP_WSL"
-export NODE_WSL_HOST="wsl"
-export NODE_WSL_USER="usercivenz"
-export NODE_WSL_PORT="$SSH_WSL_PORT"
-export NODE_WSL_ST_PORT="8385"
-export NODE_WSL_ST_KEY="${NODE_WSL_ST_KEY:-}"
-export NODE_WSL_ST_ID="3S42YWK-JLYGQXU-NR37KDQ-7WFSODG-42TZPEX-XLTGR3W-XNK67EL-KUAKHQG"
-export NODE_WSL_ST_URL="http://${NODE_WSL_HOST}:${NODE_WSL_ST_PORT}"
-
-# --- Windows ---
-# ssh host window 's port
-export NODE_WIN_PORT="22"
-export NODE_WIN_IP="$TAILSCALE_IP_WINDOW"
-export NODE_WIN_HOST="window"
-export NODE_WIN_USER="User"
-export NODE_WIN_ST_PORT="8384"
-export NODE_WIN_ST_KEY="${NODE_WIN_ST_KEY:-}"
-export NODE_WIN_ST_ID="6XHR5KV-7I3RQZ2-TIUVGNW-WRAN42K-HNQYCSZ-PFK7TKX-S5BU7OF-LNGBVAO"
-export NODE_WIN_ST_URL="http://${NODE_WIN_HOST}:${NODE_WIN_ST_PORT}"
-
-# --- MUMUPlayer 12 (Android 14 emulator, Tailscale MagicDNS) ---
-export NODE_MUMU_IP="$TAILSCALE_IP_MUMU"
-export NODE_MUMU_HOST="mumu"
-export NODE_MUMU_USER="u0_a62"
-export NODE_MUMU_PORT="$SSH_MUMU_PORT"
-export NODE_MUMU_ST_PORT="8386"
-export NODE_MUMU_ST_KEY="${NODE_MUMU_ST_KEY:-}"
-export NODE_MUMU_ST_ID="IOA7ARV-TZZATDI-VLSDOUN-JM2QEEK-VZVW37M-NDQLEWJ-4NXZNMJ-WY37HQZ"
-export NODE_MUMU_ST_URL="http://${NODE_MUMU_HOST}:${NODE_MUMU_ST_PORT}"
-
-# --- ACODEX (proot inside Termux) ---
-export NODE_ACODEX_HOST="${NODE_ACODEX_HOST:-termux}"
-export NODE_ACODEX_USER="${NODE_ACODEX_USER:-root}"
-export NODE_ACODEX_PORT="${NODE_ACODEX_PORT:-8021}"
+# ── Dynamic Node Registry Loader (drop-in profiles from $SSOT/nodes/*.node.env) ──
+if [[ -f "${SSOT:-$HOME/bashscripts}/nodes/loader.sh" ]]; then
+    source "${SSOT:-$HOME/bashscripts}/nodes/loader.sh"
+fi
 
 # ============================================================
 # COMPATIBILITY LAYER — Phase 1

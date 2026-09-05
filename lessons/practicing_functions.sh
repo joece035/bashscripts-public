@@ -407,29 +407,39 @@ fexec(){
 }
 
 new() {
-    local is_dir=0
-    case ${1:--d} in
-            -d) is_dir=1 && shift ;;
-            -f|sh) is_dir=0 && shift ;;
-            *)  cn y b "usage : -d or -f"; return 1 ;;
-    esac
-    local target="${2:-}"
+    local type="${1:-'-d'}"
+    local target="${2:?"usage : $0 [type] [target] \n type: -d or -f"}"
+    
+    case $type in
+        "-d")  
+            mkdir -p "$target" && 
+            cn y bi "✅ โฟลเดอร์ถูกสร้างเรียบร้อยที่: $target" ;;
+        "-f") 
+            mkdir -p "$(dirname "$target")" && 
+            touch "$target" && 
+            cn y bi "✅ ไฟล์ถูกสร้างเรียบร้อยที่: $target" ;;
+        "-sh")  
+            mkdir -p "$(dirname "$target")"  
+            touch "$target" && 
+            cn y bi "✅ ไฟล์ .sh ถูกสร้างเรียบร้อยที่: $target" &&
+            chmod +x "$target" && c lg bi "ให้สิทธิ์รันไฟล์  ";c 45 b "$(basename "$target")  ";cn lg bi "เรียบร้อย"  && 
+            cat << EOF > "$target"
+#!/usr/bin/env bash
+# ------------------------------------------------------------
+# File: $(basename "$target")
+# ------------------------------------------------------------
 
-    if [[ $is_dir -eq 1 ]]; then
-        mkdir -p "$target" && cn y bi "✅ โฟลเดอร์ถูกสร้างเรียบร้อยที่: $target"
-    else
-        if [[ "$is_dir" -eq 0 && "$1" == "sh" ]]; then
-           sh_ "$target"
-        else
-            mkdir -p "$(dirname "$target")" 
-            touch "$target" && cn y bi "✅ ไฟล์ถูกสร้างเรียบร้อยที่: $target"
-        fi
-    fi
+
+
+
+EOF
+            ;;
+        *)  cn y b "usage : -d or -f"; return 1 ;;
+    esac
+
 }
 
-
-sh_(){
-    local target="${1:-}"
-    mkdir -p "$(dirname "$target")"  
-    touch "$target" && perm "$target" && cn y bi "✅ ไฟล์ .sh ถูกสร้างเรียบร้อยที่: $target"
+perm(){
+    local target="${1:-$(cb_read)}"
+    chmod +x "$target" && c 10 bi "ให้สิทธิ์รันไฟล์  ";c 45 b "$(basename "$target")  ";cn 10 bi "เรียบร้อย" 
 }
