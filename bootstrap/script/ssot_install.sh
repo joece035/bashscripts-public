@@ -17,6 +17,8 @@ clone_(){
         git clone "$SSOT_REPO" "$SSOT_TARGET"
     else
         echo "🔄 SSOT repository already exists at $SSOT_TARGET"
+        echo "⬇️  Updating SSOT to latest from GitHub..."
+        git -C "$SSOT_TARGET" fetch origin main 2>/dev/null && git -C "$SSOT_TARGET" reset --hard origin/main 2>/dev/null || true
     fi
 
     cd "$SSOT_TARGET"
