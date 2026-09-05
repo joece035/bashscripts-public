@@ -6,6 +6,21 @@
 # Usage:
 #   bash bootstrap/ssot_install.sh [ENV_OVERRIDE]
 # ============================================================
+clone_(){
+    SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
+    SSOT_TARGET="$HOME/bashscripts"
+
+    if [[ ! -d "$SSOT_TARGET/.git" ]]; then
+        echo "📥 Cloning SSOT repository..."
+        git clone "$SSOT_REPO" "$SSOT_TARGET"
+    else
+        echo "🔄 SSOT repository already exists at $SSOT_TARGET"
+    fi
+
+    cd "$SSOT_TARGET"
+}
+clone_
+
 source "$HOME/bashscripts/.bash_helper"
 source "$HOME/bashscripts/joe.sh"
 set -eo pipefail
@@ -81,17 +96,7 @@ pkg_install() {
 }
 #pkg_install
 # ── [4] CLONE / UPDATE REPO ──
-SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
-SSOT_TARGET="$HOME/bashscripts"
 
-if [[ ! -d "$SSOT_TARGET/.git" ]]; then
-    echo "📥 Cloning SSOT repository..."
-    git clone "$SSOT_REPO" "$SSOT_TARGET"
-else
-    echo "🔄 SSOT repository already exists at $SSOT_TARGET"
-fi
-
-cd "$SSOT_TARGET"
 
 # ── [5] CONFIGURE .env & SECRET VAULT ──
 echo "⚙️  Configuring environment variables & secrets..."
