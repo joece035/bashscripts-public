@@ -6,8 +6,7 @@
 # Usage:
 #   bash bootstrap/ssot_install.sh [ENV_OVERRIDE]
 # ============================================================
-pkg update && pkg upgrade -y
-pkg install -y git curl
+
 
 clone_(){
     SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
@@ -51,7 +50,6 @@ _JOE_ENV() {
         echo "LINUX"
     fi
 }
-_JOE_ENV 
 DETECTED_ENV="$(_JOE_ENV "${1:-}")"
 export JOE_ENV="$DETECTED_ENV"
 
@@ -91,14 +89,16 @@ pkg_install() {
         ncurses-utils 
         curl 
         micro 
-        openssh
+        openssl
     )
     for p in "${pack[@]}"; do
-        pkg_manager ${p}
-        echo installed ${p}"
+        if command -v pkg_manager >/dev/null 2>&1; then
+            pkg_manager "${p}"
+        fi
+        echo "installed ${p}"
     done
 }
-#pkg_install
+pkg_install
 # ── [4] CLONE / UPDATE REPO ──
 
 
@@ -128,9 +128,9 @@ fi
 
 # 5.3 Ensure JOE_ENV is set correctly
 if grep -q "^export JOE_ENV=" "$HOME/.env" 2>/dev/null; then
-    sed -i "s/^export JOE_ENV=.*/export JOE_ENV="$JOE_ENV"/" "$HOME/.env"
+    sed -i "s/^export JOE_ENV=.*/export JOE_ENV=\"$JOE_ENV\"/" "$HOME/.env"
 else
-    echo "export JOE_ENV="$JOE_ENV"" >> "$HOME/.env"
+    echo "export JOE_ENV=\"$JOE_ENV\"" >> "$HOME/.env"
 fi
 
 # 5.4 Dynamic Node Identity Registration (MY_DEVICE)
@@ -148,7 +148,7 @@ if ! grep -q "^export MY_DEVICE=" "$HOME/.env" 2>/dev/null; then
     echo "📱 Node Identity Registration:"
     read -r -t 10 -p "   Name this node in the SSOT mesh (default: $_def_device): " _chosen_dev < /dev/tty || _chosen_dev="$_def_device"
     _chosen_dev="${_chosen_dev:-$_def_device}"
-    echo "export MY_DEVICE="$_chosen_dev"" >> "$HOME/.env"
+    echo "export MY_DEVICE=\"$_chosen_dev\"" >> "$HOME/.env"
     echo "  ✅ Registered node: MY_DEVICE=$_chosen_dev"
 fi
 
