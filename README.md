@@ -5,26 +5,28 @@
 
 ---
 
-## ⚡ Quick Start (No Auth Required)
+## ⚡ Quick Start
 
-คุณสามารถโคลน Repository นี้บนเครื่องใหม่ใดๆ ได้ทันทีโดยไม่ต้องใช้ SSH Key หรือ Login:
+### One-liner (New Device)
+
+รันคำสั่งเดียวบนเครื่องใหม่ — ตรวจจับสภาพแวดล้อม, _clone repo, ตั้งค่า shell profile, และ SSH อัตโนมัติ:
 
 ```bash
-# 1. Clone via HTTPS (Public - No auth needed)
+curl -fsSL https://raw.githubusercontent.com/joece035/bashscripts-public/main/bootstrap/install.sh | bash
+```
+
+### Manual Setup (If you prefer step-by-step)
+
+```bash
+# 1. Clone via HTTPS
 git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
-cd ~/bashscripts
 
-# 2. ตั้งค่าไฟล์ Environment & Secrets
-cp .env.example .env
-chmod 600 .env
-# (แก้ไขค่าคีย์ใน .env ตามต้องการ หรือปล่อยว่างไว้สำหรับฟังก์ชันพื้นฐาน)
+# 2. Run installer (auto-detects Termux / WSL / Git Bash)
+bash ~/bashscripts/bootstrap/install.sh
 
-# 3. รันตัวติดตั้ง (ตรวจจับ Termux / WSL / Git Bash อัตโนมัติ)
-./bootstrap/setup.sh
-
-# 4. Reload Shell
+# 3. Restart shell
 source ~/.bashrc   # WSL / Git Bash
-source ~/.zshrc    # Termux / ZSH
+exec zsh           # Termux / ZSH
 ```
 
 ---
@@ -43,7 +45,10 @@ bashscripts/
 │
 ├── bootstrap/
 │   ├── 00-env.sh             ← SSOT Environment Variables & Paths (อ่าน .env)
-│   └── setup.sh              ← สคริปต์ติดตั้งสำหรับเครื่องใหม่
+│   ├── install.sh            ← 🚀 One-shot installer (curl-reachable)
+│   └── script/
+│       ├── ssh_audit.sh      ← SSH Audit & Self-Healing
+│       └── Fresh_termux_fullsetup_SSOT.sh  ← Termux full setup
 │
 ├── core/
 │   ├── 01-colors.sh          ← Color Engine V3 (c/cn/color/ctab/hline/rc)

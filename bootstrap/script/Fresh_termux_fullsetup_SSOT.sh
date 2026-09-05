@@ -278,17 +278,21 @@ else
 fi
 
 # ============================================================
-# STAGE 9 -- Wire ~/.zshrc to SSOT zshrc_termux.zsh (symlink)
-#   SSOT template lives in bashscripts/tools/zshrc_termux.zsh
-#   which is synced from WSL master via Syncthing.
-#   On Termux: ~/.zshrc is a symlink -> SSOT (read-only on device).
+# STAGE 9 -- Wire ~/.zshrc to SSOT profile template (symlink)
+#   Canonical template: bashscripts/profiles/termux/.zshrc
+#   On Termux: ~/.zshrc is a symlink -> SSOT profile.
 # ============================================================
-log "Stage 9: Wire ~/.zshrc -> zshrc_termux.zsh (SSOT symlink)"
+log "Stage 9: Wire ~/.zshrc -> profiles/termux/.zshrc (SSOT symlink)"
 ZSHRC_DEST="$TERMUX_HOME/.zshrc"
-ZSHRC_SRC="$SSOT_DIR/tools/zshrc_termux.zsh"
+ZSHRC_SRC="$SSOT_DIR/profiles/termux/.zshrc"
 
 if [[ ! -f "$ZSHRC_SRC" ]]; then
-    warn "zshrc_termux.zsh not found at $ZSHRC_SRC"
+    # Fallback to deprecated location
+    ZSHRC_SRC="$SSOT_DIR/tools/zshrc_termux.zsh"
+fi
+
+if [[ ! -f "$ZSHRC_SRC" ]]; then
+    warn "Profile template not found at profiles/termux/.zshrc"
     warn "Syncthing may not have synced yet -- ~/.zshrc will be created after sync"
 else
     # Backup existing .zshrc if NOT already our symlink
