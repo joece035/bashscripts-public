@@ -91,14 +91,14 @@ cmd_lock() {
     if [[ -n "${SSOT_VAULT_PASS:-}" ]]; then
         pass1="$SSOT_VAULT_PASS"
     else
-        read -r -s -p "Enter Master Vault Passphrase: " pass1
+        read -r -s -p "Enter Master Vault Passphrase: " pass < /dev/tty1 < /dev/tty
         echo ""
         if [[ -z "$pass1" ]]; then
             cn 196 b "❌ Passphrase cannot be empty."
             exit 1
         fi
 
-        read -r -s -p "Confirm Master Vault Passphrase: " pass2
+        read -r -s -p "Confirm Master Vault Passphrase: " pass2 < /dev/tty
         echo ""
         if [[ "$pass1" != "$pass2" ]]; then
             cn 196 b "❌ Passphrases do not match!"
@@ -140,7 +140,7 @@ cmd_unlock() {
     if [[ -n "${SSOT_VAULT_PASS:-}" ]]; then
         pass="$SSOT_VAULT_PASS"
     else
-        read -r -s -p "Enter Master Vault Passphrase: " pass
+        read -r -s -p "Enter Master Vault Passphrase: " pass < /dev/tty
         echo ""
     fi
 

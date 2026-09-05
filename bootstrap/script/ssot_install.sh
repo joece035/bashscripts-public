@@ -100,7 +100,7 @@ if [[ -f "$SSOT_TARGET/core/.env.enc" ]]; then
     echo ""
     echo "🔐 Found SSOT Encrypted Vault ($SSOT_TARGET/core/.env.enc)"
     echo "   Would you like to unlock secrets now with your Master Passphrase? [Y/n]"
-    read -r -t 15 -p "   Selection (default: Y): " _vault_choice || _vault_choice="Y"
+    read -r -t 15 -p "   Selection (default: Y): " _vault_choice < /dev/tty || _vault_choice="Y"
     if [[ "${_vault_choice:-Y}" =~ ^[Yy]?$ ]]; then
         "$SSOT_TARGET/tools/ssot-vault.sh" unlock || echo "⚠️  Vault unlock skipped/failed. You can run 'vault unlock' anytime later."
     fi
@@ -136,7 +136,7 @@ if ! grep -q "^export MY_DEVICE=" "$HOME/.env" 2>/dev/null; then
     fi
     echo ""
     echo "📱 Node Identity Registration:"
-    read -r -t 10 -p "   Name this node in the SSOT mesh (default: $_def_device): " _chosen_dev || _chosen_dev="$_def_device"
+    read -r -t 10 -p "   Name this node in the SSOT mesh (default: $_def_device): " _chosen_dev < /dev/tty || _chosen_dev="$_def_device"
     _chosen_dev="${_chosen_dev:-$_def_device}"
     echo "export MY_DEVICE="$_chosen_dev"" >> "$HOME/.env"
     echo "  ✅ Registered node: MY_DEVICE=$_chosen_dev"
