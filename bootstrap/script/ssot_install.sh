@@ -32,7 +32,7 @@ _JOE_ENV() {
         echo "LINUX"
     fi
 }
-_JOE_ENV "OPPO"
+_JOE_ENV 
 DETECTED_ENV="$(_JOE_ENV "${1:-}")"
 export JOE_ENV="$DETECTED_ENV"
 
