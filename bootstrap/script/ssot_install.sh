@@ -4,7 +4,7 @@
 # ============================================================
 # Target Environment: Termux, MuMu, WSL, Git-Bash
 # Usage:
-#   bash bootstrap/ssot_install.sh [ENV_OVERRIDE]
+#   bash bootstrap/script/ssot_install.sh [ENV_OVERRIDE]
 # ============================================================
 
 
@@ -84,6 +84,7 @@ fi
     #fi
 #fi
 
+
 pkg_install() {
     local ssl_pkg="openssl"
     if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
@@ -95,6 +96,8 @@ pkg_install() {
         "ncurses-utils:tput"
         "curl:curl"
         "micro:micro"
+        "which:which"
+        "find:find"
         "${ssl_pkg}:openssl"
     )
     for item in "${pack[@]}"; do
@@ -167,7 +170,7 @@ echo "  ✅ Configured ~/.env and symlinked to $SSOT_TARGET/.env"
 
 # ── [6] PERMISSIONS ──
 echo "🔑 Updating execution permissions..."
-for f in bootstrap/*.sh core/*.sh; do
+for f in bootstrap/script/*.sh core/*.sh; do
     [[ -f "$f" ]] && chmod +x "$f"
 done
 echo "  ✅ Permissions granted"
@@ -175,11 +178,11 @@ echo "  ✅ Permissions granted"
 # ── [7] RUN SETUP & SSH AUDIT ──
 echo ""
 echo "🔧 Running setup.sh ($JOE_ENV)..."
-./bootstrap/setup.sh "$JOE_ENV"
+./bootstrap/script/setup.sh "$JOE_ENV"
 
 echo ""
 echo "🛡️  Running SSH Mesh Self-Healing..."
-./bootstrap/ssh_audit.sh --fix
+./bootstrap/script/ssh_audit.sh --fix
 
 # ── [8] AUTO-START SSHD FOR TERMUX ──
 if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
