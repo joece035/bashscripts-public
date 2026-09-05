@@ -38,7 +38,7 @@ pkg_helper curl git
 curl -fsSL https://raw.githubusercontent.com/joece035/bashscripts-public/main/bootstrap/install.sh | bash
 
 # -- or 
-
+rm -rf
 git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
 bash ~/bashscripts/bootstrap/install.sh
 

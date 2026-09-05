@@ -199,24 +199,7 @@ git_() {
   fi
 }
 
-clone() {
 
-    local repo="$SSOT"
-
-    if [[ -d "${repo}" ]]; then
-         rm -rf "${repo}" && cn 10 b " done deleted ${repo} " &&
-         cd $HOME
-         git "clone" "git@github.com:joece035/bashscripts.git" &&
-         echo "Done cloning BASHSCRIPTS"
-    else
-         echo " ${repo} not found in HOME "
-         cd $HOME
-         git "clone" "git@github.com:joece035/bashscripts.git" &&
-         echo "Done cloning BASHSCRIPTS"
-    fi
-
-   pp
-}
 idf_del(){
 
     local idf_dir=${1:-$SSOT}

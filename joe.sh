@@ -164,6 +164,7 @@ ssot_load(){
         "$SSOT/functions/joe-block/entry.sh"
         "$SSOT/lessons/maps_random.sh"
         "$SSOT/lessons/superboom.sh"
+        "$SSOT/lessons/clean_.sh"
     )
     #-- run main cmd
     _check -f "source_files" "source" 2>/dev/null
