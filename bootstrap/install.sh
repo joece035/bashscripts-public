@@ -6,6 +6,7 @@
 # Works on: Termux, MuMu, WSL, Git Bash.
 #
 # Usage:
+    
 #   curl -fsSL https://raw.githubusercontent.com/joece035/bashscripts-public/main/bootstrap/install.sh | bash
 #
 # Or clone first, then run:
