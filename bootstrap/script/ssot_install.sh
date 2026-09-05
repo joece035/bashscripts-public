@@ -6,6 +6,9 @@
 # Usage:
 #   bash bootstrap/ssot_install.sh [ENV_OVERRIDE]
 # ============================================================
+pkg update && pkg upgrade -y
+pkg install -y git curl
+
 clone_(){
     SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
     SSOT_TARGET="$HOME/bashscripts"
@@ -18,11 +21,12 @@ clone_(){
     fi
 
     cd "$SSOT_TARGET"
+    source "$HOME/bashscripts/.bash_helper"
+    source "$HOME/bashscripts/joe.sh"
 }
 clone_
 
-source "$HOME/bashscripts/.bash_helper"
-source "$HOME/bashscripts/joe.sh"
+
 set -eo pipefail
 
 # ── [1] DETECT ENVIRONMENT ──
