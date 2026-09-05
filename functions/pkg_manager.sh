@@ -97,8 +97,10 @@ pkg_manager() {
     echo "[pkg_manager] Environment: $env | กำลังติดตั้ง '$pkg' ..."
 
     case "$env" in
-        TERMUX)
-            pkg update -y && pkg upgrade -y && pkg install -y "$pkg"
+        TERMUX|MUMU)
+            local termux_pkg="$pkg"
+            [[ "$pkg" == "openssl" ]] && termux_pkg="openssl-tool"
+            pkg install -y "$termux_pkg"
             ;;
         WSL)
             sudo apt update && sudo apt upgrade -y && sudo apt install -y "$pkg"

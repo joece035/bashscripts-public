@@ -85,13 +85,17 @@ fi
 #fi
 
 pkg_install() {
+    local ssl_pkg="openssl"
+    if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
+        ssl_pkg="openssl-tool"
+    fi
     local pack=(
         "git:git"
         "openssh:ssh"
         "ncurses-utils:tput"
         "curl:curl"
         "micro:micro"
-        "openssl:openssl"
+        "${ssl_pkg}:openssl"
     )
     for item in "${pack[@]}"; do
         local p="${item%%:*}"
