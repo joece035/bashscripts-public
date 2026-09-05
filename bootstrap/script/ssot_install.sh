@@ -76,6 +76,7 @@ pkg_install() {
     )
     for p in "${pack[@]}"; do
         pkg_manager ${p}
+        echo installed ${p}"
     done
 }
 #pkg_install
