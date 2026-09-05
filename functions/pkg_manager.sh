@@ -33,7 +33,16 @@ pkg_manager() {
     done
 
     local pkg="$1"
-    local bin="${2:-$1}"
+    local bin="${2:-}"
+    local overrides="$3"
+
+    if [[ -z "$bin" ]]; then
+        case "$pkg" in
+            openssh|openssh-client|openssh-server) bin="ssh" ;;
+            ncurses-utils|ncurses-bin|ncurses)     bin="tput" ;;
+            *)                                    bin="$pkg" ;;
+        esac
+    fi
     local overrides="$3"
 
     if [[ -z "$pkg" ]]; then

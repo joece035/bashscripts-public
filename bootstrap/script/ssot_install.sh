@@ -84,16 +84,18 @@ fi
 
 pkg_install() {
     local pack=(
-        git 
-        openssh 
-        ncurses-utils 
-        curl 
-        micro 
-        openssl
+        "git:git"
+        "openssh:ssh"
+        "ncurses-utils:tput"
+        "curl:curl"
+        "micro:micro"
+        "openssl:openssl"
     )
-    for p in "${pack[@]}"; do
+    for item in "${pack[@]}"; do
+        local p="${item%%:*}"
+        local b="${item##*:}"
         if command -v pkg_manager >/dev/null 2>&1; then
-            pkg_manager "${p}"
+            pkg_manager "${p}" "${b}"
         fi
         echo "installed ${p}"
     done
