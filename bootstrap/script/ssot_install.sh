@@ -6,9 +6,52 @@
 # Usage:
 #   bash bootstrap/script/ssot_install.sh [ENV_OVERRIDE]
 # ============================================================
+set -eo pipefail
 
+pkg_helper() {
+    # 1. Validation: ตรวจสอบว่ามีการส่งชื่อแพ็กเกจมาหรือไม่
+    if [ "$#" -eq 0 ]; then
+        echo "❌ Usage: pkg_helper <package_1> [package_2 ...]" >&2
+        return 1
+    fi
 
+    # 2. Package Manager Detection & Execution
+    if command -v pkg >/dev/null 2>&1; then
+        # Environment: Termux
+        pkg update -y && pkg upgrade -y
+        pkg install -y "$@"
+
+    elif command -v apt >/dev/null 2>&1; then
+        # Environment: Ubuntu (WSL2), Debian, VPS
+        local sudo_cmd=""
+        if [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1; then
+            sudo_cmd="sudo"
+        fi
+
+        # ใช้ Non-interactive mode เพื่อป้องกัน Prompt ค้างระหว่าง Auto-install
+        DEBIAN_FRONTEND=noninteractive $sudo_cmd apt-get update -qq && \
+        DEBIAN_FRONTEND=noninteractive $sudo_cmd apt-get install -y -qq "$@"
+
+    elif command -v apk >/dev/null 2>&1; then
+        # Environment: Alpine Linux (VPS / Container)
+        apk update && apk add --no-cache "$@"
+
+    elif command -v pacman >/dev/null 2>&1; then
+        # Environment: Arch Linux
+        local sudo_cmd=""
+        [ "$(id -u)" -ne 0 ] && command -v sudo >/dev/null 2>&1 && sudo_cmd="sudo"
+        $sudo_cmd pacman -Sy --noconfirm "$@"
+
+    else
+        echo "❌ Error: No supported package manager found (pkg, apt, apk, pacman)" >&2
+        return 1
+    fi
+}
 clone_(){
+    if ! command -v git 2>/dev/null; then
+        pkg_helper "git"
+    fi    
+        
     SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
     SSOT_TARGET="$HOME/bashscripts"
 
@@ -28,7 +71,7 @@ clone_(){
 clone_
 
 
-set -eo pipefail
+
 
 # ── [1] DETECT ENVIRONMENT ──
 _JOE_ENV() {
@@ -72,17 +115,7 @@ fi
 
 # ── [3] UPDATE & INSTALL CORE PACKAGES (Batch) ──
 #echo "📦 Updating repositories & installing core packages..."
-#if command -v pkg >/dev/null 2>&1; then
-    # Fix shared library mismatch (openssl / libcurl / git-remote-https)
- #   pkg update -y && pkg upgrade -y
-  #  pkg install -y git openssh ncurses-utils curl micro openssl
-#elif command -v apt-get >/dev/null 2>&1; then
- #   if command -v sudo >/dev/null 2>&1; then
-  #      sudo apt-get update -qq && sudo apt-get install -y git openssh-client ncurses-bin curl
-   # else
-    #    apt-get update -qq && apt-get install -y git openssh-client ncurses-bin curl
-    #fi
-#fi
+
 
 
 pkg_install() {
