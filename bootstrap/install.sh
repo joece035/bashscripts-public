@@ -55,8 +55,10 @@ detect_joe_env() {
         echo "WSL"
     elif [[ -n "${MSYSTEM:-}" ]] || [[ "${OSTYPE:-}" == "msys" ]]; then
         echo "GIT-BASH"
+    elif command -v apk 2>/dev/null; then
+        echo "ACODEX"
     else
-        echo "WSL"  # safe default
+        echo "${1:-${MY_DEVICE:-$JOE_ENV}}"
     fi
 }
 
