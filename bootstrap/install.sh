@@ -179,6 +179,36 @@ else
     echo "  💡 Edit ~/.env or use 'vault lock' to encrypt"
 fi
 
+# ── 2c. Node Identity Registration ──
+NODE_SCRIPT="$SSOT/tools/node-register.sh"
+if [[ -f "$NODE_SCRIPT" ]]; then
+    log "Stage 2c: Registering node identity"
+    if [[ -n "${MY_DEVICE:-}" ]]; then
+        ok "MY_DEVICE already set: $MY_DEVICE"
+    else
+        # Auto-detect and register node (non-interactive)
+        if JOE_ENV="$JOE_ENV" SSOT="$SSOT" bash "$NODE_SCRIPT" --auto 2>/dev/null; then
+            ok "Node registered"
+        else
+            warn "Node registration skipped — run 'node-register' later"
+        fi
+    fi
+else
+    # Fallback: just set MY_DEVICE in ~/.env
+    if [[ -z "${MY_DEVICE:-}" ]]; then
+        _def_device="$(echo "$JOE_ENV" | tr '[:upper:]' '[:lower:]')"
+        case "$JOE_ENV" in
+            GIT-BASH) _def_device="window" ;;
+        esac
+        if grep -q "^export MY_DEVICE=" "$ENV_FILE" 2>/dev/null; then
+            sed -i "s/^export MY_DEVICE=.*/export MY_DEVICE=\"$_def_device\"/" "$ENV_FILE"
+        else
+            printf '\nexport MY_DEVICE="%s"\n' "$_def_device" >> "$ENV_FILE"
+        fi
+        ok "MY_DEVICE=$_def_device (fallback)"
+    fi
+fi
+
 # ============================================================
 # STAGE 3 — Wire Shell Profile
 # ============================================================

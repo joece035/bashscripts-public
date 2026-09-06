@@ -356,35 +356,55 @@ cmd_export() {
 
 # ── 6. CLI Dispatcher ──
 case "${1:-}" in
-    lock|encrypt)   cmd_lock ;;
-    unlock|decrypt) cmd_unlock ;;
-    status)         cmd_status ;;
-    init|setup)     cmd_init ;;
-    export|backup)  cmd_export ;;
-    verify|check)   cmd_status ;;   # alias: verify = status with exit code
-    diff)           cmd_status ;;   # alias: diff = status (shows missing/empty)
-    audit)          cmd_status ;;   # alias: audit = status
+    lock|encrypt)       cmd_lock ;;
+    unlock|decrypt)     cmd_unlock ;;
+    status)             cmd_status ;;
+    init|setup)         cmd_init ;;
+    export|backup)      cmd_export ;;
+    verify|check)       cmd_status ;;   # alias: verify = status
+    diff)               cmd_status ;;   # alias: diff = status
+    audit)              cmd_status ;;   # alias: audit = status
+
+    # Pubkey commands (pass-through to pubkey-manager.sh)
+    lock_pubkey|unlock_pubkey|pubkey-status)
+        _PUBKEY_SCRIPT="$SSOT/tools/pubkey-manager.sh"
+        if [[ -f "$_PUBKEY_SCRIPT" ]]; then
+            # Map vault command names to pubkey-manager names
+            _pk_cmd="${1}"
+            shift
+            case "$_pk_cmd" in
+                pubkey-status) bash "$_PUBKEY_SCRIPT" status "$@" ;;
+                *)             bash "$_PUBKEY_SCRIPT" "$_pk_cmd" "$@" ;;
+            esac
+        else
+            cn 196 b "❌ pubkey-manager.sh not found"
+            exit 1
+        fi
+        ;;
+
     *)
         _banner
         echo "Usage: $(basename "$0") <command>"
         echo ""
-        echo "Commands:"
+        echo "Secret Commands:"
         echo "  lock    Encrypt ~/.env → core/.env.enc"
         echo "  unlock  Decrypt core/.env.enc → ~/.env"
         echo "  status  Vault health + secret audit (exit 1 if incomplete)"
         echo "  init    Interactive wizard to fill in secrets"
         echo "  export  Encrypted backup of ~/.env"
         echo ""
+        echo "Pubkey Commands:"
+        echo "  lock_pubkey [--add <key>] [--from <host>]"
+        echo "              Collect + encrypt SSH pubkeys → core/pubkeys.enc"
+        echo "  unlock_pubkey"
+        echo "              Decrypt → install to ~/.ssh/authorized_keys"
+        echo "  pubkey-status"
+        echo "              Show vault + key installation status"
+        echo ""
         echo "Aliases: verify, check, diff, audit → status"
         echo ""
         echo "Non-interactive:"
         echo "  export SSOT_VAULT_PASS='<pass>'  (skip passphrase prompts)"
-        echo ""
-        echo "Workflow (new machine):"
-        echo "  1. git clone <repo> ~/bashscripts"
-        echo "  2. bash ~/bashscripts/bootstrap/install.sh"
-        echo "  3. vault unlock"
-        echo "  4. vault status    # verify all secrets"
         echo ""
         exit 0
         ;;

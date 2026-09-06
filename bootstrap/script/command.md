@@ -45,3 +45,17 @@ bash ~/bashscripts/bootstrap/install.sh
 
 
 
+pkg install git 
+# 1. Clone public repo
+git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
+
+# 2. Run installer (auto-detects vault, prompts unlock)
+bash ~/bashscripts/bootstrap/install.sh
+
+# 3. Verify secrets
+vault status
+
+# 1. Add key to .env.example (empty value)
+# 2. Set value in ~/.env
+vault lock    # re-encrypt vault
+git commit + push
