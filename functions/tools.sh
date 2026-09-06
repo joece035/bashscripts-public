@@ -240,7 +240,7 @@ idf_del(){
 
 
 }
-conf_def(){
+con_del(){
 
     local conf_dir=${1:-$SSOT}
 

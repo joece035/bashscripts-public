@@ -132,6 +132,53 @@ fi
 
 chmod 600 "$ENV_FILE" 2>/dev/null || true
 
+# ── 2b. Vault Detection & Auto-Unlock ──
+VAULT_FILE="$SSOT/core/.env.enc"
+VAULT_SCRIPT="$SSOT/tools/ssot-vault.sh"
+
+# Check if secrets are already populated
+_secrets_populated=false
+if [[ -f "$ENV_FILE" ]]; then
+    if grep -qE '^[^#]*=[^"'"'"'\s]+[^\s]' "$ENV_FILE" 2>/dev/null; then
+        _secrets_populated=true
+    fi
+fi
+
+if [[ -f "$VAULT_FILE" ]] && [[ "$_secrets_populated" == "false" ]]; then
+    log "Stage 2b: Vault detected — attempting auto-unlock"
+    if [[ -f "$VAULT_SCRIPT" ]] && command -v openssl >/dev/null 2>&1; then
+        if [[ -n "${SSOT_VAULT_PASS:-}" ]]; then
+            # Non-interactive: passphrase provided via env var
+            if "$VAULT_SCRIPT" unlock 2>/dev/null; then
+                ok "Vault unlocked (via SSOT_VAULT_PASS)"
+            else
+                warn "Vault unlock failed — run 'vault unlock' manually"
+            fi
+        else
+            # Interactive: prompt user
+            echo "  📦 Vault found: $VAULT_FILE"
+            read -r -t 20 -p "   Unlock secrets now? [Y/n] (default: Y): " _vault_choice < /dev/tty || _vault_choice="Y"
+            if [[ "${_vault_choice:-Y}" =~ ^[Yy]?$ ]]; then
+                if "$VAULT_SCRIPT" unlock 2>/dev/null; then
+                    ok "Vault unlocked"
+                else
+                    warn "Vault unlock failed — run 'vault unlock' later"
+                fi
+            else
+                echo "  💡 Run 'vault unlock' when ready"
+            fi
+        fi
+    else
+        warn "Cannot auto-unlock (openssl missing or vault script not found)"
+        echo "  💡 Install openssl, then run: vault unlock"
+    fi
+elif [[ -f "$VAULT_FILE" ]] && [[ "$_secrets_populated" == "true" ]]; then
+    ok "Secrets already populated — vault unlock not needed"
+else
+    ok "No vault found — using template .env"
+    echo "  💡 Edit ~/.env or use 'vault lock' to encrypt"
+fi
+
 # ============================================================
 # STAGE 3 — Wire Shell Profile
 # ============================================================

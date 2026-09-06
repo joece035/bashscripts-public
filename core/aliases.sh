@@ -86,5 +86,11 @@ alias wr='python3 "$SSOT/tools/statscal/statscal.py"'
 # ============================================================
 # SSOT SECRET VAULT
 # ============================================================
+# vault lock    — encrypt ~/.env → core/.env.enc
+# vault unlock  — decrypt core/.env.enc → ~/.env
+# vault status  — health + audit (exit 1 if incomplete)
+# vault init    — interactive wizard
+# vault export  — encrypted backup
 alias vault='${SSOT:-$HOME/bashscripts}/tools/ssot-vault.sh'
 alias ssot-vault='${SSOT:-$HOME/bashscripts}/tools/ssot-vault.sh'
+alias secret-setup='${SSOT:-$HOME/bashscripts}/bootstrap/secret-setup.sh'
