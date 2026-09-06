@@ -68,102 +68,14 @@ export JOE_ENV
 ok "Environment: $JOE_ENV"
 
 # ============================================================
-# ============================================================
-# STAGE 1 — Install Essential Packages (All Environments)
-# ============================================================
-# git must already be available (user installs it manually before clone).
-# This stage uses pkg_manager.sh to install remaining deps universally.
-# Supported: TERMUX/MUMU (pkg), WSL/LINUX (apt), ACODEX (apk), GIT-BASH (pacman/winget)
-
-log "Stage 1: Installing essential packages"
-
-# Source pkg_manager if available (repo may already be cloned)
-_PKG_MGR="$HOME/bashscripts/functions/pkg_manager.sh"
-if [[ -f "$_PKG_MGR" ]]; then
-    # shellcheck source=/dev/null
-    source "$_PKG_MGR"
-    _HAVE_PKGMGR=true
-else
-    _HAVE_PKGMGR=false
-    warn "pkg_manager.sh not found yet — using native fallback for this run"
-fi
-
-# Helper: install one package via pkg_manager or native fallback
-_install_pkg() {
-    local pkg="$1"
-    local bin="${2:-$1}"
-    local overrides="${3:-}"
-
-    if command -v "$bin" >/dev/null 2>&1; then
-        ok "  already installed: $bin"
-        return 0
-    fi
-
-    if [[ "$_HAVE_PKGMGR" == "true" ]]; then
-        pkg_manager "$pkg" "$bin" "$overrides" 2>&1 | sed 's/^/  /'
-    else
-        # Native fallback — runs only on first boot before repo is cloned
-        case "$JOE_ENV" in
-            TERMUX|MUMU)
-                local t_pkg="$pkg"
-                [[ "$pkg" == "openssl" ]] && t_pkg="openssl-tool"
-                pkg install -y "$t_pkg" 2>/dev/null || warn "  pkg install $pkg failed"
-                ;;
-            WSL|LINUX)
-                sudo apt-get install -y "$pkg" 2>/dev/null || warn "  apt install $pkg failed"
-                ;;
-            ACODEX)
-                apk add "$pkg" 2>/dev/null || warn "  apk add $pkg failed"
-                ;;
-            *)
-                warn "  No package manager for $JOE_ENV — install $pkg manually"
-                ;;
-        esac
-    fi
-}
-
-# ── Update package index (once, best-effort) ──
-case "$JOE_ENV" in
-    TERMUX|MUMU)
-        pkg update -y 2>/dev/null || warn "pkg update failed (non-fatal)"
-        ;;
-    WSL|LINUX)
-        sudo apt-get update -qq 2>/dev/null || warn "apt update failed (non-fatal)"
-        ;;
-    ACODEX)
-        apk update 2>/dev/null || warn "apk update failed (non-fatal)"
-        ;;
-esac
-
-# ── Install essential packages ──
-# git: expected to exist already (user installs before clone)
-# openssh, openssl, curl, jq, rsync: needed for vault/ssh/sync stages
-_install_pkg openssh  ssh
-_install_pkg openssl  openssl  "apk=openssl"
-_install_pkg curl     curl
-_install_pkg jq       jq
-_install_pkg rsync    rsync
-
-ok "Stage 1: Essential packages ready"
-
-# ── Termux-specific: Storage access ──
-if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
-    if [[ ! -d "$HOME/storage" ]]; then
-        log "  Requesting storage access..."
-        termux-setup-storage </dev/null || warn "termux-setup-storage failed (approve manually)"
-    else
-        ok "  Storage already accessible"
-    fi
-fi
-
-# STAGE 2 — Locate or Clone Repository
+# STAGE 1 — Locate or Clone Repository
 # ============================================================
 SSOT="${SSOT:-$HOME/bashscripts}"
 
 if [[ -f "$SSOT/joe.sh" ]]; then
     ok "SSOT repo found at $SSOT"
 else
-    log "Stage 2: Cloning SSOT repository"
+    log "Stage 1: Cloning SSOT repository"
     if [[ -d "$SSOT/.git" ]]; then
         warn "Partial repo at $SSOT (no joe.sh) — removing and re-cloning"
         rm -rf "$SSOT"
@@ -188,9 +100,9 @@ fi
 cd "$SSOT"
 
 # ============================================================
-# STAGE 3 — Create ~/.env (idempotent)
+# STAGE 2 — Create ~/.env (idempotent)
 # ============================================================
-log "Stage 3: Configuring ~/.env"
+log "Stage 2: Configuring ~/.env"
 ENV_FILE="$HOME/.env"
 
 if [[ ! -f "$ENV_FILE" ]]; then
@@ -235,7 +147,7 @@ if [[ -f "$ENV_FILE" ]]; then
 fi
 
 if [[ -f "$VAULT_FILE" ]] && [[ "$_secrets_populated" == "false" ]]; then
-    log "Stage 3b: Vault detected — attempting auto-unlock"
+    log "Stage 2b: Vault detected — attempting auto-unlock"
     if [[ -f "$VAULT_SCRIPT" ]] && command -v openssl >/dev/null 2>&1; then
         if [[ -n "${SSOT_VAULT_PASS:-}" ]]; then
             # Non-interactive: passphrase provided via env var
@@ -272,7 +184,7 @@ fi
 # ── 2c. Node Identity Registration ──
 NODE_SCRIPT="$SSOT/bootstrap/nodes/node-register.sh"
 if [[ -f "$NODE_SCRIPT" ]]; then
-    log "Stage 3c: Registering node identity"
+    log "Stage 2c: Registering node identity"
     if [[ -n "${MY_DEVICE:-}" ]]; then
         ok "MY_DEVICE already set: $MY_DEVICE"
     else
@@ -306,7 +218,7 @@ PUBKEY_SCRIPT="$SSOT/bootstrap/nodes/pubkey-manager.sh"
 PUBKEY_VAULT="$SSOT/core/pubkeys.enc"
 
 if [[ -f "$PUBKEY_VAULT" ]] && [[ -f "$PUBKEY_SCRIPT" ]]; then
-    log "Stage 3d: Installing SSH pubkeys from vault (core/pubkeys.enc)"
+    log "Stage 2d: Installing SSH pubkeys from vault (core/pubkeys.enc)"
     if [[ -n "${SSOT_VAULT_PASS:-}" ]]; then
         # Non-interactive: passphrase provided via env var
         if bash "$PUBKEY_SCRIPT" unlock 2>/dev/null; then
@@ -331,9 +243,9 @@ else
     ok "No pubkey vault found \u2014 skipping (core/pubkeys.enc)"
 fi
 
-# STAGE 4 — Wire Shell Profile
+# STAGE 3 — Wire Shell Profile
 # ============================================================
-log "Stage 4: Wiring shell profile"
+log "Stage 3: Wiring shell profile"
 
 # Determine which profile templates to symlink
 case "$JOE_ENV" in
@@ -402,9 +314,9 @@ if [[ "$SHELL_RC" != "$BASH_RC" ]]; then
 fi
 
 # ============================================================
-# STAGE 5 — Create Tool Symlinks
+# STAGE 4 — Create Tool Symlinks
 # ============================================================
-log "Stage 5: Creating tool symlinks"
+log "Stage 4: Creating tool symlinks"
 
 BIN_DIR="$HOME/.local/bin"
 mkdir -p "$BIN_DIR"
@@ -425,6 +337,30 @@ if [[ ! -L "$BIN_DIR/syncctl" ]] && [[ -f "$SSOT/tools/syncctl/syncctl" ]]; then
     ok "Created: $BIN_DIR/syncctl → tools/syncctl/syncctl"
 fi
 
+# ============================================================
+# STAGE 5 — Termux / MuMu: Storage + Packages
+# ============================================================
+if [[ "$JOE_ENV" == "TERMUX" || "$JOE_ENV" == "MUMU" ]]; then
+    log "Stage 5: Termux setup"
+
+    # Storage access
+    if [[ ! -d "$HOME/storage" ]]; then
+        log "  Requesting storage access..."
+        termux-setup-storage </dev/null || warn "termux-setup-storage failed (approve manually)"
+    else
+        ok "  Storage already accessible"
+    fi
+
+    # Essential packages (best-effort, don't fail the install)
+    if command -v pkg >/dev/null 2>&1; then
+        log "  Installing essential packages..."
+        pkg install -y git openssh curl jq rsync 2>/dev/null \
+            && ok "  Core packages installed" \
+            || warn "  Some packages failed (non-fatal)"
+    fi
+fi
+
+# ============================================================
 # STAGE 6 — SSH Audit & Self-Healing
 # ============================================================
 if [[ -f "$SSOT/bootstrap/script/ssh_audit.sh" ]]; then

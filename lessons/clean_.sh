@@ -31,7 +31,10 @@ clone() {
         "pb"|"public")
             rp_="bashscripts-public.git"
             git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
-            bash ~/bashscripts/bootstrap/install.sh
+            bash ~/bashscripts/bootstrap/install.sh ${2}
+        ;;
+        *)    
+            cn 5 y " Invalid repo name " 
         ;;
     esac
 
