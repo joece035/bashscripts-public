@@ -29,7 +29,8 @@ nvm use default >/dev/null 2>&1 || true
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
 export SSOT="$HOME/bashscripts"
-export MY_DEVICE=${WSL:-$JOE_ENV}
+export JOE_ENV="WSL"
+export MY_DEVICE="WSL"
 [ -f $HOME/.env ] && source $HOME/.env
 
 # ── 5. ALIASES & COMPLETIONS ──

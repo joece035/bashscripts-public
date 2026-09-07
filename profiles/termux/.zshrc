@@ -8,6 +8,8 @@
 # -- Terminal type (SSH sessions inherit no TERM -- micro/TUI needs this)
 export TERM="${TERM:-xterm-256color}"
 export COLORTERM="truecolor"
+export JOE_ENV="TERMUX"
+export MY_DEVICE="TERMUX"
 
 # -- Shell Options (Prevent glob errors & duplicate fpath) ------
 setopt NO_NOMATCH 2>/dev/null || true

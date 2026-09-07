@@ -30,7 +30,8 @@ _check -f "$HOME/.local/bin/env" "source"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
 export SSOT="$HOME/bashscripts"
-export MY_DEVICE=${OPPO:-$JOE_ENV}
+export JOE_ENV="TERMUX"
+export MY_DEVICE="TERMUX"
 [ -f $HOME/.env ] && source $HOME/.env
 
 # ── 5. ALIASES & COMPLETIONS ──

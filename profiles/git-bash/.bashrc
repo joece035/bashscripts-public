@@ -31,7 +31,8 @@ fi
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
 export SSOT="${SSOT:-$HOME/bashscripts}"
-export MY_DEVICE="${MY_DEVICE:-GIT-BASH}"
+export JOE_ENV="GIT-BASH"
+export MY_DEVICE="GIT-BASH"
 [ -f ~/.env ] && source ~/.env
 
 # ── 5. ALIASES & COMPLETIONS ──

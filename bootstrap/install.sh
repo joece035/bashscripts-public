@@ -205,14 +205,13 @@ else
     ok "~/.env already exists"
 fi
 
-# Pin JOE_ENV in ~/.env (append or update, never clobber)
+# Pin JOE_ENV at the VERY TOP of ~/.env so early case statements get it
 if grep -q "^export JOE_ENV=" "$ENV_FILE" 2>/dev/null; then
-    sed -i "s/^export JOE_ENV=.*/export JOE_ENV=\"$JOE_ENV\"/" "$ENV_FILE"
-    ok "~/.env: JOE_ENV=$JOE_ENV (updated)"
-else
-    printf '\n# ── SSOT Bootstrap (auto-detected) ──\nexport JOE_ENV="%s"\n' "$JOE_ENV" >> "$ENV_FILE"
-    ok "~/.env: JOE_ENV=$JOE_ENV (added)"
+    sed -i "/^export JOE_ENV=/d" "$ENV_FILE"
 fi
+# Insert at line 1
+printf 'export JOE_ENV="%s"\n%s' "$JOE_ENV" "$(cat "$ENV_FILE" 2>/dev/null)" > "$ENV_FILE"
+ok "~/.env: JOE_ENV=$JOE_ENV (pinned at top)"
 
 # Symlink $SSOT/.env → ~/.env (so joe.sh / 00-env.sh can find it)
 if [[ ! -L "$SSOT/.env" ]]; then
@@ -364,41 +363,36 @@ case "$JOE_ENV" in
         ;;
 esac
 
-# Symlink primary shell profile
-_profile_src="$PROFILE_DIR/$(basename "$SHELL_RC")"
-if [[ -f "$_profile_src" ]]; then
-    if [[ -L "$SHELL_RC" ]]; then
-        _current_target="$(readlink "$SHELL_RC")"
-        if [[ "$_current_target" == "$_profile_src" ]]; then
-            ok "$SHELL_RC already linked to correct profile"
+_link_profile() {
+    local target="$1"
+    local src="$2"
+    [[ ! -f "$src" ]] && return 0
+    if [[ -L "$target" ]]; then
+        local curr
+        curr="$(readlink "$target")"
+        if [[ "$curr" == "$src" ]]; then
+            ok "$target already linked to correct profile"
+            return 0
         else
-            ln -sf "$_profile_src" "$SHELL_RC"
-            ok "$SHELL_RC re-linked → $_profile_src"
+            ln -sf "$src" "$target"
+            ok "$target re-linked → $src"
+            return 0
         fi
-    elif [[ -f "$SHELL_RC" ]]; then
-        _backup="${SHELL_RC}.bak.$(date +%s)"
-        cp "$SHELL_RC" "$_backup"
-        warn "Backed up existing $SHELL_RC → $_backup"
-        ln -sf "$_profile_src" "$SHELL_RC"
-        ok "$SHELL_RC → $_profile_src (symlinked, original backed up)"
-    else
-        ln -sf "$_profile_src" "$SHELL_RC"
-        ok "$SHELL_RC → $_profile_src (symlinked)"
+    elif [[ -f "$target" ]]; then
+        local bak="${target}.bak.$(date +%s)"
+        cp "$target" "$bak"
+        warn "Backed up existing $target → $bak"
     fi
-else
-    warn "Profile template not found: $_profile_src"
-    warn "You may need to manually source joe.sh in $SHELL_RC"
-fi
+    ln -sf "$src" "$target"
+    ok "$target → $src (symlinked)"
+}
 
-# Also symlink .bashrc if different from primary and template exists
+# Symlink primary shell profile (e.g. .zshrc)
+_link_profile "$SHELL_RC" "$PROFILE_DIR/$(basename "$SHELL_RC")"
+
+# Also symlink .bashrc if different from primary (e.g. on Android/Termux where both bash and zsh exist)
 if [[ "$SHELL_RC" != "$BASH_RC" ]]; then
-    _bashrc_src="$PROFILE_DIR/.bashrc"
-    if [[ -f "$_bashrc_src" ]] && [[ ! -L "$BASH_RC" ]]; then
-        _backup="${BASH_RC}.bak.$(date +%s)"
-        cp "$BASH_RC" "$_backup" 2>/dev/null || true
-        ln -sf "$_bashrc_src" "$BASH_RC"
-        ok "$BASH_RC → $_bashrc_src (symlinked)"
-    fi
+    _link_profile "$BASH_RC" "$PROFILE_DIR/.bashrc"
 fi
 
 # ============================================================
