@@ -9,7 +9,7 @@ del_cache(){
 }
 alias cc='del_cache'
 
-clone() {
+clone_reinstall() {
 
     local repo="${1:-pb}"
     local dep_dir="$HOME/bashscripts/"
@@ -30,9 +30,12 @@ clone() {
         ;;
         "pb"|"public")
             rp_="bashscripts-public.git"
-            git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
-            bash ~/bashscripts/bootstrap/install.sh ${2}
+            local target_node="${2:-${MY_DEVICE:-${JOE_ENV:-}}}"
+
+            git clone "https://github.com/joece035/${rp_}" ~/bashscripts &&
+            bash ~/bashscripts/bootstrap/install.sh "$target_node"
         ;;
+
         *)    
             cn 5 y " Invalid repo name " 
         ;;
