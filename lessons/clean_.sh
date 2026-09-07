@@ -9,6 +9,15 @@ del_cache(){
 }
 alias cc='del_cache'
 
+pgb(){
+    if [[ "$#" -gt 0 ]]; then
+        g "$@"
+    fi
+    
+    rm -rf "$hpc/bashscripts/" && cn lg b "removed hpc/bashscripts " && \
+    cp -r "$hwsl/bashscripts/" "$hpc" && cn 45 b "done copy ssot from wsl to hpc" 
+}
+
 reinstall() {
     local repo="${1:-pb}"
     local dep_dir="$HOME/bashscripts"

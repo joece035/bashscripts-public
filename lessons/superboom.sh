@@ -39,3 +39,25 @@ _() {
         *)           ( bn_3 "${list_[@]}" ) ;;
     esac
 }
+
+rn_lgr(){
+    local space="  "
+    local name="${1:-$space}"   
+    local a b c d e
+
+       case "$name" in  
+            a) name='.7oEz' ;; 
+            b) name='-MVP-#35' ;; 
+            c) name='J1' ;; 
+            d) name='J2' ;; 
+            e) name='J3' ;;
+            *) name="$name" ;; 
+        esac
+    echo "$name" | clip.exe
+    cn lg b "ชื่อใหม่ = $(cn 45 b "$name") ถูก cp ไว้ใน clipboard แล้ว"
+
+}
+lgrn(){
+    rn_lgr "$@"
+}
+
