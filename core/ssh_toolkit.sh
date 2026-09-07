@@ -92,7 +92,14 @@ cb_copy() {
 
     # 2. Termux (Android / MuMu)
     if command -v termux-clipboard-set &>/dev/null; then
-        printf '%s' "$input" | termux-clipboard-set 2>/dev/null && return 0
+        if command -v timeout &>/dev/null; then
+            printf '%s' "$input" | timeout 1 termux-clipboard-set 2>/dev/null && return 0
+        else
+            ( printf '%s' "$input" | termux-clipboard-set 2>/dev/null ) &
+            local _cb_pid=$!
+            ( sleep 1 && kill -9 "$_cb_pid" 2>/dev/null ) &
+            wait "$_cb_pid" 2>/dev/null && return 0
+        fi
     fi
 
     # 3. Wayland (Linux)
@@ -126,7 +133,14 @@ cb_copy() {
 cb_read() {
     # 1. Termux (Android / MuMu)
     if command -v termux-clipboard-get &>/dev/null; then
-        termux-clipboard-get 2>/dev/null && return 0
+        if command -v timeout &>/dev/null; then
+            timeout 1 termux-clipboard-get 2>/dev/null && return 0
+        else
+            termux-clipboard-get 2>/dev/null &
+            local _cbr_pid=$!
+            ( sleep 1 && kill -9 "$_cbr_pid" 2>/dev/null ) &
+            wait "$_cbr_pid" 2>/dev/null && return 0
+        fi
     fi
 
     # 2. Wayland (Linux)

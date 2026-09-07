@@ -582,8 +582,9 @@ EOF
         local pub_content
         pub_content="$(cat "${KEY_NODE}.pub")"
         if declare -f cb_copy >/dev/null 2>&1; then
-            cb_copy "$pub_content"
-            log_info "Public key copied to clipboard via cb_copy"
+            if cb_copy "$pub_content" 2>/dev/null; then
+                log_info "Public key copied to clipboard via cb_copy"
+            fi
         fi
         log_info "Public key: $pub_content"
     fi
