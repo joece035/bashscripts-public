@@ -425,6 +425,13 @@ if [[ ! -L "$BIN_DIR/syncctl" ]] && [[ -f "$SSOT/tools/syncctl/syncctl" ]]; then
     ok "Created: $BIN_DIR/syncctl → tools/syncctl/syncctl"
 fi
 
+# node-status command
+if [[ ! -L "$BIN_DIR/node-status" ]] && [[ -f "$SSOT/tools/node-status.sh" ]]; then
+    ln -sf "$SSOT/tools/node-status.sh" "$BIN_DIR/node-status"
+    chmod +x "$SSOT/tools/node-status.sh"
+    ok "Created: $BIN_DIR/node-status → tools/node-status.sh"
+fi
+
 # STAGE 6 — SSH Audit & Self-Healing
 # ============================================================
 if [[ -f "$SSOT/bootstrap/script/ssh_audit.sh" ]]; then
@@ -524,6 +531,7 @@ if [[ "$JOE_ENV" == "TERMUX" ]]; then
 else
     printf '       %ssource %s%s\n' "${_BOLD}" "$SHELL_RC" "${_RESET}"
 fi
-printf '  2. (Optional) %sp10k configure%s — customize your prompt\n' "${_BOLD}" "${_RESET}"
-printf '  3. %spf mom%s — seed AI API keys\n' "${_BOLD}" "${_RESET}"
+printf '  2. %snode-status%s — verify all registered nodes and cluster health\n' "${_BOLD}" "${_RESET}"
+printf '  3. (Optional) %sp10k configure%s — customize your prompt\n' "${_BOLD}" "${_RESET}"
+printf '  4. %spf mom%s — seed AI API keys\n' "${_BOLD}" "${_RESET}"
 printf '\n'
