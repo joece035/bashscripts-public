@@ -12,16 +12,24 @@ cb_read() {
     xsel --clipboard --output 2>/dev/null
   fi
 }
-cb_copy() {
-  local input="$1"
-  if command -v powershell.exe &>/dev/null; then
-    # ใช้ Set-Clipboard Direct ผ่าน PowerShell
-    powershell.exe -NoProfile -Command "Set-Clipboard -Value '$input'" 2>/dev/null
-  elif command -v xclip &>/dev/null; then 
-    echo -n "$input" | xclip -selection clipboard
-  elif command -v xsel &>/dev/null; then 
-    echo -n "$input" | xsel --clipboard --input
-  fi
+cb_copy ()
+{
+    local input="$1";
+    
+    # 1. เช็ก clip.exe ก่อนเสมอ (ถ้าเจอจะใช้ตัวนี้แล้วจบเลย)
+    if command -v clip.exe &> /dev/null; then
+        printf '%s' "$input" | clip.exe;
+        
+    # 2. ถ้าไม่เจอ clip.exe (เช่น ไม่ได้อยู่ใน WSL) จะเข้านี้แทน
+    elif command -v powershell.exe &> /dev/null; then
+        printf '%s' "$input" | powershell.exe -NoProfile -Command "Set-Clipboard -Value \$input" 2> /dev/null;
+        
+    # 3. ถ้าอยู่ใน Linux เพียวๆ จะไปใช้ xclip หรือ xsel
+    elif command -v xclip &> /dev/null; then
+        printf '%s' "$input" | xclip -selection clipboard;
+    elif command -v xsel &> /dev/null; then
+        printf '%s' "$input" | xsel --clipboard --input;
+    fi
 }
 ssh_kgen(){
   #-- สร้าง public/private key หากยังไม่มี
