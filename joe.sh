@@ -30,9 +30,30 @@ fi
 
 
 # ── Step 2: Set derived paths based on JOE_ENV ──
+# SSOT: respect existing value (set by repo() or ~/.env), only set default if empty
+if [[ -z "${SSOT:-}" ]]; then
+    case "$JOE_ENV" in
+        TERMUX)
+            export SSOT="/data/data/com.termux/files/home/ssot"
+            ;;
+        MUMU)
+            export SSOT="/data/data/com.termux/files/home/ssot"
+            ;;
+        WSL)
+            export SSOT="$HOME/ssot"
+            ;;
+        GIT-BASH)
+            export SSOT="$HOME/ssot"
+            ;;
+        *)
+            export SSOT="$HOME/ssot"
+            ;;
+    esac
+fi
+
+# Derived paths (use $SSOT, not hardcoded)
 case "$JOE_ENV" in
     TERMUX)
-        export SSOT="/data/data/com.termux/files/home/bashscripts"
         export DASHBOARD_DIR="$HOME/dashboard"
         export OBSIDIAN_VAULT="/storage/emulated/0/syncthing/hermes_vault"
         export home="$HOME"
@@ -41,7 +62,6 @@ case "$JOE_ENV" in
         export SSH_PORT=8022
         ;;
     MUMU)
-        export SSOT="/data/data/com.termux/files/home/bashscripts"
         export DASHBOARD_DIR="$HOME/dashboard"
         export OBSIDIAN_VAULT="/storage/emulated/0/syncthing/hermes_vault"
         export home="$HOME"
@@ -50,7 +70,6 @@ case "$JOE_ENV" in
         export SSH_PORT=8020
         ;;
     WSL)
-        export SSOT="$HOME/bashscripts"
 	    export hpc="/mnt/c/Users/User"
         export hwsl="${hwsl:-$HOME}"
         export DASHBOARD_DIR="$HOME/dashboard"
@@ -63,7 +82,6 @@ case "$JOE_ENV" in
         
         ;;
     GIT-BASH)
-        export SSOT="$HOME/bashscripts"
         export hpc="$HOME"
         export hwsl="${hwsl:-//wsl.localhost/Ubuntu/home/usercivenz}"
         export DASHBOARD_DIR="$HWSL/dashboard"
@@ -159,12 +177,7 @@ ssot_load(){
         "$SSOT/core/profiles.sh"
         "$SSOT/core/theme.sh"
         "$SSOT/functions"/*.sh
-        #"$SSOT/tools/syncctl/syncctl"
-        "$SSOT/lessons/practicing_functions.sh"
-        "$SSOT/functions/joe-block/entry.sh"
-        "$SSOT/lessons/maps_random.sh"
-        "$SSOT/lessons/superboom.sh"
-        "$SSOT/lessons/clean_.sh"
+        "$SSOT/personal/joe_scripts.sh"
     )
     #-- run main cmd
     _check -f "source_files" "source" 2>/dev/null

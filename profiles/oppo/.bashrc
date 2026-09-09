@@ -29,7 +29,7 @@ nvm use default >/dev/null 2>&1 || true
 _check -f "$HOME/.local/bin/env" "source"
 export PATH="$HOME/.local/bin:$PATH"
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
-export SSOT="$HOME/bashscripts"
+export SSOT="${SSOT:-$HOME/ssot}"
 export JOE_ENV="OPPO"
 export MY_DEVICE="OPPO"
 [ -f $HOME/.env ] && source $HOME/.env

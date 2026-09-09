@@ -1,6 +1,6 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 
-[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
+[[ -f "$HOME/ssot/.bash_helper" ]] && source "$HOME/ssot/.bash_helper"
 # ── 1. CORE BASH CONFIG ──
 HISTCONTROL=ignoreboth
 shopt -s histappend
@@ -27,13 +27,15 @@ if [ -d "$NVM_DIR" ]; then
 fi
 
 # ── 4. ENVIRONMENT & PATHS ──
+# ~/.local/bin/env handles: PATH, ~/.env, SSOT auto-detect, joe.sh
 [ -f "$HOME/.local/bin/env" ] && . "$HOME/.local/bin/env"
-export PATH="$HOME/.local/bin:$PATH"
+
+# Environment-specific overrides
+export JOE_ENV="${JOE_ENV:-GIT-BASH}"
+export MY_DEVICE="${MY_DEVICE:-GIT-BASH}"
+
+# Extra PATH entries
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
-export SSOT="${SSOT:-$HOME/bashscripts}"
-export JOE_ENV="GIT-BASH"
-export MY_DEVICE="GIT-BASH"
-[ -f ~/.env ] && source ~/.env
 
 # ── 5. ALIASES & COMPLETIONS ──
 [ -f ~/.bash_aliases ] && source ~/.bash_aliases
@@ -50,17 +52,17 @@ fi
 alias ktmux="tmux kill-server"
 
 # OpenClaw Completion
-[ -f "/home/usercivenz/.openclaw-2/completions/openclaw.bash" ] && source "/home/usercivenz/.openclaw-2/completions/openclaw.bash"
+[ -f "$HOME/.openclaw-2/completions/openclaw.bash" ] && source "$HOME/.openclaw-2/completions/openclaw.bash"
 
 # opencode
-export PATH=/home/usercivenz/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"
 
 
 # Added by Antigravity CLI installer
-export PATH="/home/usercivenz/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$PATH"
 
 # pnpm
-export PNPM_HOME="/home/usercivenz/.local/share/pnpm"
+export PNPM_HOME="$HOME/.local/share/pnpm"
 case ":$PATH:" in
   *":$PNPM_HOME/bin:"*) ;;
   *) export PATH="$PNPM_HOME/bin:$PATH" ;;

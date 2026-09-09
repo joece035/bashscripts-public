@@ -2,16 +2,24 @@
 # ============================================================
 # SSOT Bootstrap Installer — Single Entry Point
 # ============================================================
-# One-shot installer for the bashscripts ecosystem.
+# One-shot installer for the ssot ecosystem.
 # Works on: Termux, MuMu, WSL, Git Bash.
 #
 # Usage:
-    
-#   curl -fsSL https://raw.githubusercontent.com/joece035/bashscripts-public/main/bootstrap/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/joece035/ssot-public/main/bootstrap/install.sh | bash
 #
 # Or clone first, then run:
-#   git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
-#   bash ~/bashscripts/bootstrap/install.sh
+#   git clone https://github.com/joece035/ssot-public.git ~/ssot
+#   bash ~/ssot/bootstrap/install.sh
+#
+# Specify device (important for Termux — auto-detect returns "TERMUX" for all):
+#   bash ~/ssot/bootstrap/install.sh <device>
+#   bash ~/ssot/bootstrap/install.sh termux    # physical Android phone
+#   bash ~/ssot/bootstrap/install.sh mumu      # MuMu emulator
+#   bash ~/ssot/bootstrap/install.sh oppo      # Oppo phone
+#
+# Or set MY_DEVICE env var:
+#   MY_DEVICE=oppo bash ~/ssot/bootstrap/install.sh
 #
 # Idempotent: safe to re-run. Skips completed steps.
 # ============================================================
@@ -33,23 +41,122 @@ warn() { printf '   %s!%s %s\n' "${_YELLOW}" "${_RESET}" "$*" >&2; }
 die()  { printf '%s✗%s %s\n' "${_BOLD}${_RED}" "${_RESET}" "$*" >&2; exit 1; }
 
 # ============================================================
+# STAGE Pre-0 — Backup & Clean Previous Installation
+# ============================================================
+# Backs up all files that will be modified into $BACKUP_DIR/installationbk/
+# then removes them so install starts from a clean state.
+# ============================================================
+STAGE_TS="$(date +%Y%m%d_%H%M%S)"
+BACKUP_DIR="$HOME/.ssot-backups/installationbk/$STAGE_TS"
+mkdir -p "$BACKUP_DIR"
+
+log "Stage Pre-0: Backing up previous installation → $BACKUP_DIR"
+
+# ── Backup files (copy, don't move — keep originals as safety net) ──
+_backup_file() {
+    local src="$1"
+    if [[ -L "$src" ]]; then
+        # Symlink: record target
+        local tgt
+        tgt="$(readlink "$src" 2>/dev/null)"
+        echo "symlink → $tgt" > "$BACKUP_DIR/$(basename "$src").meta"
+        ok "  Backed up symlink: $(basename "$src") → $tgt"
+    elif [[ -f "$src" ]]; then
+        cp "$src" "$BACKUP_DIR/$(basename "$src")"
+        ok "  Backed up: $(basename "$src")"
+    fi
+}
+
+_backup_file "$HOME/.bashrc"
+_backup_file "$HOME/.zshrc"
+_backup_file "$HOME/.bash_aliases"
+_backup_file "$HOME/.local/bin/env"
+_backup_file "$HOME/.ssh/config"
+_backup_file "$HOME/.env"
+
+# ── Backup and record all symlinks in ~/.local/bin/ ──
+if [[ -d "$HOME/.local/bin" ]]; then
+    _symlink_count=0
+    while IFS= read -r -d '' link; do
+        _tgt="$(readlink "$link" 2>/dev/null)"
+        echo "symlink → $_tgt" > "$BACKUP_DIR/bin_$(basename "$link").meta"
+        _symlink_count=$((_symlink_count + 1))
+    done < <(find "$HOME/.local/bin" -maxdepth 1 -type l -print0 2>/dev/null)
+    [[ $_symlink_count -gt 0 ]] && ok "  Backed up $_symlink_count symlink(s) from ~/.local/bin/"
+fi
+
+# ── Clean: Remove all previous installation artifacts ──
+log "Stage Pre-0: Cleaning previous installation state"
+
+# Remove ~/.local/bin/ contents (env, joe, syncctl, etc.)
+if [[ -d "$HOME/.local/bin" ]]; then
+    rm -f "$HOME/.local/bin/env"
+    rm -f "$HOME/.local/bin/joe"
+    rm -f "$HOME/.local/bin/syncctl"
+    rm -f "$HOME/.local/bin/node-status"
+    ok "  Cleaned ~/.local/bin/ (env, joe, syncctl, node-status)"
+fi
+
+# Remove shell profile symlinks (will be re-created in Stage 4)
+for _rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [[ -L "$_rc" ]]; then
+        rm -f "$_rc"
+        ok "  Removed symlink: $(basename "$_rc")"
+    fi
+done
+
+# Remove .bash_aliases symlink if it exists
+if [[ -L "$HOME/.bash_aliases" ]]; then
+    rm -f "$HOME/.bash_aliases"
+    ok "  Removed symlink: .bash_aliases"
+fi
+
+# Clean broken symlinks in ~/
+while IFS= read -r -d '' link; do
+    if [[ ! -e "$link" ]]; then
+        rm -f "$link"
+    fi
+done < <(find "$HOME" -maxdepth 1 -type l -print0 2>/dev/null)
+
+unset SSOT 2>/dev/null || true
+ok "  Cleaned environment state"
+ok "Stage Pre-0: Previous installation backed up & cleaned"
+
+# ============================================================
 # STAGE 0 — Detect Environment
 # ============================================================
+# Priority: argument > MY_DEVICE env > auto-detect
+# Auto-detect limitations:
+#   - Termux on ALL devices returns "TERMUX" (can't distinguish phone/emulator)
+#   - Use argument or MY_DEVICE to specify: termux, mumu, oppo, etc.
+# ============================================================
 detect_joe_env() {
-    # Allow override via argument or MY_DEVICE env var
+    # 1. Explicit argument (highest priority)
     if [[ -n "${1:-}" ]]; then
         echo "$1"
         return
     fi
+    # 2. MY_DEVICE env var (set in ~/.env or before running)
     if [[ -n "${MY_DEVICE:-}" ]]; then
         echo "$MY_DEVICE"
         return
     fi
+    # 3. Auto-detect (limited on Termux)
     if [[ -d "/data/data/com.termux" ]]; then
-        if getprop ro.product.model 2>/dev/null | grep -qiE '(MuMu|vphone)'; then
+        # Check multiple properties for MuMu/emulator detection
+        _model="$(getprop ro.product.model 2>/dev/null)"
+        _brand="$(getprop ro.product.brand 2>/dev/null)"
+        _hardware="$(getprop ro.hardware 2>/dev/null)"
+        _display="$(getprop ro.build.display.id 2>/dev/null)"
+
+        # MuMu indicators: model contains MuMu/vphone, or brand is MuMu
+        if echo "$_model $_brand $_display" | grep -qiE '(MuMu|vphone)'; then
             echo "MUMU"
+        # Standard emulator indicators: goldfish (QEMU), ranchu (Android Emulator)
+        elif echo "$_hardware" | grep -qiE '(goldfish|ranchu)'; then
+            echo "MUMU"  # Treat generic emulator as MuMu (user can override with arg)
         else
-            echo "TERMUX"
+            echo "TERMUX"  # Physical device or unknown emulator
         fi
     elif grep -qi microsoft /proc/version 2>/dev/null; then
         echo "WSL"
@@ -58,14 +165,21 @@ detect_joe_env() {
     elif command -v apk 2>/dev/null; then
         echo "ACODEX"
     else
-        echo "${1:-${MY_DEVICE:-$JOE_ENV}}"
+        echo "UNKNOWN"
     fi
 }
 
 log "Stage 0: Detecting environment"
 JOE_ENV="$(detect_joe_env "${1:-}")"
 export JOE_ENV
-ok "Environment: $JOE_ENV"
+
+# Also set MY_DEVICE if provided via argument
+if [[ -n "${1:-}" ]]; then
+    MY_DEVICE="$1"
+    export MY_DEVICE
+fi
+
+ok "Environment: $JOE_ENV (MY_DEVICE=${MY_DEVICE:-auto})"
 
 # ============================================================
 # ============================================================
@@ -77,8 +191,20 @@ ok "Environment: $JOE_ENV"
 
 log "Stage 1: Installing essential packages"
 
+# ── Ensure Git for Windows paths are in PATH ──
+# Git Bash may have rsync, ssh, etc. in /usr/bin or /mingw64/bin
+# but these aren't always in PATH when running from external shells
+if [[ "$JOE_ENV" == "GIT-BASH" ]]; then
+    for _gfw_bin in "/usr/bin" "/mingw64/bin" "/mingw32/bin"; do
+        [[ -d "$_gfw_bin" ]] && case ":${PATH}:" in
+            *:"$_gfw_bin":*) ;;
+            *) export PATH="$_gfw_bin:$PATH" ;;
+        esac
+    done
+fi
+
 # Source pkg_manager if available (repo may already be cloned)
-_PKG_MGR="$HOME/bashscripts/functions/pkg_manager.sh"
+_PKG_MGR="$HOME/ssot/functions/pkg_manager.sh"
 if [[ -f "$_PKG_MGR" ]]; then
     # shellcheck source=/dev/null
     source "$_PKG_MGR"
@@ -141,8 +267,18 @@ esac
 _install_pkg openssh  ssh
 _install_pkg openssl  openssl  "apk=openssl"
 _install_pkg curl     curl
-_install_pkg jq       jq
-_install_pkg rsync    rsync
+_install_pkg jq       jq      "winget=jqlang.jq"
+
+# rsync: optional on Git Bash (not available via winget, skip gracefully)
+if [[ "$JOE_ENV" == "GIT-BASH" ]]; then
+    if command -v rsync >/dev/null 2>&1; then
+        ok "  already installed: rsync"
+    else
+        warn "  rsync not available on Git Bash — skipping (use WSL for rsync)"
+    fi
+else
+    _install_pkg rsync    rsync
+fi
 
 ok "Stage 1: Essential packages ready"
 
@@ -158,7 +294,7 @@ fi
 
 # STAGE 2 — Locate or Clone Repository
 # ============================================================
-SSOT="${SSOT:-$HOME/bashscripts}"
+SSOT="${SSOT:-$HOME/ssot}"
 
 if [[ -f "$SSOT/joe.sh" ]]; then
     ok "SSOT repo found at $SSOT"
@@ -169,7 +305,7 @@ else
         rm -rf "$SSOT"
     fi
 
-    REPO_URL="https://github.com/joece035/bashscripts-public.git"
+    REPO_URL="https://github.com/joece035/ssot-public.git"
     if command -v git >/dev/null 2>&1; then
         git clone --depth=1 "$REPO_URL" "$SSOT" || die "git clone failed"
     else
@@ -178,7 +314,7 @@ else
         TMPDIR="$(mktemp -d)"
         curl -fsSL "${REPO_URL%.git}/archive/refs/heads/main.tar.gz" \
             | tar -xz -C "$TMPDIR" || die "Download failed"
-        mv "$TMPDIR/bashscripts-main" "$SSOT"
+        mv "$TMPDIR/ssot-main" "$SSOT"
         rm -rf "$TMPDIR"
     fi
     ok "Repository cloned to $SSOT"
@@ -223,7 +359,7 @@ chmod 600 "$ENV_FILE" 2>/dev/null || true
 
 # ── 2b. Vault Detection & Auto-Unlock ──
 VAULT_FILE="$SSOT/core/.env.enc"
-VAULT_SCRIPT="$SSOT/bootstrap/ssot-vault.sh"
+VAULT_SCRIPT="$SSOT/bootstrap/vault/ssot-vault.sh"
 
 # Check if secrets are already populated
 _secrets_populated=false
@@ -396,6 +532,100 @@ if [[ "$SHELL_RC" != "$BASH_RC" ]]; then
 fi
 
 # ============================================================
+# STAGE 4.5 — Generate Global Environment Manager (~/.local/bin/env)
+# ============================================================
+# This file provides:
+#   - PATH setup (~/.local/bin)
+#   - Load ~/.env (secrets & overrides)
+#   - shell_setup() — symlink shell profiles
+#   - repo() — switch between ~/bashscripts and ~/ssot
+# ============================================================
+log "Stage 4.5: Generating global environment manager"
+
+BIN_DIR="$HOME/.local/bin"
+mkdir -p "$BIN_DIR"
+
+ENV_TARGET="$BIN_DIR/env"
+
+# Find template: try $SSOT first, then fallback to ~/ssot
+ENV_TEMPLATE=""
+for _dir in "$SSOT" "$HOME/ssot" "$HOME/bashscripts"; do
+    if [[ -f "$_dir/bootstrap/templates/env" ]]; then
+        ENV_TEMPLATE="$_dir/bootstrap/templates/env"
+        break
+    fi
+done
+
+if [[ -n "$ENV_TEMPLATE" ]]; then
+    cp "$ENV_TEMPLATE" "$ENV_TARGET"
+    chmod +x "$ENV_TARGET"
+    ok "Created: $ENV_TARGET (from $ENV_TEMPLATE)"
+else
+    warn "Template not found in any repo — generating minimal env"
+    cat > "$ENV_TARGET" << 'ENVEOF'
+#!/bin/bash
+# ~/.local/bin/env — Global Environment Manager (minimal)
+
+# PATH setup
+case ":${PATH}:" in
+    *:"$HOME/.local/bin":*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH" ;;
+esac
+
+# Load private env vars
+[ -f ~/.env ] && . ~/.env
+
+# SSOT auto-detection
+if [[ -z "${SSOT:-}" ]]; then
+    [[ -d "$HOME/bashscripts" ]] && export SSOT="$HOME/bashscripts"
+    [[ -z "${SSOT:-}" && -d "$HOME/ssot" ]] && export SSOT="$HOME/ssot"
+fi
+
+# Source joe.sh if SSOT is set
+[[ -n "${SSOT:-}" && -f "${SSOT}/joe.sh" ]] && source "${SSOT}/joe.sh" 2>/dev/null
+ENVEOF
+    chmod +x "$ENV_TARGET"
+    ok "Created: $ENV_TARGET (minimal)"
+fi
+
+# ============================================================
+# STAGE 4.7 — Broken Symlink Scanner & Cleanup
+# ============================================================
+# Scan critical directories for broken symlinks and remove them.
+# This prevents issues from previous installs or manual edits.
+# ============================================================
+log "Stage 4.7: Scanning for broken symlinks"
+
+_broken_count=0
+
+# Helper: scan a directory for broken symlinks and remove them
+_scan_broken() {
+    local dir="$1"
+    local label="$2"
+    [[ ! -d "$dir" ]] && return 0
+
+    while IFS= read -r -d '' link; do
+        if [[ ! -e "$link" ]]; then
+            warn "  Removing broken symlink: $link"
+            rm -f "$link"
+            _broken_count=$((_broken_count + 1))
+        fi
+    done < <(find "$dir" -maxdepth 1 -type l -print0 2>/dev/null)
+}
+
+# Scan ~/.local/bin/
+_scan_broken "$HOME/.local/bin" "~/.local/bin"
+
+# Scan ~/
+_scan_broken "$HOME" "~"
+
+if [[ $_broken_count -gt 0 ]]; then
+    ok "Removed $_broken_count broken symlink(s)"
+else
+    ok "No broken symlinks found"
+fi
+
+# ============================================================
 # STAGE 5 — Create Tool Symlinks
 # ============================================================
 log "Stage 5: Creating tool symlinks"
@@ -417,13 +647,21 @@ if [[ ! -L "$BIN_DIR/syncctl" ]] && [[ -f "$SSOT/tools/syncctl/syncctl" ]]; then
     ln -sf "$SSOT/tools/syncctl/syncctl" "$BIN_DIR/syncctl"
     chmod +x "$SSOT/tools/syncctl/syncctl"
     ok "Created: $BIN_DIR/syncctl → tools/syncctl/syncctl"
+else
+    ok "$BIN_DIR/syncctl not available (tools/syncctl not found) — skipping"
 fi
 
 # node-status command
-if [[ ! -L "$BIN_DIR/node-status" ]] && [[ -f "$SSOT/tools/node-status.sh" ]]; then
-    ln -sf "$SSOT/tools/node-status.sh" "$BIN_DIR/node-status"
-    chmod +x "$SSOT/tools/node-status.sh"
-    ok "Created: $BIN_DIR/node-status → tools/node-status.sh"
+if [[ ! -L "$BIN_DIR/node-status" ]]; then
+    if [[ -f "$SSOT/bootstrap/nodes/node-status.sh" ]]; then
+        ln -sf "$SSOT/bootstrap/nodes/node-status.sh" "$BIN_DIR/node-status"
+        chmod +x "$SSOT/bootstrap/nodes/node-status.sh"
+        ok "Created: $BIN_DIR/node-status → bootstrap/nodes/node-status.sh"
+    else
+        ok "$BIN_DIR/node-status not available (node-status.sh not found) — skipping"
+    fi
+else
+    ok "$BIN_DIR/node-status already linked"
 fi
 
 # STAGE 6 — SSH Audit & Self-Healing
@@ -445,7 +683,69 @@ log "Stage 7: Verification"
 
 _errors=0
 
-# Check joe.sh exists and is valid
+# ── 7a. Critical file preservation checks ──
+# These files MUST exist and NOT be empty after install
+log "  Checking critical files..."
+
+_critical_files=(
+    "$HOME/.env"
+    "$SSOT/joe.sh"
+    "$SSOT/bootstrap/00-env.sh"
+    "$SSOT/core/01-colors.sh"
+    "$SSOT/core/aliases.sh"
+    "$SSOT/core/3worlds.sh"
+    "$HOME/.local/bin/env"
+)
+
+for _cf in "${_critical_files[@]}"; do
+    if [[ -f "$_cf" ]]; then
+        if [[ -s "$_cf" ]]; then
+            ok "  $(basename "$_cf") — exists and not empty"
+        else
+            warn "  $(basename "$_cf") — exists but EMPTY!"
+            _errors=$((_errors + 1))
+        fi
+    else
+        warn "  $(basename "$_cf") — MISSING at $_cf"
+        _errors=$((_errors + 1))
+    fi
+done
+
+# ── 7b. Shell profile checks ──
+# Verify .bashrc and .zshrc exist (as file or symlink)
+for _rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+    if [[ -L "$_rc" ]]; then
+        _target="$(readlink "$_rc" 2>/dev/null)"
+        if [[ -e "$_rc" ]]; then
+            ok "  $(basename "$_rc") — symlink → $(basename "$_target")"
+        else
+            warn "  $(basename "$_rc") — BROKEN symlink → $_target"
+            rm -f "$_rc"
+            _errors=$((_errors + 1))
+        fi
+    elif [[ -f "$_rc" ]]; then
+        ok "  $(basename "$_rc") — regular file (not symlinked)"
+    else
+        warn "  $(basename "$_rc") — MISSING"
+        _errors=$((_errors + 1))
+    fi
+done
+
+# ── 7c. .bash_aliases check ──
+if [[ -f "$HOME/.bash_aliases" ]]; then
+    ok "  .bash_aliases — exists"
+elif [[ -L "$HOME/.bash_aliases" ]]; then
+    if [[ -e "$HOME/.bash_aliases" ]]; then
+        ok "  .bash_aliases — symlink OK"
+    else
+        warn "  .bash_aliases — BROKEN symlink"
+        rm -f "$HOME/.bash_aliases"
+    fi
+else
+    warn "  .bash_aliases — not found (non-critical)"
+fi
+
+# ── 7d. joe.sh syntax check ──
 if [[ -f "$SSOT/joe.sh" ]] && bash -n "$SSOT/joe.sh" 2>/dev/null; then
     ok "joe.sh — exists and syntax valid"
 else
@@ -453,7 +753,7 @@ else
     _errors=$((_errors + 1))
 fi
 
-# Check .env has JOE_ENV
+# ── 7e. .env configuration check ──
 if grep -q "^export JOE_ENV=" "$HOME/.env" 2>/dev/null; then
     ok "~/.env — JOE_ENV configured"
 else
@@ -461,7 +761,7 @@ else
     _errors=$((_errors + 1))
 fi
 
-# Check shell profile sources joe.sh
+# ── 7f. Shell profile sources joe.sh check ──
 if [[ -L "$SHELL_RC" ]]; then
     _target="$(readlink "$SHELL_RC")"
     if grep -q "joe.sh" "$_target" 2>/dev/null; then
@@ -477,7 +777,7 @@ else
     fi
 fi
 
-# Check key modules exist
+# ── 7g. Key modules existence check ──
 for _mod in "bootstrap/00-env.sh" "core/01-colors.sh" "core/aliases.sh" "core/3worlds.sh"; do
     if [[ -f "$SSOT/$_mod" ]]; then
         ok "$_mod — found"
@@ -487,7 +787,7 @@ for _mod in "bootstrap/00-env.sh" "core/01-colors.sh" "core/aliases.sh" "core/3w
     fi
 done
 
-# Syntax-check all .sh files in core/ (quick scan)
+# ── 7h. Syntax check all .sh files ──
 if command -v bash >/dev/null 2>&1; then
     _syntax_fails=0
     for _f in "$SSOT"/core/*.sh "$SSOT"/functions/*.sh; do
@@ -501,6 +801,20 @@ if command -v bash >/dev/null 2>&1; then
     else
         warn "Syntax check — $_syntax_fails file(s) have errors"
     fi
+fi
+
+# ── 7i. Final broken symlink scan ──
+_final_broken=0
+while IFS= read -r -d '' link; do
+    if [[ ! -e "$link" ]]; then
+        warn "Final scan: broken symlink at $link"
+        rm -f "$link"
+        _final_broken=$((_final_broken + 1))
+    fi
+done < <(find "$HOME/.local/bin" -maxdepth 1 -type l -print0 2>/dev/null)
+
+if [[ $_final_broken -gt 0 ]]; then
+    ok "Cleaned $_final_broken broken symlink(s) in final scan"
 fi
 
 # ============================================================

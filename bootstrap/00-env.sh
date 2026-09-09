@@ -22,10 +22,10 @@
 # Loads private credentials from ~/.env or $SSOT/.env if present. Never commit .env to git!
 if [[ -f "$HOME/.env" ]]; then
     source "$HOME/.env"
-elif [[ -f "${SSOT:-$HOME/bashscripts}/.env" ]]; then
-    source "${SSOT:-$HOME/bashscripts}/.env"
-elif [[ -f "${SCRIPTS_PATH:-$HOME/bashscripts}/.env" ]]; then
-    source "${SCRIPTS_PATH:-$HOME/bashscripts}/.env"
+elif [[ -f "${SSOT:-$HOME/ssot}/.env" ]]; then
+    source "${SSOT:-$HOME/ssot}/.env"
+elif [[ -f "${SCRIPTS_PATH:-$HOME/ssot}/.env" ]]; then
+    source "${SCRIPTS_PATH:-$HOME/ssot}/.env"
 fi
 
 # ============================================================
@@ -195,9 +195,9 @@ export TAILSCALE_IP_WINDOW=100.69.181.45
 export TAILSCALE_IP_WSL=100.80.195.120
 export TAILSCALE_IP_MUMU=100.100.176.94
 
-# ── Dynamic Node Registry Loader (drop-in profiles from $SSOT/nodes/*.node.env) ──
-if [[ -f "${SSOT:-$HOME/bashscripts}/nodes/loader.sh" ]]; then
-    source "${SSOT:-$HOME/bashscripts}/nodes/loader.sh"
+# ── Dynamic Node Registry Loader (drop-in profiles from $SSOT/bootstrap/nodes/*.node.env) ──
+if [[ -f "${SSOT:-$HOME/ssot}/bootstrap/nodes/loader.sh" ]]; then
+    source "${SSOT:-$HOME/ssot}/bootstrap/nodes/loader.sh"
 fi
 
 # ============================================================
@@ -356,7 +356,7 @@ esac
 #-- Zshshell-setup
 zsh_setup(){
     local device=${1:-$MY_DEVICE} #-- TERMUX || MUMU
-    local zsh_path="${SSOT:-$HOME/bashscripts}"/tools/.zshrc
+    local zsh_path="${SSOT:-$HOME/ssot}/profiles/${device}/.zshrc"
         case "$device" in
             TERMUX|termux)
                     if  [[ -f "$HOME/.zshrc" ]]; then
