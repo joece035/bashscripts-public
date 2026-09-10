@@ -94,9 +94,9 @@ alias wr='python3 "$SSOT/tools/statscal/statscal.py"'
 # vault lock_pubkey   — encrypt pubkeys → core/pubkeys.enc
 # vault unlock_pubkey — decrypt + install to authorized_keys
 # vault pubkey-status — show key status
-alias vault='${SSOT:-$HOME/bashscripts}/bootstrap/vault/ssot-vault.sh'
-alias ssot-vault='${SSOT:-$HOME/bashscripts}/bootstrap/vault/ssot-vault.sh'
-alias secret-setup='${SSOT:-$HOME/bashscripts}/bootstrap/vault/secret-setup.sh'
+alias vault='bash ${SSOT:-$HOME/bashscripts}/bootstrap/vault/ssot-vault.sh'
+alias ssot-vault='bash ${SSOT:-$HOME/bashscripts}/bootstrap/vault/ssot-vault.sh'
+alias secret-setup='bash ${SSOT:-$HOME/bashscripts}/bootstrap/vault/secret-setup.sh'
 alias node-register='${SSOT:-$HOME/bashscripts}/tools/node-register.sh'
 alias node-status='${SSOT:-$HOME/bashscripts}/tools/node-status.sh'
 alias nodestatus='${SSOT:-$HOME/bashscripts}/tools/node-status.sh'
