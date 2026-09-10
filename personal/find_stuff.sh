@@ -120,7 +120,7 @@ find_unsource_func() {
             ;;
     esac
 }
-alias fusf='find_unsource_func'
+alias unsrc_func='find_unsource_func'
 auto_source() {
     local func="${1:-}"
 
@@ -148,7 +148,7 @@ auto_source() {
         return 1
     fi
 }
-alias ausf='auto_source'
+alias self_load='auto_source'
 
 # ==========================================
 # _guard_func — Error guard สำหรับใช้ใน scripts
@@ -158,7 +158,7 @@ alias ausf='auto_source'
 #   _guard_func "fm_cp" && fm_cp "$src" "$dst"
 #   _guard_func "my_func" || exit 1
 # ==========================================
-_guard_func() {
+_check_func() {
     local func="$1"
     local context="${2:-${SSOT:-$repository}}"
 
