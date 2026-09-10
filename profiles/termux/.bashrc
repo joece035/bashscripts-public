@@ -1,6 +1,6 @@
 # $HOME/.bashrc: executed by bash(1) for non-login shells.
 
-[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
+[[ -f "$HOME/ssot/.bash_helper" ]] && source "$HOME/ssot/.bash_helper"
 # ── 1. CORE BASH CONFIG ──
 HISTCONTROL=ignoreboth
 shopt -s histappend
@@ -26,13 +26,15 @@ export NVM_DIR="$HOME/.nvm"
 nvm use default >/dev/null 2>&1 || true
 
 # ── 4. ENVIRONMENT & PATHS ──
+# ~/.local/bin/env handles: PATH, ~/.env, SSOT auto-detect, joe.sh
 _check -f "$HOME/.local/bin/env" "source"
-export PATH="$HOME/.local/bin:$PATH"
+
+# Environment-specific overrides
+export JOE_ENV="${JOE_ENV:-TERMUX}"
+export MY_DEVICE="${MY_DEVICE:-TERMUX}"
+
+# Extra PATH entries
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
-export SSOT="${SSOT:-$HOME/ssot}"
-export JOE_ENV="TERMUX"
-export MY_DEVICE="TERMUX"
-[ -f $HOME/.env ] && source $HOME/.env
 
 # ── 5. ALIASES & COMPLETIONS ──
 [ -f $HOME/.bash_aliases ] && source $HOME/.bash_aliases
@@ -42,11 +44,11 @@ export MY_DEVICE="TERMUX"
 # don't kill the shell (defensive — not a fix, just safety net)
 # CRLF guard: ถ้า joe.sh ถูกบันทึกเป็น CRLF (จาก Windows/Acode-X) bash จะ
 # parse ไม่ผ่าน → แปลงกลับเป็น LF ก่อน source (joe.sh มี self-heal ข้างในด้วย)
-if [ -f $HOME/bashscripts/joe.sh ] && grep -qU $'\r' $HOME/bashscripts/joe.sh 2>/dev/null; then
-    sed -i 's/\r$//' $HOME/bashscripts/joe.sh
+if [ -f $HOME/ssot/joe.sh ] && grep -qU $'\r' $HOME/ssot/joe.sh 2>/dev/null; then
+    sed -i 's/\r$//' $HOME/ssot/joe.sh
     echo "⚠️  CRLF→LF: joe.sh (auto-fixed)"
 fi
-[ -f $HOME/bashscripts/joe.sh ] && . $HOME/bashscripts/joe.sh 2>/dev/null
+[ -f $HOME/ssot/joe.sh ] && . $HOME/ssot/joe.sh 2>/dev/null
 
 # ── 6. STARSHIP ──
 # if [[ $- == *i* && -z "$STARSHIP_LOADED" ]]; then

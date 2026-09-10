@@ -1,4 +1,4 @@
-﻿#!/bin/bash
+#!/bin/bash
 THEME_FILE="$HOME/bashscripts/core/theme.sh"
 
 cat > /tmp/theme_zsh.txt << 'EOF'

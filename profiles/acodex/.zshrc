@@ -1,6 +1,6 @@
 # ================================================================
 # ~/.zshrc - JOE SSOT ZSH Config (Termux)
-# MASTER: WSL | SSOT: ~/bashscripts/tools/zshrc_termux.zsh
+# MASTER: WSL | SSOT: ~/ssot/tools/zshrc_termux.zsh
 # Deployed by: Fresh_termux_fullsetup_SSOT.sh (links to ~/.zshrc)
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
@@ -69,7 +69,7 @@ fi
 
 # -- ZSH/Bash compat layer (BEFORE joe.sh) ---------------------
 [[ -f "$HOME/.env" ]] && source "$HOME/.env"
-SSOT="${SSOT:-$HOME/bashscripts}"
+SSOT="${SSOT:-$HOME/ssot}"
 [[ -f "$SSOT/.zsh-bash-compat.sh" ]] && source "$SSOT/.zsh-bash-compat.sh"
 
 # -- JOE SSOT single entry point --------------------------------

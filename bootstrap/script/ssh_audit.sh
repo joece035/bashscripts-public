@@ -2,7 +2,7 @@
 # ============================================================
 # 🛡️ ssh_audit.sh — SSOT SSH Audit & Self-Healing Utility
 # ============================================================
-# Infrastructure: ~/bashscripts/ (SSOT)
+# Infrastructure: ~/ssot/ (SSOT)
 # Compatible: WSL2, Termux (Android/MuMu), Linux, Git-Bash
 # Usage:
 #   ./bootstrap/ssh_audit.sh          # รัน Audit ตรวจสอบอย่างเดียว (Read-only)
@@ -47,7 +47,7 @@ fi
 # ทำ inline แทน source joe.sh เพื่อกัน side-effects (ssh-agent, sshd, ssot_load)
 case "$JOE_ENV" in
     TERMUX|MUMU)
-        export SSOT="/data/data/com.termux/files/home/bashscripts"
+        export SSOT="/data/data/com.termux/files/home/ssot"
         export DASHBOARD_DIR="$HOME/dashboard"
         export MAIN_SYNC_DIR="$HOME/main_sync"
         export SSH_MUMU_PORT=8020
@@ -57,7 +57,7 @@ case "$JOE_ENV" in
         export SSH_PORT=8022
         ;;
     WSL)
-        export SSOT="${SSOT:-$HOME/bashscripts}"
+        export SSOT="${SSOT:-$HOME/ssot}"
         export hpc="${hpc:-/mnt/c/Users/User}"
         export hwsl="${hwsl:-$HOME}"
         export DASHBOARD_DIR="${DASHBOARD_DIR:-$HOME/dashboard}"
@@ -69,7 +69,7 @@ case "$JOE_ENV" in
         export SSH_PORT=22
         ;;
     GIT-BASH)
-        export SSOT="${SSOT:-$HOME/bashscripts}"
+        export SSOT="${SSOT:-$HOME/ssot}"
         export hpc="${hpc:-$HOME}"
         export hwsl="${hwsl:-//wsl.localhost/Ubuntu/home/usercivenz}"
         export DASHBOARD_DIR="${DASHBOARD_DIR:-$HOME/dashboard}"
@@ -81,7 +81,7 @@ case "$JOE_ENV" in
         export SSH_PORT=22
         ;;
     *)
-        export SSOT="${SSOT:-$HOME/bashscripts}"
+        export SSOT="${SSOT:-$HOME/ssot}"
         export DASHBOARD_DIR="${DASHBOARD_DIR:-$HOME/dashboard}"
         export MAIN_SYNC_DIR="${MAIN_SYNC_DIR:-$HOME/main_sync}"
         export SSH_MUMU_PORT=8020
@@ -111,10 +111,10 @@ if [[ -f "$SSOT/bootstrap/00-env.sh" ]]; then
     # shellcheck source=/dev/null
     source "$SSOT/bootstrap/00-env.sh" || true
     set -u
-elif [[ -f "$HOME/bashscripts/bootstrap/00-env.sh" ]]; then
+elif [[ -f "$HOME/ssot/bootstrap/00-env.sh" ]]; then
     set +u
     # shellcheck source=/dev/null
-    source "$HOME/bashscripts/bootstrap/00-env.sh" || true
+    source "$HOME/ssot/bootstrap/00-env.sh" || true
     set -u
 fi
 

@@ -27,7 +27,7 @@
 set -euo pipefail 2>/dev/null || true
 
 # ── 1. Resolve SSOT Root ──
-_SSOT_ROOT="${SSOT:-$HOME/bashscripts}"
+_SSOT_ROOT="${SSOT:-$HOME/ssot}"
 if [[ ! -d "$_SSOT_ROOT" ]]; then
     _SSOT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi

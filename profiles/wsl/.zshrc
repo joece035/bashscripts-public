@@ -1,6 +1,6 @@
 # ================================================================
 # $HOME/.zshrc - JOE SSOT ZSH Config (WSL)
-# SSOT: $HOME/bashscripts/profiles/wsl/.zshrc
+# SSOT: $HOME/ssot/profiles/wsl/.zshrc
 # Linked to: $HOME/.zshrc
 # ================================================================
 
@@ -9,17 +9,14 @@ unsetopt KSH_ARRAYS SH_WORD_SPLIT 2>/dev/null || true
 
 # -- Path Setup (Must be BEFORE any tools/helpers run) ----------
 export PATH="$HOME/.local/bin:$HOME/.local/lib/openclaw/bin:$HOME/.opencode/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH"
-export SSOT="${SSOT:-$HOME/ssot}"
-export JOE_ENV="WSL"
-export MY_DEVICE="WSL"
 
 # -- Initialize color engine (must come before any tools that use it) --
 # Check if .bash_helper is executable and source it
-if [[ -x "$HOME/bashscripts/.bash_helper" ]]; then
-    source "$HOME/bashscripts/.bash_helper"
-elif [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
-    chmod +x "$HOME/bashscripts/.bash_helper"
-    source "$HOME/bashscripts/.bash_helper"
+if [[ -x "$HOME/ssot/.bash_helper" ]]; then
+    source "$HOME/ssot/.bash_helper"
+elif [[ -f "$HOME/ssot/.bash_helper" ]]; then
+    chmod +x "$HOME/ssot/.bash_helper"
+    source "$HOME/ssot/.bash_helper"
 fi
 
 # -- Terminal type (micro/TUI needs this) -----------------------
@@ -70,7 +67,7 @@ if [[ -z "${_OMZ_SOURCED:-}" ]]; then
 fi
 
 # -- ZSH/Bash compat layer & SSOT entry point ------------------
-SSOT="${SSOT:-$HOME/bashscripts}"
+SSOT="${SSOT:-$HOME/ssot}"
 source_files=(
     "$HOME/.env"
     "$SSOT/.zsh-bash-compat.sh"

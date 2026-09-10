@@ -52,8 +52,8 @@ clone_(){
         pkg_helper "git"
     fi    
         
-    SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
-    SSOT_TARGET="$HOME/bashscripts"
+    SSOT_REPO="https://github.com/joece035/ssot-public.git"
+    SSOT_TARGET="$HOME/ssot"
 
     if [[ ! -d "$SSOT_TARGET/.git" ]]; then
         echo "📥 Cloning SSOT repository..."
@@ -65,8 +65,8 @@ clone_(){
     fi
 
     cd "$SSOT_TARGET"
-    source "$HOME/bashscripts/.bash_helper"
-    source "$HOME/bashscripts/joe.sh"
+    source "$HOME/ssot/.bash_helper"
+    source "$HOME/ssot/joe.sh"
 }
 clone_
 
@@ -156,7 +156,7 @@ if [[ -f "$SSOT_TARGET/core/.env.enc" ]]; then
     echo "   Would you like to unlock secrets now with your Master Passphrase? [Y/n]"
     read -r -t 15 -p "   Selection (default: Y): " _vault_choice < /dev/tty || _vault_choice="Y"
     if [[ "${_vault_choice:-Y}" =~ ^[Yy]?$ ]]; then
-        "$SSOT_TARGET/tools/ssot-vault.sh" unlock || echo "⚠️  Vault unlock skipped/failed. You can run 'vault unlock' anytime later."
+        "$SSOT_TARGET/bootstrap/vault/ssot-vault.sh" unlock || echo "⚠️  Vault unlock skipped/failed. You can run 'vault unlock' anytime later."
     fi
 fi
 

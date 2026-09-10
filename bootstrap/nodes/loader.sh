@@ -7,7 +7,7 @@
 #          No hardcoding of node names required!
 # ============================================================
 
-_SSOT_NODES_DIR="${SSOT:-$HOME/bashscripts}/nodes"
+_SSOT_NODES_DIR="${SSOT:-$HOME/ssot}/nodes"
 SSOT_REGISTERED_NODES=()
 
 if [[ -d "$_SSOT_NODES_DIR" ]]; then

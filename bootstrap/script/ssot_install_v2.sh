@@ -6,8 +6,8 @@
 
 set -eo pipefail
 
-SSOT_REPO="https://github.com/joece035/bashscripts-public.git"
-SSOT_TARGET="$HOME/bashscripts"
+SSOT_REPO="https://github.com/joece035/ssot-public.git"
+SSOT_TARGET="$HOME/ssot"
 
 # ── [1] DETECT ENVIRONMENT ──
 _JOE_ENV() {
@@ -140,7 +140,7 @@ if [[ -f "$SSOT_TARGET/core/.env.enc" ]]; then
     echo "🔐 Found SSOT Encrypted Vault ($SSOT_TARGET/core/.env.enc)"
     read -r -t 15 -p "   Unlock secrets now? [Y/n] (default: Y): " _vault_choice < /dev/tty || _vault_choice="Y"
     if [[ "${_vault_choice:-Y}" =~ ^[Yy]?$ ]]; then
-        "$SSOT_TARGET/tools/ssot-vault.sh" unlock || echo "⚠️  Vault unlock skipped/failed."
+        "$SSOT_TARGET/bootstrap/vault/ssot-vault.sh" unlock || echo "⚠️  Vault unlock skipped/failed."
     fi
 fi
 
@@ -183,11 +183,11 @@ ln -sf "$HOME/.env" "$SSOT_TARGET/.env"
 
 # ── [7] RC AUTO-LINKING (Single Source Concept) ──
 # แม้ Termux ใช้ .zshrc แต่เรากำหนดให้ทุก RC ไป source Entry Point เดียวกัน
-LINK_TARGET='[ -f "$HOME/bashscripts/joe.sh" ] && source "$HOME/bashscripts/joe.sh"'
+LINK_TARGET='[ -f "$HOME/ssot/joe.sh" ] && source "$HOME/ssot/joe.sh"'
 
 for rc_file in "$HOME/.bashrc" "$HOME/.zshrc"; do
     if [[ -f "$rc_file" ]] || [[ "$rc_file" == "$HOME/.zshrc" && "$JOE_ENV" == "TERMUX" ]]; then
-        if ! grep -q "bashscripts/joe.sh" "$rc_file" 2>/dev/null; then
+        if ! grep -q "ssot/joe.sh" "$rc_file" 2>/dev/null; then
             echo -e "\n# SSOT Entry point\n$LINK_TARGET" >> "$rc_file"
             echo "  ✅ Linked SSOT entry point to $rc_file"
         fi

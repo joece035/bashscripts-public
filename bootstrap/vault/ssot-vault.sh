@@ -13,7 +13,7 @@
 set -eo pipefail 2>/dev/null || true
 
 # ── 1. SSOT Root & Environment Resolution ──
-_SSOT_ROOT="${SSOT:-$HOME/bashscripts}"
+_SSOT_ROOT="${SSOT:-$HOME/ssot}"
 if [[ ! -d "$_SSOT_ROOT" ]]; then
     _SSOT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi
@@ -367,7 +367,7 @@ case "${1:-}" in
 
     # Pubkey commands (pass-through to pubkey-manager.sh)
     lock_pubkey|unlock_pubkey|pubkey-status)
-        _PUBKEY_SCRIPT="$SSOT/tools/pubkey-manager.sh"
+        _PUBKEY_SCRIPT="$SSOT/bootstrap/nodes/pubkey-manager.sh"
         if [[ -f "$_PUBKEY_SCRIPT" ]]; then
             # Map vault command names to pubkey-manager names
             _pk_cmd="${1}"

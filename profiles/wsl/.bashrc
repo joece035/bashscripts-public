@@ -1,8 +1,8 @@
 # $HOME/.bashrc: executed by bash(1) for non-login shells.
 # Load helper functions early so core functions (like _color_render)
 # are available during the .env loading phase
-if [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
-    source "$HOME/bashscripts/.bash_helper" 2>/dev/null
+if [[ -f "$HOME/ssot/.bash_helper" ]]; then
+    source "$HOME/ssot/.bash_helper" 2>/dev/null
 fi
     
 # ── 1. CORE BASH CONFIG ──
@@ -17,7 +17,7 @@ shopt -s checkwinsize
 if [[ $- == *i* && -f $HOME/.local/share/blesh/ble.sh ]]; then
     [[ ${BLE_VERSION-} ]] || source $HOME/.local/share/blesh/ble.sh --attach=none
 fi
-
+_check -f "$HOME/.local/share/blesh/ble.sh" "source"
 # ── 3. NVM & COMPLETIONS (MUST come BEFORE .env) ──
 # .env reads NVM_DIR to find node path — needs NVM init first
 export NVM_DIR="$HOME/.nvm"
@@ -25,27 +25,26 @@ export NVM_DIR="$HOME/.nvm"
 nvm use default >/dev/null 2>&1 || true
 
 # ── 4. ENVIRONMENT & PATHS ──
+# ~/.local/bin/env handles: PATH, ~/.env, SSOT auto-detect, joe.sh
 . "$HOME/.local/bin/env"
-export PATH="$HOME/.local/bin:$PATH"
+
+# Environment-specific overrides (set by ~/.local/bin/env via ~/.env)
+export JOE_ENV="${JOE_ENV:-WSL}"
+export MY_DEVICE="${MY_DEVICE:-WSL}"
+
+# Extra PATH entries (not managed by env)
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
-export SSOT="${SSOT:-$HOME/ssot}"
-export JOE_ENV="WSL"
-export MY_DEVICE="WSL"
-[ -f $HOME/.env ] && source $HOME/.env
 
 # ── 5. ALIASES & COMPLETIONS ──
 [ -f $HOME/.bash_aliases ] && source $HOME/.bash_aliases
 
 # ── 6. PERSONAL COMMAND CENTER (JOE) ──
-# Source joe.sh; suppress all errors so any function-level bugs
-# don't kill the shell (defensive — not a fix, just safety net)
-# CRLF guard: ถ้า joe.sh ถูกบันทึกเป็น CRLF (จาก Windows/Acode-X) bash จะ
-# parse ไม่ผ่าน → แปลงกลับเป็น LF ก่อน source (joe.sh มี self-heal ข้างในด้วย)
-if [ -f $HOME/bashscripts/joe.sh ] && grep -qU $'\r' $HOME/bashscripts/joe.sh 2>/dev/null; then
-    sed -i 's/\r$//' $HOME/bashscripts/joe.sh
+# joe.sh is auto-sourced by ~/.local/bin/env via SSOT
+# CRLF guard: convert CRLF→LF if needed (Windows/Acode-X issue)
+if [[ -f "${SSOT:-$HOME/ssot}/joe.sh" ]] && grep -qU $'\r' "${SSOT:-$HOME/ssot}/joe.sh" 2>/dev/null; then
+    sed -i 's/\r$//' "${SSOT:-$HOME/ssot}/joe.sh"
     echo "⚠️  CRLF→LF: joe.sh (auto-fixed)"
 fi
-[ -f $HOME/bashscripts/joe.sh ] && . $HOME/bashscripts/joe.sh 2>/dev/null
 
 # ── 6. STARSHIP ──
 # if [[ $- == *i* && -z "$STARSHIP_LOADED" ]]; then

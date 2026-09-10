@@ -19,7 +19,7 @@
 set -euo pipefail 2>/dev/null || true
 
 # ── 1. Resolve SSOT Root ──
-_SSOT_ROOT="${SSOT:-$HOME/bashscripts}"
+_SSOT_ROOT="${SSOT:-$HOME/ssot}"
 if [[ ! -d "$_SSOT_ROOT" ]]; then
     _SSOT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi
@@ -69,6 +69,9 @@ _detect_identity() {
             else
                 joe_env="TERMUX"
             fi
+        # ACODEX: must check before WSL — ACODEX runs on WSL filesystem
+        elif command -v apk >/dev/null 2>&1; then
+            joe_env="ACODEX"
         elif grep -qi microsoft /proc/version 2>/dev/null; then
             joe_env="WSL"
         elif [[ -n "${MSYSTEM:-}" ]] || [[ "$OSTYPE" == "msys" ]]; then

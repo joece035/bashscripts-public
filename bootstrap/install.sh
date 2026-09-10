@@ -158,12 +158,15 @@ detect_joe_env() {
         else
             echo "TERMUX"  # Physical device or unknown emulator
         fi
+    # ACODEX must be checked BEFORE WSL — ACODEX runs on WSL filesystem so
+    # /proc/version contains "microsoft", causing false WSL detection if order is wrong.
+    # apk is the definitive ACODEX identifier (Alpine package manager).
+    elif command -v apk >/dev/null 2>&1; then
+        echo "ACODEX"
     elif grep -qi microsoft /proc/version 2>/dev/null; then
         echo "WSL"
     elif [[ -n "${MSYSTEM:-}" ]] || [[ "${OSTYPE:-}" == "msys" ]]; then
         echo "GIT-BASH"
-    elif command -v apk 2>/dev/null; then
-        echo "ACODEX"
     else
         echo "UNKNOWN"
     fi
@@ -230,7 +233,7 @@ _install_pkg() {
     else
         # Native fallback — runs only on first boot before repo is cloned
         case "$JOE_ENV" in
-            TERMUX|MUMU)
+            TERMUX|MUMU|OPPO)
                 local t_pkg="$pkg"
                 [[ "$pkg" == "openssl" ]] && t_pkg="openssl-tool"
                 pkg install -y "$t_pkg" 2>/dev/null || warn "  pkg install $pkg failed"
@@ -250,7 +253,7 @@ _install_pkg() {
 
 # ── Update package index (once, best-effort) ──
 case "$JOE_ENV" in
-    TERMUX|MUMU)
+    TERMUX|MUMU|OPPO)
         pkg update -y 2>/dev/null || warn "pkg update failed (non-fatal)"
         ;;
     WSL|LINUX)
@@ -294,7 +297,28 @@ fi
 
 # STAGE 2 — Locate or Clone Repository
 # ============================================================
-SSOT="${SSOT:-$HOME/ssot}"
+# Priority: $SSOT env > derive from script location ($0) > default ~/ssot
+# Handles: bash (BASH_SOURCE), zsh (${(%):-%x}), plain sh ($0), curl|bash pipe
+if [[ -z "${SSOT:-}" ]]; then
+    # Resolve script path — zsh vs bash vs plain $0
+    if [[ -n "${ZSH_VERSION:-}" ]]; then
+        _self="${(%):-%x}"          # zsh: expands to current script file
+    elif [[ -n "${BASH_SOURCE[0]:-}" ]]; then
+        _self="${BASH_SOURCE[0]}"   # bash: reliable even when sourced
+    else
+        _self="$0"                  # fallback: plain sh / pipe
+    fi
+    _script_dir="$(cd "$(dirname "$_self")" 2>/dev/null && pwd)"
+    _derived="$(cd "$_script_dir/.." 2>/dev/null && pwd)"
+    if [[ -n "$_derived" && -f "$_derived/joe.sh" ]]; then
+        SSOT="$_derived"
+        ok "SSOT derived from script path: $SSOT"
+    else
+        SSOT="$HOME/ssot"
+        ok "SSOT defaulting to: $SSOT"
+    fi
+fi
+export SSOT
 
 if [[ -f "$SSOT/joe.sh" ]]; then
     ok "SSOT repo found at $SSOT"
@@ -373,8 +397,8 @@ if [[ -f "$VAULT_FILE" ]] && [[ "$_secrets_populated" == "false" ]]; then
     log "Stage 3b: Vault detected — attempting auto-unlock"
     if [[ -f "$VAULT_SCRIPT" ]] && command -v openssl >/dev/null 2>&1; then
         if [[ -n "${SSOT_VAULT_PASS:-}" ]]; then
-            # Non-interactive: passphrase provided via env var
-            if "$VAULT_SCRIPT" unlock 2>/dev/null; then
+            # Non-interactive: passphrase provided via env var (safe to suppress stderr)
+            if bash "$VAULT_SCRIPT" unlock 2>/dev/null; then
                 ok "Vault unlocked (via SSOT_VAULT_PASS)"
             else
                 warn "Vault unlock failed — run 'vault unlock' manually"
@@ -384,7 +408,8 @@ if [[ -f "$VAULT_FILE" ]] && [[ "$_secrets_populated" == "false" ]]; then
             echo "  📦 Vault found: $VAULT_FILE"
             read -r -t 20 -p "   Unlock secrets now? [Y/n] (default: Y): " _vault_choice < /dev/tty || _vault_choice="Y"
             if [[ "${_vault_choice:-Y}" =~ ^[Yy]?$ ]]; then
-                if "$VAULT_SCRIPT" unlock 2>/dev/null; then
+                # Interactive: do NOT suppress stderr — password prompt writes there
+                if bash "$VAULT_SCRIPT" unlock </dev/tty; then
                     ok "Vault unlocked"
                 else
                     warn "Vault unlock failed — run 'vault unlock' later"
@@ -475,27 +500,34 @@ case "$JOE_ENV" in
     TERMUX)
         PROFILE_DIR="$SSOT/profiles/termux"
         SHELL_RC="$HOME/.zshrc"    # Termux uses zsh
-        BASH_RC="$HOME/.bashrc"
         ;;
     MUMU)
         PROFILE_DIR="$SSOT/profiles/mumu"
         SHELL_RC="$HOME/.zshrc"
-        BASH_RC="$HOME/.bashrc"
+        ;;
+    OPPO)
+        PROFILE_DIR="$SSOT/profiles/oppo"
+        SHELL_RC="$HOME/.zshrc"
+        ;;
+    PI)
+        PROFILE_DIR="$SSOT/profiles/termux"
+        SHELL_RC="$HOME/.zshrc"
         ;;
     WSL)
         PROFILE_DIR="$SSOT/profiles/wsl"
         SHELL_RC="$HOME/.bashrc"   # WSL default is bash
-        BASH_RC="$HOME/.bashrc"
         ;;
     GIT-BASH)
         PROFILE_DIR="$SSOT/profiles/git-bash"
         SHELL_RC="$HOME/.bashrc"
-        BASH_RC="$HOME/.bashrc"
+        ;;
+    ACODEX)
+        PROFILE_DIR="$SSOT/profiles/acodex"
+        SHELL_RC="$HOME/.zshrc"
         ;;
     *)
         PROFILE_DIR="$SSOT/profiles/wsl"
         SHELL_RC="$HOME/.bashrc"
-        BASH_RC="$HOME/.bashrc"
         ;;
 esac
 
@@ -503,6 +535,10 @@ _link_profile() {
     local target="$1"
     local src="$2"
     [[ ! -f "$src" ]] && return 0
+    # Guard: auto-strip CRLF () from source template if present
+    if grep -q $'\r' "$src" 2>/dev/null; then
+        sed -i 's/\r$//' "$src" 2>/dev/null || true
+    fi
     if [[ -L "$target" ]]; then
         local curr
         curr="$(readlink "$target")"
@@ -510,6 +546,7 @@ _link_profile() {
             ok "$target already linked to correct profile"
             return 0
         else
+            rm -f "$target"
             ln -sf "$src" "$target"
             ok "$target re-linked → $src"
             return 0
@@ -518,17 +555,19 @@ _link_profile() {
         local bak="${target}.bak.$(date +%s)"
         cp "$target" "$bak"
         warn "Backed up existing $target → $bak"
+        rm -f "$target"  # MSYS/Git Bash: must remove before ln -sf can replace regular file
     fi
     ln -sf "$src" "$target"
     ok "$target → $src (symlinked)"
 }
 
-# Symlink primary shell profile (e.g. .zshrc)
-_link_profile "$SHELL_RC" "$PROFILE_DIR/$(basename "$SHELL_RC")"
+# ── Link shell profiles ──
+# Symlink .bashrc (all environments)
+_link_profile "$HOME/.bashrc" "$PROFILE_DIR/.bashrc"
 
-# Also symlink .bashrc if different from primary (e.g. on Android/Termux where both bash and zsh exist)
-if [[ "$SHELL_RC" != "$BASH_RC" ]]; then
-    _link_profile "$BASH_RC" "$PROFILE_DIR/.bashrc"
+# Symlink .zshrc (all environments except GIT-BASH)
+if [[ "$JOE_ENV" != "GIT-BASH" && -f "$PROFILE_DIR/.zshrc" ]]; then
+    _link_profile "$HOME/.zshrc" "$PROFILE_DIR/.zshrc"
 fi
 
 # ============================================================
