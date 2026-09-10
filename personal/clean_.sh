@@ -14,9 +14,8 @@ pgb(){
         g "$@"
     fi
     
-    rm -rf "$hpc/bashscripts/" && cn lg b "removed hpc/bashscripts " && \
-    cp -r "$hwsl/bashscripts/" "$hpc" && cn 45 b "done copy ssot from wsl to hpc" 
+    rm -rf "$hpc/ssot/" && cn lg b "removed hpc/ssot " && \
+    cp -r "$hwsl/ssot/" "$hpc" && cn 45 b "done copy ssot from wsl to hpc" 
 }
-
 
 

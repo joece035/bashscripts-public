@@ -9,7 +9,7 @@
 # ── Step 0: JOE_ENV detection (fallback — ปกติ set จาก ~/.env หรือ .bashrc) ──
 # ค่าที่ใช้ได้: TERMUX | WSL | GIT-BASH | MUMU
 
-[[ -n "${MY_DEVICE:-}" ]] && export JOE_ENV=${MY_DEVICE:-$JOE_ENV}
+[[ -z "${JOE_ENV:-}" && -n "${MY_DEVICE:-}" ]] && export JOE_ENV="$MY_DEVICE"
 if [[ -z "${JOE_ENV:-}" ]]; then
     if [[ -d "/data/data/com.termux" ]]; then
         if [[ -n "${MUMU_DEVICE:-}" ]] || [[ "$(getprop ro.product.model 2>/dev/null)" =~ (MuMu|vphone) ]]; then

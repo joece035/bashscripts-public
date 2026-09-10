@@ -49,6 +49,8 @@ fi
 VAULT_FILE="$SSOT/core/.env.enc"
 VAULT_SCRIPT="$SSOT/bootstrap/vault/ssot-vault.sh"
 EXAMPLE_FILE="$SSOT/.env.example"
+LOCAL_SECRET="$HOME/.env.secret"
+SSOT_SECRET="$SSOT/.env.secret"
 LOCAL_ENV="$HOME/.env"
 SSOT_ENV="$SSOT/.env"
 
@@ -61,9 +63,13 @@ _banner() {
     echo ""
 }
 
-# ── 5. Helper: Resolve active .env ──
+# ── 5. Helper: Resolve active secret ──
 _resolve_active_env() {
-    if [[ -f "$LOCAL_ENV" ]]; then
+    if [[ -f "$LOCAL_SECRET" ]]; then
+        echo "$LOCAL_SECRET"
+    elif [[ -f "$SSOT_SECRET" ]]; then
+        echo "$SSOT_SECRET"
+    elif [[ -f "$LOCAL_ENV" ]]; then
         echo "$LOCAL_ENV"
     elif [[ -f "$SSOT_ENV" ]]; then
         echo "$SSOT_ENV"

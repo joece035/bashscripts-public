@@ -21,12 +21,13 @@ esac
 
 # ── 2. Load private env vars (JOE_ENV, SSOT, secrets) ──
 [ -f ~/.env ] && . ~/.env
+[ -f ~/.env.secret ] && . ~/.env.secret
 
 # Git Bash Guard: Never let imported ~/.env poison a Windows Git Bash session
 case "$(uname -s)" in
     MINGW*|MSYS*|CYGWIN*)
         export JOE_ENV="GIT-BASH"
-        export MY_DEVICE="window"
+        export MY_DEVICE="GIT-BASH"
         ;;
 esac
 

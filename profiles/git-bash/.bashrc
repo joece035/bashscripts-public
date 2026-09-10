@@ -88,3 +88,9 @@ export PATH="$HOME/.local/bin:$PATH"
 
 export TERM=xterm-256color
 
+micro(){
+
+    $HOME/micro.exe "$1"
+
+}
+

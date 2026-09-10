@@ -6,20 +6,20 @@
 # Works on: Termux, MuMu, WSL, Git Bash.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/joece035/ssot-public/main/bootstrap/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/joece035/bashscripts-public/main/bootstrap/install.sh | bash
 #
 # Or clone first, then run:
-#   git clone https://github.com/joece035/ssot-public.git ~/ssot
-#   bash ~/ssot/bootstrap/install.sh
+#   git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
+#   bash ~/bashscripts/bootstrap/install.sh
 #
 # Specify device (important for Termux — auto-detect returns "TERMUX" for all):
-#   bash ~/ssot/bootstrap/install.sh <device>
-#   bash ~/ssot/bootstrap/install.sh termux    # physical Android phone
-#   bash ~/ssot/bootstrap/install.sh mumu      # MuMu emulator
-#   bash ~/ssot/bootstrap/install.sh oppo      # Oppo phone
+#   bash ~/bashscripts/bootstrap/install.sh <device>
+#   bash ~/bashscripts/bootstrap/install.sh termux    # physical Android phone
+#   bash ~/bashscripts/bootstrap/install.sh mumu      # MuMu emulator
+#   bash ~/bashscripts/bootstrap/install.sh oppo      # Oppo phone
 #
 # Or set MY_DEVICE env var:
-#   MY_DEVICE=oppo bash ~/ssot/bootstrap/install.sh
+#   MY_DEVICE=oppo bash ~/bashscripts/bootstrap/install.sh
 #
 # Idempotent: safe to re-run. Skips completed steps.
 # ============================================================
@@ -207,7 +207,7 @@ if [[ "$JOE_ENV" == "GIT-BASH" ]]; then
 fi
 
 # Source pkg_manager if available (repo may already be cloned)
-_PKG_MGR="$HOME/ssot/functions/pkg_manager.sh"
+_PKG_MGR="$HOME/bashscripts/functions/pkg_manager.sh"
 if [[ -f "$_PKG_MGR" ]]; then
     # shellcheck source=/dev/null
     source "$_PKG_MGR"
@@ -297,7 +297,7 @@ fi
 
 # STAGE 2 — Locate or Clone Repository
 # ============================================================
-# Priority: $SSOT env > derive from script location ($0) > default ~/ssot
+# Priority: $SSOT env > derive from script location ($0) > default ~/bashscripts
 # Handles: bash (BASH_SOURCE), zsh (${(%):-%x}), plain sh ($0), curl|bash pipe
 if [[ -z "${SSOT:-}" ]]; then
     # Resolve script path — zsh vs bash vs plain $0
@@ -314,7 +314,7 @@ if [[ -z "${SSOT:-}" ]]; then
         SSOT="$_derived"
         ok "SSOT derived from script path: $SSOT"
     else
-        SSOT="$HOME/ssot"
+        SSOT="$HOME/bashscripts"
         ok "SSOT defaulting to: $SSOT"
     fi
 fi
@@ -329,7 +329,7 @@ else
         rm -rf "$SSOT"
     fi
 
-    REPO_URL="https://github.com/joece035/ssot-public.git"
+    REPO_URL="https://github.com/joece035/bashscripts-public.git"
     if command -v git >/dev/null 2>&1; then
         git clone --depth=1 "$REPO_URL" "$SSOT" || die "git clone failed"
     else
@@ -338,7 +338,7 @@ else
         TMPDIR="$(mktemp -d)"
         curl -fsSL "${REPO_URL%.git}/archive/refs/heads/main.tar.gz" \
             | tar -xz -C "$TMPDIR" || die "Download failed"
-        mv "$TMPDIR/ssot-main" "$SSOT"
+        mv "$TMPDIR/bashscripts-main" "$SSOT"
         rm -rf "$TMPDIR"
     fi
     ok "Repository cloned to $SSOT"
@@ -535,7 +535,7 @@ _link_profile() {
     local target="$1"
     local src="$2"
     [[ ! -f "$src" ]] && return 0
-    # Guard: auto-strip CRLF () from source template if present
+    # Guard: auto-strip CRLF from source template if present
     if grep -q $'\r' "$src" 2>/dev/null; then
         sed -i 's/\r$//' "$src" 2>/dev/null || true
     fi
@@ -577,7 +577,7 @@ fi
 #   - PATH setup (~/.local/bin)
 #   - Load ~/.env (secrets & overrides)
 #   - shell_setup() — symlink shell profiles
-#   - repo() — switch between ~/bashscripts and ~/ssot
+#   - repo() — switch between ~/bashscripts and ~/bashscripts
 # ============================================================
 log "Stage 4.5: Generating global environment manager"
 
@@ -586,9 +586,9 @@ mkdir -p "$BIN_DIR"
 
 ENV_TARGET="$BIN_DIR/env"
 
-# Find template: try $SSOT first, then fallback to ~/ssot
+# Find template: try $SSOT first, then fallback to ~/bashscripts
 ENV_TEMPLATE=""
-for _dir in "$SSOT" "$HOME/ssot" "$HOME/bashscripts"; do
+for _dir in "$SSOT" "$HOME/bashscripts" "$HOME/bashscripts"; do
     if [[ -f "$_dir/bootstrap/templates/env" ]]; then
         ENV_TEMPLATE="$_dir/bootstrap/templates/env"
         break
@@ -617,7 +617,7 @@ esac
 # SSOT auto-detection
 if [[ -z "${SSOT:-}" ]]; then
     [[ -d "$HOME/bashscripts" ]] && export SSOT="$HOME/bashscripts"
-    [[ -z "${SSOT:-}" && -d "$HOME/ssot" ]] && export SSOT="$HOME/ssot"
+    [[ -z "${SSOT:-}" && -d "$HOME/bashscripts" ]] && export SSOT="$HOME/bashscripts"
 fi
 
 # Source joe.sh if SSOT is set
