@@ -7,10 +7,10 @@
 #          or when adding new API keys to the ecosystem.
 #
 # Usage:
-#   bash ~/ssot/bootstrap/secret-setup.sh          # Full wizard
-#   bash ~/ssot/bootstrap/secret-setup.sh --unlock  # Unlock vault first
-#   bash ~/ssot/bootstrap/secret-setup.sh --verify  # Quick check
-#   bash ~/ssot/bootstrap/secret-setup.sh --diff    # Show what's missing
+#   bash ~/bashscripts/bootstrap/secret-setup.sh          # Full wizard
+#   bash ~/bashscripts/bootstrap/secret-setup.sh --unlock  # Unlock vault first
+#   bash ~/bashscripts/bootstrap/secret-setup.sh --verify  # Quick check
+#   bash ~/bashscripts/bootstrap/secret-setup.sh --diff    # Show what's missing
 #
 # Part of the 3-Layer Secret Architecture:
 #   Layer 1: .env.example     (committed, shows all expected keys)
@@ -21,7 +21,7 @@
 set -euo pipefail 2>/dev/null || true
 
 # ── 1. Resolve SSOT Root ──
-_SSOT_ROOT="${SSOT:-$HOME/ssot}"
+_SSOT_ROOT="${SSOT:-$HOME/bashscripts}"
 if [[ ! -d "$_SSOT_ROOT" ]]; then
     _SSOT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 fi
@@ -371,10 +371,10 @@ _show_help() {
     echo "  Layer 3: ~/.env           (local only, chmod 600, gitignored)"
     echo ""
     echo "New Machine Workflow:"
-    echo "  1. git clone <repo> ~/ssot"
-    echo "  2. bash ~/ssot/bootstrap/install.sh"
+    echo "  1. git clone <repo> ~/bashscripts"
+    echo "  2. bash ~/bashscripts/bootstrap/install.sh"
     echo "     └─ Detects vault → prompts to unlock"
-    echo "  3. bash ~/ssot/bootstrap/secret-setup.sh"
+    echo "  3. bash ~/bashscripts/bootstrap/secret-setup.sh"
     echo "     └─ Verifies all secrets are populated"
     echo ""
     echo "Adding New Secrets:"

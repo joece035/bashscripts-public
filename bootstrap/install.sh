@@ -10,7 +10,7 @@
 #
 # Or clone first, then run:
 #   git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
-#   bash ~/bashscripts/bootstrap/install.sh
+#  bash ~/bashscripts/bootstrap/install.sh
 #
 # Specify device (important for Termux — auto-detect returns "TERMUX" for all):
 #   bash ~/bashscripts/bootstrap/install.sh <device>
