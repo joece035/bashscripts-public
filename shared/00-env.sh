@@ -66,11 +66,20 @@ case "$JOE_ENV" in
          export NODE_HOST="wsl"
          export WIN_PATH="/mnt/"
          ;;
+<<<<<<< HEAD
+    WSL2)
+         export PYTHON_VENV="$HOME/.venv/bin/activate"
+         export NODE_HOST="wsl2"
+         export WIN_PATH="/mnt/"
+              
+         ;;
+=======
     WSL2)
          export PYTHON_VENV="$HOME/.venv/bin/activate"
          export NODE_HOST="wsl2"
          export WIN_PATH="/mnt/"     
          ;;
+>>>>>>> 4ed38816cb7bf1f1264b9fd970ee01c25085c8a0
     GIT-BASH)
          export HERMES_DIR="/mnt/c/Users/User/AppData/Local/hermes"
          export PYTHON_VENV="$HWSL/.venv/bin/activate"
@@ -214,8 +223,13 @@ export TAILSCALE_IP_TERMUX=100.110.26.16
 export TAILSCALE_IP_WINDOW=100.69.181.45
 export TAILSCALE_IP_WSL=100.80.195.120
 export TAILSCALE_IP_MUMU=100.100.176.94
+<<<<<<< HEAD
+export TAILSCALE_IP_OPPO=100.109.249.216
+export TAILSCALE_IP_WSL2=100.123.224.60
+=======
 export TAILSCALE_IP_OPPO=100.109.249.216
 export TAILSCALE_IP_WSL2=
+>>>>>>> 4ed38816cb7bf1f1264b9fd970ee01c25085c8a0
 
 # ── Dynamic Node Registry Loader (drop-in profiles from $SSOT/bootstrap/nodes/*.node.env) ──
 if [[ -f "${SSOT:-$HOME/ssot}/bootstrap/nodes/loader.sh" ]]; then
@@ -356,7 +370,7 @@ mkdir -p "$BACKUP_DIR" 2>/dev/null
 # ============================================================
 
 case "$JOE_ENV" in
-    WSL|TERMUX|MUMU)
+    WSL|TERMUX|MUMU|WSL2)
         if command -v micro >/dev/null 2>&1; then
             export EDITOR="micro"
             export VISUAL="micro"
@@ -385,9 +399,9 @@ case "$JOE_ENV" in
 esac
 #-- Zshshell-setup
 zsh_setup(){
-    local device=${1:-$MY_DEVICE} #-- TERMUX || MUMU
+    local JOE_ENV=${1:-$JOE_ENV} #-- TERMUX || MUMU
     local zsh_path="${SSOT:-$HOME/ssot}/profiles/${device}/.zshrc"
-        case "$device" in
+        case "$JOE_ENV" in
             TERMUX|termux)
                     if  [[ -f "$HOME/.zshrc" ]]; then
                         mv "$HOME/.zshrc" "$HOME/.zshrcbk_by_setup" &&
