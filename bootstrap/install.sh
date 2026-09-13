@@ -47,7 +47,7 @@ die()  { printf '%s✗%s %s\n' "${_BOLD}${_RED}" "${_RESET}" "$*" >&2; exit 1; }
 # then removes them so install starts from a clean state.
 # ============================================================
 STAGE_TS="$(date +%Y%m%d_%H%M%S)"
-BACKUP_DIR="$HOME/.ssot-backups/installationbk/$STAGE_TS"
+BACKUP_DIR="$HOME/.bashscripts-backups/installationbk/$STAGE_TS"
 mkdir -p "$BACKUP_DIR"
 
 log "Stage Pre-0: Backing up previous installation → $BACKUP_DIR"
