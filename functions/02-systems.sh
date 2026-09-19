@@ -227,19 +227,6 @@ alias tmnal='terminal_theme'
 
 
 
-set_() {
-    eval "$1=\"\$2\""
-}
-
-draw_() {
-    local char="$1"
-    local count="$2"
-    local space_
-    space_="$(printf '%*s' "$count" '')"
-    printf '%s' "${space_// /$char}"
-}
-
-
 
 
 slink(){
