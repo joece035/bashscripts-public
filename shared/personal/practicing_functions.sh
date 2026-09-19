@@ -471,3 +471,17 @@ perm(){
         done
     fi
 
+find_(){
+    local tdir=${1:-.}
+    local pat=${2:-}
+
+    local files=$(find "$tdir" -type f -iname "$2" >/dev/null 2>&1)
+    local c_=$(find "$tdir" -type f -iname "$2" >/dev/null 2>&1 | wc -l )
+
+    for f in ${files[@]}; do
+        echo $f &&
+        rm -f $f &&
+        cn lr b "done deleted $f"
+        cn lg b " $c_ files "
+    done    
+}
