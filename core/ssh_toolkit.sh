@@ -2,7 +2,7 @@
 # ============================================================
 # 🛠️ SSH TOOLKIT — Production Multi-Node & Key Management
 # ============================================================
-# Part of SSOT Infrastructure (~/bashscripts/)
+# Part of SSOT Infrastructure (~/ssot/)
 # Compatible: WSL (Ubuntu), Termux (Android/MuMu), Linux, macOS, Git-Bash
 # Supported Shells: Bash 4+, Zsh
 #

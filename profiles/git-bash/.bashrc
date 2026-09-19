@@ -1,6 +1,6 @@
 # ~/.bashrc: executed by bash(1) for non-login shells.
 
-[[ -f "$HOME/ssot/.bash_helper" ]] && source "$HOME/ssot/.bash_helper"
+[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
 # ── 1. CORE BASH CONFIG ──
 HISTCONTROL=ignoreboth
 shopt -s histappend
@@ -12,9 +12,7 @@ shopt -s checkwinsize
 ## ── 2. BASH LINE EDITOR (Source only, no attach yet) ──
 
 # ── Fix ble.sh locale (Termux has no locale command) ──
-export LANG="en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
-export LC_CTYPE="en_US.UTF-8"
+
 if [[ $- == *i* && -f $HOME/.local/share/blesh/ble.sh ]]; then
     [[ ${BLE_VERSION-} ]] || source $HOME/.local/share/blesh/ble.sh --attach=none
 fi
@@ -87,10 +85,4 @@ export PATH="$HOME/.local/bin:$PATH"
 
 
 export TERM=xterm-256color
-
-micro(){
-
-    $HOME/micro.exe "$1"
-
-}
-
+cd

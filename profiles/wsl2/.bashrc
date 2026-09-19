@@ -1,6 +1,10 @@
 # $HOME/.bashrc: executed by bash(1) for non-login shells.
-
-[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
+# Load helper functions early so core functions (like _color_render)
+# are available during the .env loading phase
+if [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
+    source "$HOME/bashscripts/.bash_helper" 2>/dev/null
+fi
+    
 # ── 1. CORE BASH CONFIG ──
 HISTCONTROL=ignoreboth
 shopt -s histappend
@@ -10,15 +14,9 @@ shopt -s checkwinsize
 [ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
 
 # ── 2. BASH LINE EDITOR (Source only, no attach yet) ──
-
-# ── Fix ble.sh locale (Termux has no locale command) ──
-export LANG="en_US.UTF-8"
-export LC_ALL="en_US.UTF-8"
-export LC_CTYPE="en_US.UTF-8"
 if [[ $- == *i* && -f $HOME/.local/share/blesh/ble.sh ]]; then
     [[ ${BLE_VERSION-} ]] || source $HOME/.local/share/blesh/ble.sh --attach=none
 fi
-
 # ── 3. NVM & COMPLETIONS (MUST come BEFORE .env) ──
 # .env reads NVM_DIR to find node path — needs NVM init first
 export NVM_DIR="$HOME/.nvm"
@@ -27,28 +25,25 @@ nvm use default >/dev/null 2>&1 || true
 
 # ── 4. ENVIRONMENT & PATHS ──
 # ~/.local/bin/env handles: PATH, ~/.env, SSOT auto-detect, joe.sh
-_check -f "$HOME/.local/bin/env" "source"
+_C -o -f "$HOME/.local/bin/env" "source"
 
-# Environment-specific overrides
-export JOE_ENV="${JOE_ENV:-TERMUX}"
-export MY_DEVICE="${MY_DEVICE:-TERMUX}"
+# Environment-specific overrides (set by ~/.local/bin/env via ~/.env)
+export JOE_ENV="${JOE_ENV:-WSL2}"
+export MY_DEVICE="${MY_DEVICE:-WSL2}"
 
-# Extra PATH entries
+# Extra PATH entries (not managed by env)
 export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
 
 # ── 5. ALIASES & COMPLETIONS ──
 [ -f $HOME/.bash_aliases ] && source $HOME/.bash_aliases
 
 # ── 6. PERSONAL COMMAND CENTER (JOE) ──
-# Source joe.sh; suppress all errors so any function-level bugs
-# don't kill the shell (defensive — not a fix, just safety net)
-# CRLF guard: ถ้า joe.sh ถูกบันทึกเป็น CRLF (จาก Windows/Acode-X) bash จะ
-# parse ไม่ผ่าน → แปลงกลับเป็น LF ก่อน source (joe.sh มี self-heal ข้างในด้วย)
-if [ -f $HOME/bashscripts/joe.sh ] && grep -qU $'\r' $HOME/bashscripts/joe.sh 2>/dev/null; then
-    sed -i 's/\r$//' $HOME/bashscripts/joe.sh
+# joe.sh is auto-sourced by ~/.local/bin/env via SSOT
+# CRLF guard: convert CRLF→LF if needed (Windows/Acode-X issue)
+if [[ -f "${SSOT:-$HOME/ssot}/joe.sh" ]] && grep -qU $'\r' "${SSOT:-$HOME/ssot}/joe.sh" 2>/dev/null; then
+    sed -i 's/\r$//' "${SSOT:-$HOME/ssot}/joe.sh"
     echo "⚠️  CRLF→LF: joe.sh (auto-fixed)"
 fi
-[ -f $HOME/bashscripts/joe.sh ] && . $HOME/bashscripts/joe.sh 2>/dev/null
 
 # ── 6. STARSHIP ──
 # if [[ $- == *i* && -z "$STARSHIP_LOADED" ]]; then
@@ -62,6 +57,14 @@ if [[ $- == *i* && ${BLE_VERSION-} && -z "$BLE_ATTACHED" ]]; then
     ble-attach
 fi
 
+# ── 9. FINAL SETTINGS ──
+
+
+# OpenClaw Completion
+[ -f "$HOME/.openclaw-2/completions/openclaw.bash" ] && source "$HOME/.openclaw-2/completions/openclaw.bash"
+
+# opencode
+export PATH=$HOME/.opencode/bin:$PATH
 
 
 # Added by Antigravity CLI installer
@@ -78,3 +81,5 @@ export PATH="$HOME/.local/bin:$PATH"
 
 
 export TERM=xterm-256color
+
+[ -t 0 ] && stty sane 2>/dev/null || true

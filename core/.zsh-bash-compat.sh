@@ -1,7 +1,7 @@
 # ============================================================
 # .zsh-bash-compat.sh — Zsh -> Bash Compatibility Layer
 # ============================================================
-# Sourced by .zshrc BEFORE joe.sh to make bashscripts work in zsh.
+# Sourced by .zshrc BEFORE joe.sh to make ssot work in zsh.
 # SSOT: ~/bashscripts/.zsh-bash-compat.sh
 # ============================================================
 
@@ -43,7 +43,7 @@ if ! command -v compgen &>/dev/null && ! typeset -f compgen &>/dev/null; then
     compgen() { :; }
 fi
 
-# ── 6. Unalias conflicts BEFORE bashscripts load ──
+# ── 6. Unalias conflicts BEFORE ssot load ──
 unalias sudo 2>/dev/null
 unalias sd 2>/dev/null
 unalias rc 2>/dev/null

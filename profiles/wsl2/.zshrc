@@ -1,6 +1,6 @@
 # ================================================================
-# $HOME/.zshrc - JOE SSOT ZSH Config (WSL)
-# SSOT: $HOME/bashscripts/profiles/wsl/.zshrc
+# $HOME/.zshrc - JOE SSOT ZSH Config (WSL2)
+# SSOT: $HOME/bashscripts/profiles/WSL2/.zshrc
 # Linked to: $HOME/.zshrc
 # ================================================================
 

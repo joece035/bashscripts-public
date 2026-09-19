@@ -1,6 +1,6 @@
 # $HOME/.bashrc: executed by bash(1) for non-login shells.
 
-[[ -f "$HOME/ssot/.bash_helper" ]] && source "$HOME/ssot/.bash_helper"
+[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
 # ── 1. CORE BASH CONFIG ──
 HISTCONTROL=ignoreboth
 shopt -s histappend
@@ -44,11 +44,11 @@ export PATH="$HOME/.local/lib/openclaw/bin:$PATH"
 # don't kill the shell (defensive — not a fix, just safety net)
 # CRLF guard: ถ้า joe.sh ถูกบันทึกเป็น CRLF (จาก Windows/Acode-X) bash จะ
 # parse ไม่ผ่าน → แปลงกลับเป็น LF ก่อน source (joe.sh มี self-heal ข้างในด้วย)
-if [ -f $HOME/ssot/joe.sh ] && grep -qU $'\r' $HOME/ssot/joe.sh 2>/dev/null; then
-    sed -i 's/\r$//' $HOME/ssot/joe.sh
+if [ -f $HOME/bashscripts/joe.sh ] && grep -qU $'\r' $HOME/bashscripts/joe.sh 2>/dev/null; then
+    sed -i 's/\r$//' $HOME/bashscripts/joe.sh
     echo "⚠️  CRLF→LF: joe.sh (auto-fixed)"
 fi
-[ -f $HOME/ssot/joe.sh ] && . $HOME/ssot/joe.sh 2>/dev/null
+[ -f $HOME/bashscripts/joe.sh ] && . $HOME/bashscripts/joe.sh 2>/dev/null
 
 # ── 6. STARSHIP ──
 # if [[ $- == *i* && -z "$STARSHIP_LOADED" ]]; then

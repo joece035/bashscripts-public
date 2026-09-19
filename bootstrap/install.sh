@@ -6,20 +6,20 @@
 # Works on: Termux, MuMu, WSL, Git Bash.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/joece035/bashscripts-public/main/bootstrap/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/joece035/ssot-public/main/bootstrap/install.sh | bash
 #
 # Or clone first, then run:
-#   git clone https://github.com/joece035/bashscripts-public.git ~/bashscripts
-#  bash ~/bashscripts/bootstrap/install.sh
+#   git clone https://github.com/joece035/ssot-public.git $HOME/bashscripts
+#   bash $HOME/bashscripts/bootstrap/install.sh
 #
 # Specify device (important for Termux — auto-detect returns "TERMUX" for all):
-#   bash ~/bashscripts/bootstrap/install.sh <device>
-#   bash ~/bashscripts/bootstrap/install.sh termux    # physical Android phone
-#   bash ~/bashscripts/bootstrap/install.sh mumu      # MuMu emulator
-#   bash ~/bashscripts/bootstrap/install.sh oppo      # Oppo phone
+#   bash $HOME/bashscripts/bootstrap/install.sh <device>
+#   bash $HOME/bashscripts/bootstrap/install.sh termux    # physical Android phone
+#   bash $HOME/bashscripts/bootstrap/install.sh mumu      # MuMu emulator
+#   bash $HOME/bashscripts/bootstrap/install.sh oppo      # Oppo phone
 #
 # Or set MY_DEVICE env var:
-#   MY_DEVICE=oppo bash ~/bashscripts/bootstrap/install.sh
+#   MY_DEVICE=oppo bash $HOME/bashscripts/bootstrap/install.sh
 #
 # Idempotent: safe to re-run. Skips completed steps.
 # ============================================================
@@ -47,7 +47,7 @@ die()  { printf '%s✗%s %s\n' "${_BOLD}${_RED}" "${_RESET}" "$*" >&2; exit 1; }
 # then removes them so install starts from a clean state.
 # ============================================================
 STAGE_TS="$(date +%Y%m%d_%H%M%S)"
-BACKUP_DIR="$HOME/.bashscripts-backups/installationbk/$STAGE_TS"
+BACKUP_DIR="$HOME/.ssot-backups/installationbk/$STAGE_TS"
 mkdir -p "$BACKUP_DIR"
 
 log "Stage Pre-0: Backing up previous installation → $BACKUP_DIR"
@@ -164,7 +164,11 @@ detect_joe_env() {
     elif command -v apk >/dev/null 2>&1; then
         echo "ACODEX"
     elif grep -qi microsoft /proc/version 2>/dev/null; then
-        echo "WSL"
+        if [[ $(id -un) == "joez" ]]; then
+            echo "WSL2"
+        else    
+            echo "WSL"
+        fi    
     elif [[ -n "${MSYSTEM:-}" ]] || [[ "${OSTYPE:-}" == "msys" ]]; then
         echo "GIT-BASH"
     else
@@ -238,7 +242,7 @@ _install_pkg() {
                 [[ "$pkg" == "openssl" ]] && t_pkg="openssl-tool"
                 pkg install -y "$t_pkg" 2>/dev/null || warn "  pkg install $pkg failed"
                 ;;
-            WSL|LINUX)
+            WSL|WSL2)
                 sudo apt-get install -y "$pkg" 2>/dev/null || warn "  apt install $pkg failed"
                 ;;
             ACODEX)
@@ -256,7 +260,7 @@ case "$JOE_ENV" in
     TERMUX|MUMU|OPPO)
         pkg update -y 2>/dev/null || warn "pkg update failed (non-fatal)"
         ;;
-    WSL|LINUX)
+    WSL|WSL2)
         sudo apt-get update -qq 2>/dev/null || warn "apt update failed (non-fatal)"
         ;;
     ACODEX)
@@ -271,6 +275,8 @@ _install_pkg openssh  ssh
 _install_pkg openssl  openssl  "apk=openssl"
 _install_pkg curl     curl
 _install_pkg jq       jq      "winget=jqlang.jq"
+_install_pkg make 	  make
+_install_pkg gawk			gawk
 
 # rsync: optional on Git Bash (not available via winget, skip gracefully)
 if [[ "$JOE_ENV" == "GIT-BASH" ]]; then
@@ -297,7 +303,7 @@ fi
 
 # STAGE 2 — Locate or Clone Repository
 # ============================================================
-# Priority: $SSOT env > derive from script location ($0) > default ~/bashscripts
+# Priority: $SSOT env > derive from script location ($0) > default $HOME/bashscripts
 # Handles: bash (BASH_SOURCE), zsh (${(%):-%x}), plain sh ($0), curl|bash pipe
 if [[ -z "${SSOT:-}" ]]; then
     # Resolve script path — zsh vs bash vs plain $0
@@ -329,7 +335,7 @@ else
         rm -rf "$SSOT"
     fi
 
-    REPO_URL="https://github.com/joece035/bashscripts-public.git"
+    REPO_URL="https://github.com/joece035/ssot-public.git"
     if command -v git >/dev/null 2>&1; then
         git clone --depth=1 "$REPO_URL" "$SSOT" || die "git clone failed"
     else
@@ -338,7 +344,7 @@ else
         TMPDIR="$(mktemp -d)"
         curl -fsSL "${REPO_URL%.git}/archive/refs/heads/main.tar.gz" \
             | tar -xz -C "$TMPDIR" || die "Download failed"
-        mv "$TMPDIR/bashscripts-main" "$SSOT"
+        mv "$TMPDIR/ssot-main" "$SSOT"
         rm -rf "$TMPDIR"
     fi
     ok "Repository cloned to $SSOT"
@@ -448,7 +454,7 @@ else
     if [[ -z "${MY_DEVICE:-}" ]]; then
         _def_device="$(echo "$JOE_ENV" | tr '[:upper:]' '[:lower:]')"
         case "$JOE_ENV" in
-            GIT-BASH) _def_device="window" ;;
+            GIT-BASH) _def_device="git-bash" ;;
         esac
         if grep -q "^export MY_DEVICE=" "$ENV_FILE" 2>/dev/null; then
             sed -i "s/^export MY_DEVICE=.*/export MY_DEVICE=\"$_def_device\"/" "$ENV_FILE"
@@ -461,34 +467,102 @@ fi
 
 # ============================================================
 
-# \u2500\u2500 2d. SSH Pubkey Vault Unlock \u2500\u2500
+# ── 3d. SSH Node Keypair Generation ──
+log "Stage 3d: SSH node keypair"
+_NODE_KEY="$HOME/.ssh/id_ed25519_node"
+_NODE_PUB="$HOME/.ssh/id_ed25519_node.pub"
+mkdir -p "$HOME/.ssh" && chmod 700 "$HOME/.ssh"
+
+if [[ ! -f "$_NODE_KEY" ]]; then
+    _node_comment="${MY_DEVICE:-$(hostname)}-$(echo "$JOE_ENV" | tr '[:upper:]' '[:lower:]')"
+    ssh-keygen -t ed25519 -C "$_node_comment" -f "$_NODE_KEY" -N "" -q
+    ok "Generated SSH node keypair: $_NODE_KEY"
+    ok "  Comment: $_node_comment"
+else
+    ok "SSH node keypair exists: $_NODE_KEY"
+fi
+
+# ── 3e. SSH Pubkey Vault Unlock ──
 PUBKEY_SCRIPT="$SSOT/bootstrap/nodes/pubkey-manager.sh"
 PUBKEY_VAULT="$SSOT/core/pubkeys.enc"
 
 if [[ -f "$PUBKEY_VAULT" ]] && [[ -f "$PUBKEY_SCRIPT" ]]; then
-    log "Stage 3d: Installing SSH pubkeys from vault (core/pubkeys.enc)"
+    log "Stage 3e: Installing SSH pubkeys from vault (core/pubkeys.enc)"
     if [[ -n "${SSOT_VAULT_PASS:-}" ]]; then
         # Non-interactive: passphrase provided via env var
         if bash "$PUBKEY_SCRIPT" unlock 2>/dev/null; then
-            ok "Pubkeys installed \u2192 ~/.ssh/authorized_keys"
+            ok "Pubkeys installed -> ~/.ssh/authorized_keys"
         else
-            warn "Pubkey unlock failed \u2014 run 'vault unlock_pubkey' manually"
+            warn "Pubkey unlock failed -- run 'vault unlock_pubkey' manually"
         fi
     else
-        # Interactive: prompt user
-        read -r -t 15 -p "   \ud83d\udd11 Install SSH pubkeys from vault? [Y/n] (default: Y): " _pk_choice < /dev/tty || _pk_choice="Y"
+        # Interactive: write prompt directly to /dev/tty (avoids subshell rendering issue)
+        printf "   🔑 Install SSH pubkeys from vault? [Y/n] (default: Y): " > /dev/tty
+        read -r -t 15 _pk_choice < /dev/tty || _pk_choice="Y"
         if [[ "${_pk_choice:-Y}" =~ ^[Yy]?$ ]]; then
-            if bash "$PUBKEY_SCRIPT" unlock 2>/dev/null; then
-                ok "Pubkeys installed \u2192 ~/.ssh/authorized_keys"
+            if bash "$PUBKEY_SCRIPT" unlock < /dev/tty; then
+                ok "Pubkeys installed -> ~/.ssh/authorized_keys"
             else
-                warn "Pubkey unlock failed \u2014 run 'vault unlock_pubkey' manually"
+                warn "Pubkey unlock failed -- run 'vault unlock_pubkey' manually"
             fi
         else
-            echo "  \ud83d\udca1 Run 'vault unlock_pubkey' when ready"
+            echo "  💡 Run 'vault unlock_pubkey' when ready"
         fi
     fi
 else
-    ok "No pubkey vault found \u2014 skipping (core/pubkeys.enc)"
+    ok "No pubkey vault found -- skipping (core/pubkeys.enc)"
+fi
+
+# ── 3f. Publish this node's pubkey -> bootstrap/nodes/pending/ (Step C) ──
+# Allows the hub (WSL2) to collect all pending keys with: vault lock_pubkey --collect
+log "Stage 3f: Publishing node pubkey for hub collection"
+_PENDING_DIR="$SSOT/bootstrap/nodes/pending"
+_NODE_LABEL="${MY_DEVICE:-$(hostname)}"
+_PENDING_FILE="$_PENDING_DIR/${_NODE_LABEL}.pub"
+
+if [[ -f "$_NODE_PUB" ]]; then
+    mkdir -p "$_PENDING_DIR"
+
+    # Idempotent: only update if pubkey changed
+    _current_pub="$(cat "$_NODE_PUB")"
+    _stored_pub="$(cat "$_PENDING_FILE" 2>/dev/null || echo "")"
+
+    if [[ "$_current_pub" == "$_stored_pub" ]]; then
+        ok "Pubkey already published: bootstrap/nodes/pending/${_NODE_LABEL}.pub"
+    else
+        cp "$_NODE_PUB" "$_PENDING_FILE"
+        ok "Published: bootstrap/nodes/pending/${_NODE_LABEL}.pub"
+
+        # Ensure pending/*.pub are git-tracked (not ignored by parent .gitignore)
+        _PENDING_GITIGNORE="$_PENDING_DIR/.gitignore"
+        if [[ ! -f "$_PENDING_GITIGNORE" ]]; then
+            printf '*\n!.gitignore\n!*.pub\n' > "$_PENDING_GITIGNORE"
+        fi
+
+        # Best-effort git push
+        if git -C "$SSOT" remote get-url origin &>/dev/null; then
+            echo "  📤 Pushing pubkey to git..."
+            git -C "$SSOT" add "$_PENDING_FILE" "$_PENDING_GITIGNORE" 2>/dev/null || true
+            if git -C "$SSOT" diff --cached --quiet 2>/dev/null; then
+                ok "Nothing new to push (pubkey already committed)"
+            else
+                if git -C "$SSOT" commit -m "chore(pubkey): add ${_NODE_LABEL} pending pubkey" 2>/dev/null; then
+                    if git -C "$SSOT" push 2>/dev/null; then
+                        ok "Pushed! Hub can now run: vault lock_pubkey --collect"
+                    else
+                        warn "git push failed -- run: git -C $SSOT push"
+                    fi
+                else
+                    warn "git commit failed -- run manually"
+                fi
+            fi
+        else
+            warn "No git remote -- skipping push"
+            echo "  💡 Copy $_PENDING_FILE to hub and run: vault lock_pubkey --collect"
+        fi
+    fi
+else
+    warn "No node pubkey found at $_NODE_PUB -- skipping publish"
 fi
 
 # STAGE 4 — Wire Shell Profile
@@ -517,6 +591,10 @@ case "$JOE_ENV" in
         PROFILE_DIR="$SSOT/profiles/wsl"
         SHELL_RC="$HOME/.bashrc"   # WSL default is bash
         ;;
+    WSL2)
+        PROFILE_DIR="$SSOT/profiles/wsl2"
+        SHELL_RC="$HOME/.bashrc"   # WSL default is bash
+        ;;    
     GIT-BASH)
         PROFILE_DIR="$SSOT/profiles/git-bash"
         SHELL_RC="$HOME/.bashrc"
@@ -535,7 +613,7 @@ _link_profile() {
     local target="$1"
     local src="$2"
     [[ ! -f "$src" ]] && return 0
-    # Guard: auto-strip CRLF from source template if present
+    # Guard: auto-strip CRLF ( from source template if present
     if grep -q $'\r' "$src" 2>/dev/null; then
         sed -i 's/\r$//' "$src" 2>/dev/null || true
     fi
@@ -577,7 +655,7 @@ fi
 #   - PATH setup (~/.local/bin)
 #   - Load ~/.env (secrets & overrides)
 #   - shell_setup() — symlink shell profiles
-#   - repo() — switch between ~/bashscripts and ~/bashscripts
+#   - repo() — switch between ~/bashscripts and $HOME/bashscripts
 # ============================================================
 log "Stage 4.5: Generating global environment manager"
 
@@ -586,7 +664,7 @@ mkdir -p "$BIN_DIR"
 
 ENV_TARGET="$BIN_DIR/env"
 
-# Find template: try $SSOT first, then fallback to ~/bashscripts
+# Find template: try $SSOT first, then fallback to $HOME/bashscripts
 ENV_TEMPLATE=""
 for _dir in "$SSOT" "$HOME/bashscripts" "$HOME/bashscripts"; do
     if [[ -f "$_dir/bootstrap/templates/env" ]]; then
@@ -627,6 +705,14 @@ ENVEOF
     ok "Created: $ENV_TARGET (minimal)"
 fi
 
+log "Stage 4.6: auto detect and install ble"
+
+
+ if [[ ! -f "~/.local/share/blesh/ble.sh" || ! -d "$HOME/ble.sh" ]]; then
+ 		cd $HOME &&
+ 		git clone --recursive --depth 1 --shallow-submodules https://github.com/akinomyoga/ble.sh.git
+		make -C ble.sh install PREFIX=~/.local
+ fi		
 # ============================================================
 # STAGE 4.7 — Broken Symlink Scanner & Cleanup
 # ============================================================

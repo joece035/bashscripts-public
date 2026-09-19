@@ -1,8 +1,8 @@
 # $HOME/.bashrc: executed by bash(1) for non-login shells.
 # Load helper functions early so core functions (like _color_render)
 # are available during the .env loading phase
-if [[ -f "$HOME/ssot/.bash_helper" ]]; then
-    source "$HOME/ssot/.bash_helper" 2>/dev/null
+if [[ -f "$HOME/bashscripts/.bash_helper" ]]; then
+    source "$HOME/bashscripts/.bash_helper" 2>/dev/null
 fi
     
 # ── 1. CORE BASH CONFIG ──
@@ -17,7 +17,6 @@ shopt -s checkwinsize
 if [[ $- == *i* && -f $HOME/.local/share/blesh/ble.sh ]]; then
     [[ ${BLE_VERSION-} ]] || source $HOME/.local/share/blesh/ble.sh --attach=none
 fi
-_check -f "$HOME/.local/share/blesh/ble.sh" "source"
 # ── 3. NVM & COMPLETIONS (MUST come BEFORE .env) ──
 # .env reads NVM_DIR to find node path — needs NVM init first
 export NVM_DIR="$HOME/.nvm"
@@ -26,7 +25,7 @@ nvm use default >/dev/null 2>&1 || true
 
 # ── 4. ENVIRONMENT & PATHS ──
 # ~/.local/bin/env handles: PATH, ~/.env, SSOT auto-detect, joe.sh
-. "$HOME/.local/bin/env"
+_C -o -f "$HOME/.local/bin/env" "source"
 
 # Environment-specific overrides (set by ~/.local/bin/env via ~/.env)
 export JOE_ENV="${JOE_ENV:-WSL}"
@@ -84,5 +83,4 @@ export PATH="$HOME/.local/bin:$PATH"
 
 export TERM=xterm-256color
 
-source -- $HOME/.local/share/blesh/ble.sh
 [ -t 0 ] && stty sane 2>/dev/null || true

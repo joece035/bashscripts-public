@@ -65,8 +65,8 @@ clone_(){
     fi
 
     cd "$SSOT_TARGET"
-    source "$HOME/ssot/.bash_helper"
-    source "$HOME/ssot/joe.sh"
+    source "$HOME/bashscripts/.bash_helper"
+    source "$HOME/bashscripts/joe.sh"
 }
 clone_
 

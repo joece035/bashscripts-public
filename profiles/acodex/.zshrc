@@ -1,10 +1,10 @@
 # ================================================================
 # ~/.zshrc - JOE SSOT ZSH Config (Termux)
-# MASTER: WSL | SSOT: ~/ssot/tools/zshrc_termux.zsh
+# MASTER: WSL | SSOT: ~/bashscripts/tools/zshrc_termux.zsh
 # Deployed by: Fresh_termux_fullsetup_SSOT.sh (links to ~/.zshrc)
 # Do NOT edit on Termux -- edit in WSL, Syncthing syncs it.
 # ================================================================
-
+[[ -f "$HOME/bashscripts/.bash_helper" ]] && source "$HOME/bashscripts/.bash_helper"
 # -- Terminal type (SSH sessions inherit no TERM -- micro/TUI needs this)
 export TERM="${TERM:-xterm-256color}"
 export COLORTERM="truecolor"

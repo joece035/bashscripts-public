@@ -89,7 +89,8 @@ ssh_() {
         w|tw|window|win|WINDOW)     ssh window    "$@" ;;
         gb|gitbash|GITBASH|g)       ssh window    "& '${WIN_GIT_BASH}' --login -i" "$@" ;;
         mm|mumu|MUMU|m)             ssh mumu      "$@" ;;
-        wsl|WSL|WSL2)               ssh wsl       "$@" ;;
+        wsl|WSL)                    ssh wsl       "$@" ;;
+        wsl2|WSL2)                  ssh wsl2      "$@" ;;
         op|oppo|OPPO|o)             ssh oppo      "$@" ;;
         ax|a|ACODEX|A)              ssh -p 8021 root@termux "bash" "$@" ;;
         *) cn r b "usage ssh_ <host>"; return 1 ;;
@@ -121,19 +122,29 @@ node_resolve() {
             TARGET_PORT="${NODE_MUMU_PORT:-8022}"
             TARGET_USER="$NODE_MUMU_USER"
             ;;
-        wsl|WSL|WSL2)
+        wsl|WSL)
             TARGET_HOST="$NODE_WSL_HOST"
-            TARGET_PORT="${NODE_WSL_PORT:-22}"
+            TARGET_PORT="${NODE_WSL_PORT:-2222}"
             TARGET_USER="$NODE_WSL_USER"
+            ;;
+        wsl2|WSL2)
+            TARGET_HOST="$NODE_WSL2_HOST"
+            TARGET_PORT="${NODE_WSL2_PORT:-2223}"
+            TARGET_USER="$NODE_WSL2_USER"
             ;;
         o|op|oppo|OPPO)
             TARGET_HOST="$NODE_OPPO_HOST"
             TARGET_PORT="${NODE_OPPO_PORT:-8023}"
             TARGET_USER="$NODE_OPPO_USER"
             ;;
+        ax|a|acodex|ACODEX)
+            TARGET_HOST="$NODE_ACODEX_HOST"
+            TARGET_PORT="${NODE_ACODEX_PORT:-8021}"
+            TARGET_USER="$NODE_ACODEX_USER"
+            ;;
         *)
             cn r b "Error: Unknown node '$target'"
-            echo "Usage: <termux|window|mumu|wsl> (or alias: t, w, m, wsl)" >&2
+            echo "Usage: <termux|window|mumu|wsl|wsl2|oppo|acodex> (or alias: t, w, m, wsl)" >&2
             return 1
             ;;
     esac
@@ -162,10 +173,16 @@ push_cmd() {
     cn 10 bi ">> Pushing to ${TARGET_HOST} (${TARGET_USER}@${TARGET_HOST}:${TARGET_PORT})..."
     
     # รัน rsync: แยก -e "ssh -p ..." ออกจาก source และ destination
-    rsync -avz --progress \
-        -e "ssh -p ${TARGET_PORT}" \
-        "${src}" \
-        "${TARGET_USER}@${TARGET_HOST}:${dest}"
+    if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+      rsync -avz --progress \
+          -e "ssh -p ${TARGET_PORT}" \
+          "${src}" \
+          "${TARGET_USER}@${TARGET_HOST}:${dest}"
+    else
+      scp -P "${TARGET_PORT}" -r \
+          "${src}" \
+          "${TARGET_USER}@${TARGET_HOST}:${dest}"
+    fi
 }
 
 # ============================================================
@@ -187,10 +204,16 @@ pull_cmd() {
 
     cn 10 bi "<< Pulling from ${TARGET_HOST} (${TARGET_USER}@${TARGET_HOST}:${TARGET_PORT})..."
 
-    rsync -avz --progress \
-        -e "ssh -p ${TARGET_PORT}" \
-        "${TARGET_USER}@${TARGET_HOST}:${remote_src}" \
-        "${local_dest}"
+    if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+      rsync -avz --progress \
+          -e "ssh -p ${TARGET_PORT}" \
+          "${TARGET_USER}@${TARGET_HOST}:${remote_src}" \
+          "${local_dest}"
+    else
+      scp -P "${TARGET_PORT}" -r \
+          "${TARGET_USER}@${TARGET_HOST}:${remote_src}" \
+          "${local_dest}"
+    fi
 }
 
 
@@ -199,8 +222,11 @@ _rsync () {
     local dest  =${2:-}
     local host  =${3:-$HOST_} # รับเป็นชื่อ alias เช่น mumu หรือ termux
     
-    #rsync -avz "file.txt" "host:/path/destination/"
-    rsync -avz "${src}" "${host}:${dest}" && cn 10 bi "DOWNLOAD DONE : ${src} ${dest}"
+    if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+      rsync -avz "${src}" "${host}:${dest}" && cn 10 bi "DOWNLOAD DONE : ${src} ${dest}"
+    else
+      scp -r "${src}" "${host}:${dest}" && cn 10 bi "DOWNLOAD DONE (scp) : ${src} ${dest}"
+    fi
 }
 
 
@@ -219,8 +245,14 @@ _rsync () {
         w|win|window|W|WINDOW)
                     HOST_=window
                     ;;
-        wsl|WSL|WSL2)
+        wsl|WSL)
                     HOST_=wsl
+                    ;;
+        wsl2|WSL2)
+                    HOST_=wsl2
+                    ;;
+        op|oppo|OPPO|o)
+                    HOST_=oppo
                     ;;
         *)          cn 198 b "UNNKOWN DEVICE"           
      esac                                   

@@ -23,7 +23,7 @@
 
 
 # Ensure SCRIPTS_PATH is set (needed for sourcing other modules)
-export SCRIPTS_PATH="${SCRIPTS_PATH:-$HOME/bashscripts}"
+export SCRIPTS_PATH="${SCRIPTS_PATH:-$HOME/ssot}"
 
 # Source colors from SSOT (core/01-colors.sh) if not already loaded
 if ! command -v c >/dev/null 2>&1; then
@@ -32,9 +32,9 @@ if ! command -v c >/dev/null 2>&1; then
   unset _colors_file
 fi
 
-# Source env vars from SSOT (bootstrap/00-env.sh) if not already loaded
+# Source env vars from SSOT (shared/00-env.sh) if not already loaded
 if [[ -z "$TERMUX_IP" ]]; then
-  _env_file="$SCRIPTS_PATH/bootstrap/00-env.sh"
+  _env_file="$SCRIPTS_PATH/shared/00-env.sh"
   [[ -f "$_env_file" ]] && source "$_env_file"
   unset _env_file
 fi
@@ -237,8 +237,8 @@ _confirm() {
 
 _human_size() {
   local bytes=${1:-0}
-  if ! command -v bc_ >/dev/null 2>&1 && [[ -f "${SCRIPTS_PATH:-$HOME/bashscripts}/functions/00.1-function-tools.sh" ]]; then
-    source "${SCRIPTS_PATH:-$HOME/bashscripts}/functions/00.1-function-tools.sh" 2>/dev/null
+  if ! command -v bc_ >/dev/null 2>&1 && [[ -f "${SCRIPTS_PATH:-$HOME/ssot}/functions/00.1-function-tools.sh" ]]; then
+    source "${SCRIPTS_PATH:-$HOME/ssot}/functions/00.1-function-tools.sh" 2>/dev/null
   fi
   if   (( bytes >= 1073741824 )); then printf "%s GB" "$(bc_ 1 "$bytes/1073741824")"
   elif (( bytes >= 1048576    )); then printf "%s MB" "$(bc_ 1 "$bytes/1048576")"
@@ -1445,7 +1445,11 @@ fm_push() {
     "-e 'ssh -p'   |ระบุ port ของเครื่องปลายทาง ($r_port)"
 
   _step "Pushing: $src → $r_name:$dst"
-  rsync -az --update --info=progress2 -e "ssh -p $r_port" "$src" "${r_user}@${r_ip}:$dst" && _ok "Push สำเร็จ"
+  if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+    rsync -az --update --info=progress2 -e "ssh -p $r_port" "$src" "${r_user}@${r_ip}:$dst" && _ok "Push สำเร็จ"
+  else
+    scp -P "$r_port" -r "$src" "${r_user}@${r_ip}:$dst" && _ok "Push สำเร็จ (scp)"
+  fi
 }
 
 fm_pull() {
@@ -1467,7 +1471,11 @@ fm_pull() {
     "Pull          |ดึง code ที่แก้ใน $r_name กลับมาที่เครื่องปัจจุบัน"
 
   _step "Pulling: $r_name:$src → $dst"
-  rsync -az --update --info=progress2 -e "ssh -p $r_port" "${r_user}@${r_ip}:$src" "$dst" && _ok "Pull สำเร็จ"
+  if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+    rsync -az --update --info=progress2 -e "ssh -p $r_port" "${r_user}@${r_ip}:$src" "$dst" && _ok "Pull สำเร็จ"
+  else
+    scp -P "$r_port" -r "${r_user}@${r_ip}:$src" "$dst" && _ok "Pull สำเร็จ (scp)"
+  fi
 }
 
 fm_rls() {
@@ -2116,7 +2124,7 @@ xfm_cp() {
 
   # ── SSOT path auto-translate ──────────────────────────────────
   # $SSOT expand เป็น local path ต้อง translate เป็น remote path
-  # เช่น จาก Git Bash: tm:/c/Users/User/bashscripts → tm:/data/data/com.termux/files/home/bashscripts
+  # เช่น จาก Git Bash: tm:/c/Users/User/ssot → tm:/data/data/com.termux/files/home/ssot
   if [[ "$(_xfm_lower "$src_m")" != "local" && "$(_xfm_lower "$src_m")" != "." ]]; then
     src_p=$(_xfm_translate_path "$src_p" "$src_m")
   fi
@@ -2441,8 +2449,13 @@ xfm_sync() {
     local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
     [[ -f "$key" ]] && ssh_opt="$ssh_opt -i $key"
     [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
-    rsync -avz --progress --delete -e "ssh $ssh_opt" "$src_p" "$user@$host:$dst_p" \
-      && _ok "sync สำเร็จ"
+    if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+      rsync -avz --progress --delete -e "ssh $ssh_opt" "$src_p" "$user@$host:$dst_p" \
+        && _ok "sync สำเร็จ"
+    else
+      scp -P "$port" -r "$src_p" "$user@$host:$dst_p" \
+        && _ok "sync สำเร็จ (scp, no --delete)"
+    fi
     return
   fi
 
@@ -2454,8 +2467,13 @@ xfm_sync() {
     local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
     [[ -f "$key" ]] && ssh_opt="$ssh_opt -i $key"
     [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
-    rsync -avz --progress --delete -e "ssh $ssh_opt" "$user@$host:$src_p" "$dst_p" \
-      && _ok "sync สำเร็จ"
+    if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+      rsync -avz --progress --delete -e "ssh $ssh_opt" "$user@$host:$src_p" "$dst_p" \
+        && _ok "sync สำเร็จ"
+    else
+      scp -P "$port" -r "$user@$host:$src_p" "$dst_p" \
+        && _ok "sync สำเร็จ (scp, no --delete)"
+    fi
     return
   fi
 
@@ -2473,8 +2491,13 @@ xfm_sync() {
   local ssh_opt="-o ConnectTimeout=8 -o BatchMode=yes"
   [[ -f "$key" ]] && ssh_opt="$ssh_opt -i $key"
   [[ -n "$port" ]] && ssh_opt="$ssh_opt -p $port"
-  rsync -avz --progress --delete -e "ssh $ssh_opt" "$relay_dir/" "$user@$host:$dst_p" \
-    && _ok "sync สำเร็จ"
+  if [[ "${_SSOT_HAS_RSYNC:-0}" -eq 1 ]]; then
+    rsync -avz --progress --delete -e "ssh $ssh_opt" "$relay_dir/" "$user@$host:$dst_p" \
+      && _ok "sync สำเร็จ"
+  else
+    scp -P "$port" -r "$relay_dir/" "$user@$host:$dst_p" \
+      && _ok "sync สำเร็จ (scp, no --delete)"
+  fi
   rm -rf "$relay_dir"
 }
 

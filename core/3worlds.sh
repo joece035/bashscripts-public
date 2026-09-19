@@ -20,6 +20,15 @@
 # Env from ~/bashscripts/00-env.sh
 
 # ============================================================
+# TRANSPORT AUTO-DETECT
+# ============================================================
+# _SSOT_HAS_RSYNC: 1 if rsync available, 0 if not (Git Bash → scp fallback)
+_SSOT_HAS_RSYNC=0
+if command -v rsync >/dev/null 2>&1; then
+    _SSOT_HAS_RSYNC=1
+fi
+
+# ============================================================
 # SECTION 0: WORLD DETECTION
 # ============================================================
 # _MY_WORLD: human-readable world tag (kept for backward compat).
@@ -28,9 +37,12 @@
 _detect_world() {
   case "${JOE_ENV}" in
     TERMUX)   printf 'termux' ;;
+    MUMU)     printf 'mumu' ;;
+    OPPO)     printf 'oppo' ;;
     WSL)      printf 'wsl' ;;
+    WSL2)     printf 'wsl2' ;;
+    ACODEX)   printf 'acodex' ;;
     GIT-BASH) printf 'git-bash' ;;
-    MUMU)     printf 'MUMU' ;;
     *)        printf 'unknown' ;;
   esac
 }
@@ -129,6 +141,12 @@ wsl() {
   _ssh_node "${NODE_WSL_USER}" "${NODE_WSL_HOST}" "${NODE_WSL_PORT}" "${ssh_opts[@]}" -- "$@"
 }
 
+wsl2() {
+  local -a ssh_opts=(-o ConnectTimeout=5 -o BatchMode=yes)
+  [[ -f "${KEY_NODE}" ]] && ssh_opts+=(-i "${KEY_NODE}")
+  _ssh_node "${NODE_WSL2_USER}" "${NODE_WSL2_HOST}" "${NODE_WSL2_PORT:-2223}" "${ssh_opts[@]}" -- "$@"
+}
+
 
 
 # ============================================================
@@ -141,7 +159,6 @@ if ! declare -F ps_remote >/dev/null 2>&1; then
   # Resolve SSOT path robustly — $SSOT may not be set if 3worlds.sh was
   # sourced standalone (e.g. during testing).
   _ssh_cfg="${SSOT:-$(dirname "${BASH_SOURCE[0]}")}/core/ssh-config.sh"
-  [[ -f "$_ssh_cfg" ]] || _ssh_cfg="/home/usercivenz/bashscripts/core/ssh-config.sh"
   if [[ -f "$_ssh_cfg" ]]; then
     source "$_ssh_cfg"
   fi
@@ -167,23 +184,39 @@ twp() {
 # ---Helper functions---  
 # _rsync_to <user> <host> <port> <local_src> <remote_dst>
 #   → Push local file/dir to remote node via rsync over SSH.
+#   → Falls back to scp on Git Bash (no rsync available).
 _rsync_to() {
   local user="$1" host="$2" port="$3" src="$4" dst="$5"
-  rsync -az --update --info=progress2 -e "ssh -p ${port}"         "$src" "${user}@${host}:${dst}"
+  if [[ "$_SSOT_HAS_RSYNC" -eq 1 ]]; then
+    rsync -az --update --info=progress2 -e "ssh -p ${port}"         "$src" "${user}@${host}:${dst}"
+  else
+    scp -P "${port}" -r "$src" "${user}@${host}:${dst}"
+  fi
 }
 
 # _rsync_to_delete <user> <host> <port> <local_src> <remote_dst>
 #   → Like _rsync_to but deletes destination files not in source.
+#   → scp fallback: copy only (no --delete equivalent).
 _rsync_to_delete() {
   local user="$1" host="$2" port="$3" src="$4" dst="$5"
-  rsync -az --delete --info=progress2 -e "ssh -p ${port}"         "$src" "${user}@${host}:${dst}"
+  if [[ "$_SSOT_HAS_RSYNC" -eq 1 ]]; then
+    rsync -az --delete --info=progress2 -e "ssh -p ${port}"         "$src" "${user}@${host}:${dst}"
+  else
+    echo "⚠️  scp: no --delete mode, doing plain copy" >&2
+    scp -P "${port}" -r "$src" "${user}@${host}:${dst}"
+  fi
 }
 
 # _rsync_from <user> <host> <port> <remote_src> <local_dst>
 #   → Pull file/dir from remote node to local via rsync over SSH.
+#   → Falls back to scp on Git Bash (no rsync available).
 _rsync_from() {
   local user="$1" host="$2" port="$3" src="$4" dst="$5"
-  rsync -az --update --info=progress2 -e "ssh -p ${port}"         "${user}@${host}:${src}" "$dst"
+  if [[ "$_SSOT_HAS_RSYNC" -eq 1 ]]; then
+    rsync -az --update --info=progress2 -e "ssh -p ${port}"         "${user}@${host}:${src}" "$dst"
+  else
+    scp -P "${port}" -r "${user}@${host}:${src}" "$dst"
+  fi
 }
 # ============================================================
 # SECTION 3: FILE TRANSFER LAYER (WSL ↔ Termux)
@@ -381,9 +414,11 @@ alias t2w="cpt2w"
 whichworld() {
   cn 226 b "🌏 Current world: ${_MY_WORLD}  (JOE_ENV: $JOE_ENV)"
   cn lb    "  WSL:        ${NODE_WSL_USER}@${NODE_WSL_HOST}"
+  cn lb    "  WSL2:       ${NODE_WSL2_USER}@${NODE_WSL2_HOST}"
   cn lg    "  Termux:     ${NODE_TERMUX_USER}@${NODE_TERMUX_HOST}"
   cn lm    "  Windows:    ${NODE_WIN_USER}@${NODE_WIN_HOST}"
   cn m     "  MUMUPlayer: ${NODE_MUMU_USER}@${NODE_MUMU_HOST} (key: id_ed25519_mumu)"
+  cn y     "  OPPO:       ${NODE_OPPO_USER}@${NODE_OPPO_HOST}"
 }
 
 # ============================================================
@@ -432,8 +467,10 @@ syncthing_check_all(){
   local ROWS=(
     "🔄|TERMUX|$(_st_fetch_status "TERMUX" "${NODE_TERMUX_ST_URL}" "${NODE_TERMUX_ST_KEY}")|"
     "🔄|WSL|$(_st_fetch_status "WSL"    "${NODE_WSL_ST_URL}"    "${NODE_WSL_ST_KEY}"   )|"
+    "🔄|WSL2|$(_st_fetch_status "WSL2"   "${NODE_WSL2_ST_URL}"   "${NODE_WSL2_ST_KEY}"  )|"
     "🔄|WIN|$(_st_fetch_status "WIN"    "${NODE_WIN_ST_URL}"    "${NODE_WIN_ST_KEY}"   )|"
     "🔄|MUMU|$(_st_fetch_status "MUMU"   "${NODE_MUMU_ST_URL}"  "${NODE_MUMU_ST_KEY}"  )|"
+    "🔄|OPPO|$(_st_fetch_status "OPPO"   "${NODE_OPPO_ST_URL}"  "${NODE_OPPO_ST_KEY}"  )|"
   )
   dashboard_array "${ROWS[@]}"
 }
@@ -490,10 +527,10 @@ _st_autostart() {
       schtasks /run /tn "Syncthing" >/dev/null 2>&1
       cn lg b "SYNCTHING (task) STARTED 🟢"
     else
-      # No task — install helper lives in bashscripts/tools/
+      # No task — install helper lives in ssot/tools/
       cn lr b " 🔌 NO TASK 'Syncthing' FOUND"
       cn lm bu "RUN ONCE:"
-      c 220 b "     bash ~/bashscripts/tools/install-syncthing-service.sh"
+      c 220 b "     syncthing serve --gui-address=\"0.0.0.0:${port}\" &"
       cn lg bi "FALLBACK (nohup — known to die on bash exit):"
       nohup syncthing serve --gui-address="0.0.0.0:${port}" >/dev/null 2>&1 &
       disown 2>/dev/null
@@ -516,8 +553,10 @@ syncthing_auto() {
   case "$JOE_ENV" in
     TERMUX)   _st_autostart "TERMUX"   "${NODE_TERMUX_ST_URL}" "${NODE_TERMUX_ST_KEY}" "${NODE_TERMUX_ST_PORT}" ;;
     WSL)      _st_autostart "WSL"      "${NODE_WSL_ST_URL}"    "${NODE_WSL_ST_KEY}"    "${NODE_WSL_ST_PORT}"    ;;
+    WSL2)     _st_autostart "WSL2"     "${NODE_WSL2_ST_URL}"   "${NODE_WSL2_ST_KEY}"   "${NODE_WSL2_ST_PORT}"   ;;
     GIT-BASH) _st_autostart "GIT-BASH" "${NODE_WIN_ST_URL}"    "${NODE_WIN_ST_KEY}"    "${NODE_WIN_ST_PORT}"    ;;
     MUMU)     _st_autostart "MUMU"     "${NODE_MUMU_ST_URL}"   "${NODE_MUMU_ST_KEY}"   "${NODE_MUMU_ST_PORT}"   ;;
+    OPPO)     _st_autostart "OPPO"     "${NODE_OPPO_ST_URL}"   "${NODE_OPPO_ST_KEY}"   "${NODE_OPPO_ST_PORT}"   ;;
   esac
 }
 
@@ -527,8 +566,10 @@ syncthing_status_() {
   case "$JOE_ENV" in
     TERMUX)   label="ST TERMUX"; target_url="${NODE_TERMUX_ST_URL}"; api_key="${NODE_TERMUX_ST_KEY}" ;;
     WSL)      label="ST WSL";    target_url="${NODE_WSL_ST_URL}";    api_key="${NODE_WSL_ST_KEY}"    ;;
+    WSL2)     label="ST WSL2";   target_url="${NODE_WSL2_ST_URL}";   api_key="${NODE_WSL2_ST_KEY}"   ;;
     GIT-BASH) label="ST WIN";    target_url="${NODE_WIN_ST_URL}";    api_key="${NODE_WIN_ST_KEY}"    ;;
     MUMU)     label="ST MUMU";   target_url="${NODE_MUMU_ST_URL}";   api_key="${NODE_MUMU_ST_KEY}"   ;;
+    OPPO)     label="ST OPPO";   target_url="${NODE_OPPO_ST_URL}";   api_key="${NODE_OPPO_ST_KEY}"   ;;
     *)        echo "🔄 SYNCTHING : ❓ N/A"; return ;;
   esac
 
@@ -562,10 +603,12 @@ check_syncthing() {
 
   _st_fetch "TERMUX"  "${NODE_TERMUX_ST_URL}" "${NODE_TERMUX_ST_KEY}"
   _st_fetch "WSL    " "${NODE_WSL_ST_URL}"    "${NODE_WSL_ST_KEY}"
+  _st_fetch "WSL2   " "${NODE_WSL2_ST_URL}"   "${NODE_WSL2_ST_KEY}"
   _st_fetch "WIN"     "${NODE_WIN_ST_URL}"    "${NODE_WIN_ST_KEY}"
   _st_fetch "MUMU"    "${NODE_MUMU_ST_URL}"   "${NODE_MUMU_ST_KEY}"
+  _st_fetch "OPPO"    "${NODE_OPPO_ST_URL}"   "${NODE_OPPO_ST_KEY}"
 
-  
+
 }
 
 alias stck='check_syncthing'
@@ -577,8 +620,10 @@ _get_syncthing_raw() {
   case "$JOE_ENV" in
     TERMUX)   target_url="${NODE_TERMUX_ST_URL}"; api_key="${NODE_TERMUX_ST_KEY}" ;;
     WSL)      target_url="${NODE_WSL_ST_URL}";    api_key="${NODE_WSL_ST_KEY}"    ;;
+    WSL2)     target_url="${NODE_WSL2_ST_URL}";   api_key="${NODE_WSL2_ST_KEY}"   ;;
     GIT-BASH) target_url="${NODE_WIN_ST_URL}";    api_key="${NODE_WIN_ST_KEY}"    ;;
     MUMU)     target_url="${NODE_MUMU_ST_URL}";   api_key="${NODE_MUMU_ST_KEY}"   ;;
+    OPPO)     target_url="${NODE_OPPO_ST_URL}";   api_key="${NODE_OPPO_ST_KEY}"   ;;
     *)        echo "OFFLINE|🔴"; return ;;
   esac
 
@@ -605,7 +650,7 @@ _get_syncthing_raw() {
 # ปัญหาที่เจอ: หลัง reinstall Termux, copy เก่าในเครื่องอื่นจะ revert
 # การแก้ไฟล์ของ WSL (เจอใน 3worlds.sh / 11-bash-manager.sh)
 # วิธีใช้:
-#   st-pause              # pause โฟลเดอร์ bashscripts (กัน revert) — แล้วค่อยแก้ไฟล์
+#   st-pause              # pause โฟลเดอร์ ssot (กัน revert) — แล้วค่อยแก้ไฟล์
 #   st-override           # บังคับให้ copy โลคอล (เครื่องนี้) เป็น master ผลักไปทุกเครื่อง (native syncthing)
 #   st-push-tm            # (ทางเลือก) rsync copy ที่ถูกต้องไป Termux ตรง ๆ ก่อน resume
 #   st-resume             # resume เมื่อพร้อม
@@ -623,8 +668,10 @@ _st_api() {
   case "$JOE_ENV" in
     TERMUX)   _ST_API_URL="${NODE_TERMUX_ST_URL}"; _ST_API_KEY="${NODE_TERMUX_ST_KEY}" ;;
     WSL)      _ST_API_URL="${NODE_WSL_ST_URL}";    _ST_API_KEY="${NODE_WSL_ST_KEY}"    ;;
+    WSL2)     _ST_API_URL="${NODE_WSL2_ST_URL}";   _ST_API_KEY="${NODE_WSL2_ST_KEY}"   ;;
     GIT-BASH) _ST_API_URL="${NODE_WIN_ST_URL}";    _ST_API_KEY="${NODE_WIN_ST_KEY}"    ;;
     MUMU)     _ST_API_URL="${NODE_MUMU_ST_URL}";   _ST_API_KEY="${NODE_MUMU_ST_KEY}"   ;;
+    OPPO)     _ST_API_URL="${NODE_OPPO_ST_URL}";   _ST_API_KEY="${NODE_OPPO_ST_KEY}"   ;;
     *)        _ST_API_URL=""; _ST_API_KEY="" ;;
   esac
 }
@@ -632,7 +679,7 @@ _st_api() {
 # ค้นหา folder ID จาก label/path (หลีกเลี่ยง hardcode folder id)
 # ป้องกัน injection: ส่ง $want ผ่าน stdin (ไม่ใช่ string interpolation)
 _st_folder_id() {
-  local want="${1:-bashscripts}"
+  local want="${1:-ssot}"
   _st_api
   [[ -z "$_ST_API_URL" ]] && { echo ""; return 1; }
   curl -s -H "X-API-Key: $_ST_API_KEY" "$_ST_API_URL/rest/config/folders" 2>/dev/null \
@@ -652,9 +699,9 @@ for f in fs:
 "
 }
 
-# st_pause [folder-label] — pause โฟลเดอร์ที่ระบุ (default: bashscripts)
+# st_pause [folder-label] — pause โฟลเดอร์ที่ระบุ (default: ssot)
 st_pause() {
-  local label="${1:-bashscripts}"
+  local label="${1:-ssot}"
   local fid
   fid=$(_st_folder_id "$label")
   [[ -z "$fid" ]] && { cn r b "❌ Syncthing offline หรือไม่เจอโฟลเดอร์ $label"; return 1; }
@@ -666,7 +713,7 @@ st_pause() {
 
 # st_resume [folder-label] — resume โฟลเดอร์
 st_resume() {
-  local label="${1:-bashscripts}"
+  local label="${1:-ssot}"
   local fid
   fid=$(_st_folder_id "$label")
   [[ -z "$fid" ]] && { cn r b "❌ Syncthing offline หรือไม่เจอโฟลเดอร์ $label"; return 1; }
@@ -680,7 +727,7 @@ st_resume() {
 # POST /rest/db/override → syncthing ถือว่า local copy ถูกต้องที่สุด
 # แล้วผลัก (push) ไปทุกเครื่องที่เชื่อม — ใช้เมื่อเครื่องอื่นมี copy เก่า
 st_override() {
-  local label="${1:-bashscripts}"
+  local label="${1:-ssot}"
   local fid
   fid=$(_st_folder_id "$label")
   [[ -z "$fid" ]] && { cn r b "❌ Syncthing offline หรือไม่เจอโฟลเดอร์ $label"; return 1; }
@@ -696,7 +743,7 @@ st_override() {
   fi
 }
 
-# st_push_tm — rsync bashscripts WSL → Termux ตรง ๆ (ใช้ก่อน resume
+# st_push_tm — rsync ssot WSL → Termux ตรง ๆ (ใช้ก่อน resume
 # เพื่อให้ Termux ได้ copy ที่ถูกต้องเป็นหลัก แทนที่จะเอา copy เก่ามาทับ)
 st_push_tm() {
   local src="${1:-$SSOT/}"
@@ -730,19 +777,21 @@ st_register_all() {
   # device map: ชื่อ → (id, url, key) — อ่านจาก SSOT
   local -A NODES=(
     [wsl]="$NODE_WSL_ST_ID|$NODE_WSL_ST_URL|$NODE_WSL_ST_KEY"
+    [wsl2]="$NODE_WSL2_ST_ID|$NODE_WSL2_ST_URL|$NODE_WSL2_ST_KEY"
     [WIN]="$NODE_WIN_ST_ID|$NODE_WIN_ST_URL|$NODE_WIN_ST_KEY"
     [TERMUX]="$NODE_TERMUX_ST_ID|$NODE_TERMUX_ST_URL|$NODE_TERMUX_ST_KEY"
     [MUMU]="$NODE_MUMU_ST_ID|$NODE_MUMU_ST_URL|$NODE_MUMU_ST_KEY"
+    [OPPO]="$NODE_OPPO_ST_ID|$NODE_OPPO_ST_URL|$NODE_OPPO_ST_KEY"
   )
 
   # canonical device map: <id>:<name> (SSOT)
   local canonical=""
-  for n in wsl WIN TERMUX MUMU; do
+  for n in wsl wsl2 WIN TERMUX MUMU OPPO; do
     canonical="$canonical ${NODES[$n]%%|*}:$n"
   done
 
   # วนไปทุกเครื่องที่ online
-  for n in wsl WIN TERMUX MUMU; do
+  for n in wsl wsl2 WIN TERMUX MUMU OPPO; do
     local entry="${NODES[$n]}"
     local url="${entry#*|}"; url="${url%%|*}"
     local key="${entry##*|}"
@@ -858,9 +907,9 @@ PYEOF
 
 alias st_regis_all='st_register_all'
 
-# st_status — สรุปสถานะ folder ที่สนใจ (default: bashscripts)
+# st_status — สรุปสถานะ folder ที่สนใจ (default: ssot)
 st_status() {
-  local label="${1:-bashscripts}"
+  local label="${1:-ssot}"
   local fid
   fid=$(_st_folder_id "$label")
   _st_api

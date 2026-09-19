@@ -2,7 +2,7 @@
 # ============================================================
 # 🛡️ ssh_audit.sh — SSOT SSH Audit & Self-Healing Utility
 # ============================================================
-# Infrastructure: ~/ssot/ (SSOT)
+# Infrastructure: ~/bashscripts/ (SSOT)
 # Compatible: WSL2, Termux (Android/MuMu), Linux, Git-Bash
 # Usage:
 #   ./bootstrap/ssh_audit.sh          # รัน Audit ตรวจสอบอย่างเดียว (Read-only)
@@ -17,8 +17,9 @@ set -uo pipefail
 # [1] SSOT BOOTSTRAP & DEPENDENCY LOADER
 # ────────────────────────────────────────────────────────────
 # ค้นหาตำแหน่ง Root ของโปรเจกต์ (SSOT) อย่างแม่นยำ ไม่ว่ารันจากที่ไหน
+# NOTE: ssh_audit.sh อยู่ที่ bootstrap/script/ → root = ../.. (ไม่ใช่ ..)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SSOT="${SSOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+SSOT="${SSOT:-$(cd "$SCRIPT_DIR/../.." && pwd)}"
 export SSOT
 
 # ── Detect JOE_ENV ก่อน source 00-env.sh (00-env.sh ต้องการ $JOE_ENV ก่อนเสมอ) ──
@@ -30,8 +31,14 @@ if [[ -z "${JOE_ENV:-}" ]]; then
         else
             export JOE_ENV="TERMUX"
         fi
+    elif command -v apk >/dev/null 2>&1; then
+        export JOE_ENV="ACODEX"
     elif grep -qi microsoft /proc/version 2>/dev/null; then
-        export JOE_ENV="WSL"
+        if [[ "$(id -un 2>/dev/null)" == "joez" ]]; then
+            export JOE_ENV="WSL2"
+        else
+            export JOE_ENV="WSL"
+        fi
     elif [[ -n "${MSYSTEM:-}" ]] || [[ "${OSTYPE:-}" == "msys" ]]; then
         export JOE_ENV="GIT-BASH"
     else
@@ -46,17 +53,18 @@ fi
 # เหตุผล: 00-env.sh ใช้ $msync, $DASHBOARD_DIR, $hpc, $hwsl — ต้อง set ก่อน
 # ทำ inline แทน source joe.sh เพื่อกัน side-effects (ssh-agent, sshd, ssot_load)
 case "$JOE_ENV" in
-    TERMUX|MUMU)
+    TERMUX|MUMU|OPPO)
         export SSOT="/data/data/com.termux/files/home/ssot"
         export DASHBOARD_DIR="$HOME/dashboard"
         export MAIN_SYNC_DIR="$HOME/main_sync"
         export SSH_MUMU_PORT=8020
         export SSH_TERMUX_PORT=8022
-        export SSH_WSL_PORT=22
+        export SSH_WSL_PORT=2222
+        export SSH_WSL2_PORT=2223
         export SSH_WIN_PORT=22
         export SSH_PORT=8022
         ;;
-    WSL)
+    WSL|WSL2)
         export SSOT="${SSOT:-$HOME/ssot}"
         export hpc="${hpc:-/mnt/c/Users/User}"
         export hwsl="${hwsl:-$HOME}"
@@ -64,7 +72,8 @@ case "$JOE_ENV" in
         export MAIN_SYNC_DIR="${MAIN_SYNC_DIR:-$HOME/main_sync}"
         export SSH_MUMU_PORT=8020
         export SSH_TERMUX_PORT=8022
-        export SSH_WSL_PORT=22
+        export SSH_WSL_PORT=2222
+        export SSH_WSL2_PORT=2223
         export SSH_WIN_PORT=22
         export SSH_PORT=22
         ;;
@@ -76,7 +85,8 @@ case "$JOE_ENV" in
         export MAIN_SYNC_DIR="${MAIN_SYNC_DIR:-$HOME/DESKTOP/main_sync}"
         export SSH_MUMU_PORT=8020
         export SSH_TERMUX_PORT=8022
-        export SSH_WSL_PORT=22
+        export SSH_WSL_PORT=2222
+        export SSH_WSL2_PORT=2223
         export SSH_WIN_PORT=22
         export SSH_PORT=22
         ;;
@@ -86,7 +96,8 @@ case "$JOE_ENV" in
         export MAIN_SYNC_DIR="${MAIN_SYNC_DIR:-$HOME/main_sync}"
         export SSH_MUMU_PORT=8020
         export SSH_TERMUX_PORT=8022
-        export SSH_WSL_PORT=22
+        export SSH_WSL_PORT=2222
+        export SSH_WSL2_PORT=2223
         export SSH_WIN_PORT=22
         export SSH_PORT=22
         ;;
@@ -106,15 +117,15 @@ export OBSIDIAN_VAULT="${OBSIDIAN_VAULT:-$HOME/obsidian}"
 # โหลด Environment Variables (SSOT) — หลัง path vars
 # ใช้ set +u เพื่อกัน 00-env.sh crash จากตัวแปรที่ปกติ set ใน joe.sh
 # (00-env.sh ถูก design ให้ source หลัง joe.sh เสมอ)
-if [[ -f "$SSOT/bootstrap/00-env.sh" ]]; then
+if [[ -f "$SSOT/shared/00-env.sh" ]]; then
     set +u
     # shellcheck source=/dev/null
-    source "$SSOT/bootstrap/00-env.sh" || true
+    source "$SSOT/shared/00-env.sh" || true
     set -u
-elif [[ -f "$HOME/ssot/bootstrap/00-env.sh" ]]; then
+elif [[ -f "$HOME/bashscripts/shared/00-env.sh" ]]; then
     set +u
     # shellcheck source=/dev/null
-    source "$HOME/ssot/bootstrap/00-env.sh" || true
+    source "$HOME/bashscripts/shared/00-env.sh" || true
     set -u
 fi
 
@@ -150,7 +161,11 @@ AUTH_KEYS="${SSH_DIR}/authorized_keys"
 # กำหนดตัวแปร Node Registry จาก SSOT (00-env.sh) พร้อม Fallback ป้องกันค่าว่าง
 NODE_WSL_HOST="${NODE_WSL_HOST:-wsl}"
 NODE_WSL_USER="${NODE_WSL_USER:-usercivenz}"
-NODE_WSL_PORT="${NODE_WSL_PORT:-22}"
+NODE_WSL_PORT="${NODE_WSL_PORT:-2222}"
+
+NODE_WSL2_HOST="${NODE_WSL2_HOST:-wsl2}"
+NODE_WSL2_USER="${NODE_WSL2_USER:-joez}"
+NODE_WSL2_PORT="${NODE_WSL2_PORT:-2223}"
 
 NODE_OPPO_HOST="${NODE_OPPO_HOST:-oppo}"
 NODE_OPPO_USER="${NODE_OPPO_USER:-u0_a88}"
@@ -351,7 +366,7 @@ audit_config() {
     fi
 
     # เช็ครายชื่อ Host ใน Mesh ทีละ Node
-    local nodes=("wsl" "oppo" "mumu" "termux" "acodex" "window")
+    local nodes=("wsl" "wsl2" "oppo" "mumu" "termux" "acodex" "window")
     for host_alias in "${nodes[@]}"; do
         if grep -qE "^Host[[:space:]]+.*\\b${host_alias}\\b" "$CONFIG_FILE" 2>/dev/null; then
             log_pass "Host alias '${host_alias}' is defined in config"
@@ -386,7 +401,7 @@ audit_service() {
 
     log_info "Detected OS Environment: $current_env"
 
-    if [[ "$current_env" == "WSL" ]]; then
+    if [[ "$current_env" == "WSL" || "$current_env" == "WSL2" ]]; then
         if service ssh status >/dev/null 2>&1; then
             log_pass "WSL OpenSSH service is running"
         else
@@ -508,6 +523,17 @@ Host wsl
     ConnectTimeout 5
     PreferredAuthentications publickey
 
+Host wsl2
+    HostName ${NODE_WSL2_HOST}
+    User ${NODE_WSL2_USER}
+    Port ${NODE_WSL2_PORT}
+    IdentityFile ~/.ssh/id_ed25519_node
+    IdentitiesOnly yes
+    ServerAliveInterval 30
+    ServerAliveCountMax 3
+    ConnectTimeout 5
+    PreferredAuthentications publickey
+
 Host oppo
     HostName ${NODE_OPPO_HOST}
     User ${NODE_OPPO_USER}
@@ -600,7 +626,7 @@ EOF
 
 test_mesh() {
     log_section "🌐 Testing Mesh Reachability (Non-blocking)"
-    local nodes=("wsl" "oppo" "mumu" "termux" "acodex" "window")
+    local nodes=("wsl" "wsl2" "oppo" "mumu" "termux" "acodex" "window")
 
     for node in "${nodes[@]}"; do
         c 252 "  Testing connection to "

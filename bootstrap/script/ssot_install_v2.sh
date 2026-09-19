@@ -183,7 +183,7 @@ ln -sf "$HOME/.env" "$SSOT_TARGET/.env"
 
 # ── [7] RC AUTO-LINKING (Single Source Concept) ──
 # แม้ Termux ใช้ .zshrc แต่เรากำหนดให้ทุก RC ไป source Entry Point เดียวกัน
-LINK_TARGET='[ -f "$HOME/ssot/joe.sh" ] && source "$HOME/ssot/joe.sh"'
+LINK_TARGET='[ -f "$HOME/bashscripts/joe.sh" ] && source "$HOME/bashscripts/joe.sh"'
 
 for rc_file in "$HOME/.bashrc" "$HOME/.zshrc"; do
     if [[ -f "$rc_file" ]] || [[ "$rc_file" == "$HOME/.zshrc" && "$JOE_ENV" == "TERMUX" ]]; then

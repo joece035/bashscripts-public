@@ -87,7 +87,7 @@ _detect_identity() {
             TERMUX)   device_name="termux" ;;
             MUMU)     device_name="mumu" ;;
             WSL)      device_name="wsl" ;;
-            GIT-BASH) device_name="window" ;;
+            GIT-BASH) device_name="git-bash" ;;
             *)        device_name="$(hostname 2>/dev/null | tr '[:upper:]' '[:lower:]' || echo "$joe_env" | tr '[:upper:]' '[:lower:]')" ;;
         esac
     fi
@@ -101,7 +101,8 @@ _detect_ssh_port() {
     case "$joe_env" in
         TERMUX)   echo "8022" ;;
         MUMU)     echo "8020" ;;
-        WSL)      echo "22" ;;
+        WSL)      echo "2222" ;;
+        WSL2)     echo "2223" ;;
         *)        echo "22" ;;
     esac
 }
